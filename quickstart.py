@@ -65,6 +65,7 @@ def main():
         print(f"   Error: {e}")
         
         # Generate sample data
+        MIN_PRICE = 1.0  # Minimum price threshold for realistic data
         dates = pd.date_range(start='2023-01-01', periods=150, freq='D')
         np.random.seed(42)
         
@@ -79,7 +80,7 @@ def main():
             
             opens.append(open_price)
             highs.append(high_price)
-            lows.append(max(low_price, 0.1))
+            lows.append(max(low_price, MIN_PRICE))
             closes.append(close_price)
             
             price = close_price

@@ -11,6 +11,7 @@ from bt3 import fetch_data, run_backtest
 
 def create_sample_data():
     """Create sample OHLCV data for testing"""
+    MIN_PRICE = 1.0  # Minimum price threshold for realistic data
     dates = pd.date_range(start='2023-01-01', periods=100, freq='D')
     np.random.seed(42)
     
@@ -28,7 +29,7 @@ def create_sample_data():
         # Ensure high/low make sense
         high_price = max(open_price, close_price) + abs(np.random.randn() * 0.5)
         low_price = min(open_price, close_price) - abs(np.random.randn() * 0.5)
-        low_price = max(low_price, 0.1)  # Ensure positive
+        low_price = max(low_price, MIN_PRICE)  # Ensure positive
         
         opens.append(open_price)
         highs.append(high_price)
