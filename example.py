@@ -156,8 +156,8 @@ def main():
     stats = run_backtest(
         data=data,
         strategy=SMAXStrategy,
-        cash=10000.0,
-        commission=0.001
+        cash=100000.0,
+        commission=0.0002
     )
     
     print(stats)
@@ -170,8 +170,8 @@ def main():
     stats = run_backtest(
         data=data,
         strategy=RSIStrategy,
-        cash=10000.0,
-        commission=0.001
+        cash=100000.0,
+        commission=0.0002
     )
     
     print(stats)
@@ -184,8 +184,8 @@ def main():
     stats = run_backtest(
         data=data,
         strategy=BreakoutStrategy,
-        cash=10000.0,
-        commission=0.001
+        cash=100000.0,
+        commission=0.0002
     )
     
     print(stats)

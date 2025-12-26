@@ -54,7 +54,7 @@ class SMAStrategy(Strategy):
 data = fetch_data(symbol="GBPJPY", timeframe="1d")
 
 # Run backtest
-stats = run_backtest(data, SMAStrategy, cash=10000, commission=0.001)
+stats = run_backtest(data, SMAStrategy, cash=100000, commission=0.0002)
 print(stats)
 ```
 

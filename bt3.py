@@ -166,6 +166,23 @@ def fetch_data(symbol: str, timeframe: str) -> pd.DataFrame:
         if 'Volume' not in df.columns:
             df['Volume'] = 0
         
+        # Auto-normalize forex prices if they look integer-scaled
+        # Many FX datasets store prices scaled (e.g., GBPJPY 132244 -> 132.244)
+        price_cols = [c for c in ['Open', 'High', 'Low', 'Close'] if c in df.columns]
+        if price_cols:
+            median_price = float(pd.to_numeric(df[price_cols[3]], errors='coerce').median())
+            scale_applied = None
+            # Heuristic: if median price is very large, downscale by 1000
+            if median_price and median_price > 1000 and median_price < 1_000_000:
+                for c in price_cols:
+                    df[c] = pd.to_numeric(df[c], errors='coerce') / 1000.0
+                scale_applied = 1000
+            # Ensure float dtype for price columns
+            for c in price_cols:
+                df[c] = pd.to_numeric(df[c], errors='coerce')
+            if scale_applied:
+                print(f"Normalized forex prices by factor {scale_applied} for {symbol_upper}")
+
         print(f"Successfully loaded {len(df)} rows of data")
         return df
         
@@ -181,8 +198,8 @@ def fetch_data(symbol: str, timeframe: str) -> pd.DataFrame:
 def run_backtest(
     data: pd.DataFrame,
     strategy: type,
-    cash: float = 10000.0,
-    commission: float = 0.001,
+    cash: float = 100000.0,
+    commission: float = 0.0002,
     **kwargs
 ) -> dict:
     """

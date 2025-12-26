@@ -102,8 +102,8 @@ def main():
     stats = run_backtest(
         data=data,
         strategy=MyStrategy,
-        cash=10000,        # Starting capital
-        commission=0.001   # 0.1% commission per trade
+        cash=100000,        # Typical forex starting capital
+        commission=0.0002   # Lower commission; spread often models cost
     )
     
     # Step 5: View results
