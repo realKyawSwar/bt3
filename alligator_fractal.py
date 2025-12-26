@@ -192,6 +192,11 @@ class AlligatorFractal(Strategy):
         # Track pending stop orders to avoid duplicates
         self._last_long_stop = None
         self._last_short_stop = None
+        # Arm SL/TP after stop entry fills
+        self._arm_brackets = False
+        self._next_sl = None
+        self._next_tp = None
+        self._prev_position_open = False
 
     def next(self):
         i = len(self.data.Close) - 1
@@ -200,6 +205,16 @@ class AlligatorFractal(Strategy):
         lips = self.lips[-1]
         if np.isnan(jaw) or np.isnan(teeth) or np.isnan(lips):
             return
+
+        # If a new position just opened, arm SL/TP now to avoid same-bar contingent order warning
+        if self._arm_brackets and self.position and not self._prev_position_open:
+            if self._next_sl is not None:
+                self.position.sl = self._next_sl
+            if self.enable_tp and self._next_tp is not None:
+                self.position.tp = self._next_tp
+            self._arm_brackets = False
+            self._next_sl = None
+            self._next_tp = None
 
         # Use cached arrays
         jaws = np.asarray(self.jaw)
@@ -225,6 +240,7 @@ class AlligatorFractal(Strategy):
                 self.position.close()
                 return
             # Position open, no new entry orders
+            self._prev_position_open = True
             return
 
         # No position - check if we just closed one and reset trackers
@@ -235,6 +251,7 @@ class AlligatorFractal(Strategy):
                 self._last_short_stop = None
 
         if state == 'sleeping' or state == 'crossing' or state == 'unknown':
+            self._prev_position_open = bool(self.position)
             return
 
         last_bull = np.nan
@@ -253,6 +270,7 @@ class AlligatorFractal(Strategy):
         if state == 'eating_up' and not self.position and not np.isnan(last_bull):
             # Require fractal above alligator
             if last_bull <= max(jaw, teeth, lips):
+                self._prev_position_open = bool(self.position)
                 return
             
             # Use stop order at fractal level
@@ -261,6 +279,7 @@ class AlligatorFractal(Strategy):
             
             # Check if we already have a pending order at this level
             if self._last_long_stop is not None and abs(entry_stop - self._last_long_stop) < eps:
+                self._prev_position_open = bool(self.position)
                 return  # Don't place duplicate order
             
             # Build SL/TP
@@ -278,28 +297,22 @@ class AlligatorFractal(Strategy):
                 if sl >= entry_stop:
                     sl = entry_stop - eps
             
-            # Place stop order
+            # Place stop order without contingent SL/TP; arm brackets after fill
             try:
-                if sl is not None:
-                    if tp is not None:
-                        self.buy(stop=entry_stop, sl=sl, tp=tp)
-                    else:
-                        self.buy(stop=entry_stop, sl=sl)
-                else:
-                    self.buy(stop=entry_stop)
+                self.buy(stop=entry_stop)
                 self._last_long_stop = entry_stop
+                self._next_sl = sl
+                self._next_tp = tp if self.enable_tp else None
+                self._arm_brackets = True
             except Exception:
-                # Broker rejected order, try without TP
-                if sl is not None:
-                    try:
-                        self.buy(stop=entry_stop, sl=sl)
-                        self._last_long_stop = entry_stop
-                    except Exception:
-                        pass
+                self._arm_brackets = False
+                self._next_sl = None
+                self._next_tp = None
 
         if state == 'eating_down' and not self.position and not np.isnan(last_bear):
             # Require fractal below alligator
             if last_bear >= min(jaw, teeth, lips):
+                self._prev_position_open = bool(self.position)
                 return
             
             # Use stop order at fractal level
@@ -308,6 +321,7 @@ class AlligatorFractal(Strategy):
             
             # Check if we already have a pending order at this level
             if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
+                self._prev_position_open = bool(self.position)
                 return  # Don't place duplicate order
             
             # Build SL/TP
@@ -325,21 +339,16 @@ class AlligatorFractal(Strategy):
                 if entry_stop >= sl:
                     sl = entry_stop + eps
             
-            # Place stop order
+            # Place stop order without contingent SL/TP; arm brackets after fill
             try:
-                if sl is not None:
-                    if tp is not None:
-                        self.sell(stop=entry_stop, sl=sl, tp=tp)
-                    else:
-                        self.sell(stop=entry_stop, sl=sl)
-                else:
-                    self.sell(stop=entry_stop)
+                self.sell(stop=entry_stop)
                 self._last_short_stop = entry_stop
+                self._next_sl = sl
+                self._next_tp = tp if self.enable_tp else None
+                self._arm_brackets = True
             except Exception:
-                # Broker rejected order, try without TP
-                if sl is not None:
-                    try:
-                        self.sell(stop=entry_stop, sl=sl)
-                        self._last_short_stop = entry_stop
-                    except Exception:
-                        pass
+                self._arm_brackets = False
+                self._next_sl = None
+                self._next_tp = None
+
+        self._prev_position_open = bool(self.position)
