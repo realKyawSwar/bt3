@@ -146,6 +146,7 @@ class AlligatorFractal(Strategy):
     min_spread_factor = 0.0005
     spread_lookback = 5
     tp_rr = 2.0
+    enable_tp = False
 
     def init(self):
         df = pd.DataFrame({
@@ -244,11 +245,22 @@ class AlligatorFractal(Strategy):
                 if not np.isnan(last_bear):
                     sl = min(last_bear, entry - eps)
                     risk = max(entry - sl, eps)
-                    tp = entry + params.tp_rr * risk
-                    # Ensure ordering SL < ENTRY < TP
-                    if sl < entry:
-                        self.buy(sl=sl)
-                        return
+                    if self.enable_tp:
+                        tp = entry + params.tp_rr * risk
+                        # Use current close as conservative reference for broker's entry check
+                        entry_ref = float(self.data.Close[-1])
+                        # Ensure ordering SL < ENTRY < TP with buffer
+                        if sl + eps < entry_ref < tp - eps:
+                            try:
+                                self.buy(sl=sl, tp=tp)
+                            except Exception:
+                                # Broker rejected TP ordering; fall back to SL-only
+                                self.buy(sl=sl)
+                            return
+                    else:
+                        if sl < entry:
+                            self.buy(sl=sl)
+                            return
                 # Fallback to market order without brackets
                 self.buy()
 
@@ -264,10 +276,21 @@ class AlligatorFractal(Strategy):
                 if not np.isnan(last_bull):
                     sl = max(last_bull, entry + eps)
                     risk = max(sl - entry, eps)
-                    tp = entry - params.tp_rr * risk
-                    # Ensure ordering TP < ENTRY < SL
-                    if entry < sl:
-                        self.sell(sl=sl)
-                        return
+                    if self.enable_tp:
+                        tp = entry - params.tp_rr * risk
+                        # Use current close as conservative reference for broker's entry check
+                        entry_ref = float(self.data.Close[-1])
+                        # Ensure ordering TP < ENTRY < SL with buffer
+                        if tp + eps < entry_ref < sl - eps:
+                            try:
+                                self.sell(sl=sl, tp=tp)
+                            except Exception:
+                                # Broker rejected TP ordering; fall back to SL-only
+                                self.sell(sl=sl)
+                            return
+                    else:
+                        if entry < sl:
+                            self.sell(sl=sl)
+                            return
                 # Fallback to market order without brackets
                 self.sell()

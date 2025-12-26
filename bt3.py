@@ -35,6 +35,7 @@ import numpy as np
 import urllib.request
 from io import StringIO
 from backtesting import Backtest, Strategy
+from typing import Optional
 
 # Allowed forex symbols (no crypto)
 SUPPORTED_SYMBOLS = {
@@ -200,6 +201,7 @@ def run_backtest(
     strategy: type,
     cash: float = 100000.0,
     commission: float = 0.0002,
+    strategy_params: Optional[dict] = None,
     **kwargs
 ) -> dict:
     """
@@ -223,7 +225,8 @@ def run_backtest(
     dict : Backtest statistics
     """
     bt = Backtest(data, strategy, cash=cash, commission=commission, **kwargs)
-    stats = bt.run()
+    params = strategy_params or {}
+    stats = bt.run(**params)
     return stats
 
 

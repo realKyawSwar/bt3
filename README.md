@@ -144,7 +144,18 @@ from alligator_fractal import AlligatorFractal
 from bt3 import fetch_data, run_backtest
 
 data = fetch_data('GBPJPY', '1d')
-stats = run_backtest(data, AlligatorFractal, cash=100000, commission=0.0002)
+stats = run_backtest(
+    data,
+    AlligatorFractal,
+    cash=100000,
+    commission=0.0002,
+    strategy_params={
+        # Re-enable TP with safety checks; default is SL-only
+        'enable_tp': True,
+        # Risk-reward for TP when enabled (default 2.0)
+        'tp_rr': 2.0,
+    }
+)
 print(stats)
 ```
 
