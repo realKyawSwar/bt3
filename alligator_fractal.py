@@ -239,13 +239,18 @@ class AlligatorFractal(Strategy):
             prev_high = highs[i - 1] if i - 1 >= 0 else np.nan
             if not np.isnan(prev_high) and highs[i] >= last_bull and prev_high < last_bull:
                 entry = closes[i]
-                if not np.isnan(last_bear) and last_bear < entry:
-                    risk = entry - last_bear
-                    if risk > 0:
-                        tp = entry + params.tp_rr * risk
-                        self.buy(sl=last_bear, tp=tp)
-                else:
-                    self.buy()
+                # Sanitize protective levels
+                eps = max(1e-4, abs(entry) * 1e-6)
+                if not np.isnan(last_bear):
+                    sl = min(last_bear, entry - eps)
+                    risk = max(entry - sl, eps)
+                    tp = entry + params.tp_rr * risk
+                    # Ensure ordering SL < ENTRY < TP
+                    if sl < entry:
+                        self.buy(sl=sl)
+                        return
+                # Fallback to market order without brackets
+                self.buy()
 
         if state == 'eating_down' and not self.position and not np.isnan(last_bear):
             # Require fractal below alligator
@@ -254,10 +259,15 @@ class AlligatorFractal(Strategy):
             prev_low = lows[i - 1] if i - 1 >= 0 else np.nan
             if not np.isnan(prev_low) and lows[i] <= last_bear and prev_low > last_bear:
                 entry = closes[i]
-                if not np.isnan(last_bull) and last_bull > entry:
-                    risk = last_bull - entry
-                    if risk > 0:
-                        tp = entry - params.tp_rr * risk
-                        self.sell(sl=last_bull, tp=tp)
-                else:
-                    self.sell()
+                # Sanitize protective levels
+                eps = max(1e-4, abs(entry) * 1e-6)
+                if not np.isnan(last_bull):
+                    sl = max(last_bull, entry + eps)
+                    risk = max(sl - entry, eps)
+                    tp = entry - params.tp_rr * risk
+                    # Ensure ordering TP < ENTRY < SL
+                    if entry < sl:
+                        self.sell(sl=sl)
+                        return
+                # Fallback to market order without brackets
+                self.sell()
