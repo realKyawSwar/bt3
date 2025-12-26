@@ -119,6 +119,7 @@ The repository includes `example.py` with three complete strategy examples:
 1. **SMA Crossover Strategy** - Moving average crossover
 2. **RSI Strategy** - Mean reversion based on RSI
 3. **Breakout Strategy** - Channel breakout
+4. **Alligator + Fractal** - Bill Williams Alligator with fractal breakouts
 
 Run the examples:
 
@@ -130,6 +131,21 @@ Or run the built-in demo:
 
 ```bash
 python bt3.py
+```
+
+### Alligator + Fractal Strategy
+
+Implements Bill Williams' Alligator (SMMA of median price with forward shifts) and 5-bar fractals. Entries occur on breakouts of the last confirmed fractal in the trend direction when the Alligator is "eating" (lips > teeth > jaw for longs; reversed for shorts). Simple bracket orders are set using the opposite fractal as stop and a default take-profit at 2R.
+
+Usage:
+
+```python
+from alligator_fractal import AlligatorFractal
+from bt3 import fetch_data, run_backtest
+
+data = fetch_data('GBPJPY', '1d')
+stats = run_backtest(data, AlligatorFractal, cash=100000, commission=0.0002)
+print(stats)
 ```
 
 ## Strategy Development

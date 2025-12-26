@@ -11,6 +11,7 @@ from backtesting import Strategy
 from backtesting.lib import crossover
 from backtesting.test import SMA
 from bt3 import fetch_data, run_backtest
+from alligator_fractal import AlligatorFractal
 import pandas as pd
 import numpy as np
 
@@ -184,6 +185,20 @@ def main():
     stats = run_backtest(
         data=data,
         strategy=BreakoutStrategy,
+        cash=100000.0,
+        commission=0.0002
+    )
+    
+    print(stats)
+    
+    # Example 4: Alligator + Fractal Strategy
+    print("\n" + "=" * 70)
+    print("Example 4: Alligator + Fractal Strategy")
+    print("=" * 70)
+    
+    stats = run_backtest(
+        data=data,
+        strategy=AlligatorFractal,
         cash=100000.0,
         commission=0.0002
     )
