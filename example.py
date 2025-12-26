@@ -117,21 +117,34 @@ def main():
         print(f"Could not fetch real data: {e}")
         print("\nGenerating sample data for demonstration...")
         
-        # Create realistic sample data
+        # Create realistic sample data with proper OHLC constraints
         dates = pd.date_range(start='2023-01-01', periods=200, freq='D')
         np.random.seed(42)
         
         price = 100
-        prices = []
+        opens, highs, lows, closes = [], [], [], []
+        
         for _ in range(200):
-            price += np.random.randn() * 2
-            prices.append(max(price, 1))  # Ensure positive prices
+            open_price = price
+            close_price = price + np.random.randn() * 2
+            
+            # Ensure High is the maximum and Low is the minimum
+            high_price = max(open_price, close_price) + abs(np.random.randn())
+            low_price = min(open_price, close_price) - abs(np.random.randn())
+            low_price = max(low_price, 1)  # Ensure Low is positive
+            
+            opens.append(open_price)
+            highs.append(high_price)
+            lows.append(low_price)
+            closes.append(close_price)
+            
+            price = close_price
         
         data = pd.DataFrame({
-            'Open': prices,
-            'High': [p + abs(np.random.randn()) for p in prices],
-            'Low': [max(p - abs(np.random.randn()), 0.1) for p in prices],
-            'Close': [p + np.random.randn() * 0.5 for p in prices],
+            'Open': opens,
+            'High': highs,
+            'Low': lows,
+            'Close': closes,
             'Volume': np.random.randint(1000, 10000, 200)
         }, index=dates)
     
