@@ -167,22 +167,70 @@ def fetch_data(symbol: str, timeframe: str) -> pd.DataFrame:
         if 'Volume' not in df.columns:
             df['Volume'] = 0
         
-        # Auto-normalize forex prices if they look integer-scaled
-        # Many FX datasets store prices scaled (e.g., GBPJPY 132244 -> 132.244)
+        # Quality fixes: sort, deduplicate, ensure dtypes
+        df.sort_index(inplace=True)
+        df = df[~df.index.duplicated(keep='first')]
+        
+        # Auto-normalize forex prices with robust scaling selector
+        # Convert all price columns to numeric floats first
         price_cols = [c for c in ['Open', 'High', 'Low', 'Close'] if c in df.columns]
         if price_cols:
-            median_price = float(pd.to_numeric(df[price_cols[3]], errors='coerce').median())
-            scale_applied = None
-            # Heuristic: if median price is very large, downscale by 1000
-            if median_price and median_price > 1000 and median_price < 1_000_000:
-                for c in price_cols:
-                    df[c] = pd.to_numeric(df[c], errors='coerce') / 1000.0
-                scale_applied = 1000
-            # Ensure float dtype for price columns
             for c in price_cols:
                 df[c] = pd.to_numeric(df[c], errors='coerce')
-            if scale_applied:
-                print(f"Normalized forex prices by factor {scale_applied} for {symbol_upper}")
+            
+            median_close = float(df['Close'].median())
+            
+            # Determine target range based on symbol
+            if symbol_upper.endswith('JPY'):
+                target_min, target_max = 50, 300
+            elif symbol_upper == 'XAUUSD':
+                target_min, target_max = 800, 4000
+            else:
+                target_min, target_max = 0.5, 3.0
+            
+            target_mid = (target_min + target_max) / 2.0
+            
+            # Evaluate candidate divisors
+            candidates = [1, 10, 100, 1000, 10000]
+            best_divisor = 1
+            best_score = float('inf')
+            
+            for divisor in candidates:
+                scaled = median_close / divisor
+                # Check if within target range
+                if target_min <= scaled <= target_max:
+                    # Distance to midpoint
+                    score = abs(scaled - target_mid)
+                else:
+                    # Distance to nearest boundary
+                    if scaled < target_min:
+                        score = target_min - scaled
+                    else:
+                        score = scaled - target_max
+                
+                if score < best_score:
+                    best_score = score
+                    best_divisor = divisor
+            
+            # Apply scaling
+            if best_divisor != 1:
+                original_median = median_close
+                for c in price_cols:
+                    df[c] = df[c] / best_divisor
+                scaled_median = df['Close'].median()
+                
+                # Sanity check: ensure OHLC integrity after scaling
+                high_valid = (df['High'] >= df[['Open', 'Close']].max(axis=1)).sum()
+                low_valid = (df['Low'] <= df[['Open', 'Close']].min(axis=1)).sum()
+                total_rows = len(df)
+                
+                if high_valid / total_rows < 0.8 or low_valid / total_rows < 0.8:
+                    # Scaling broke OHLC, revert to divisor=1
+                    for c in price_cols:
+                        df[c] = df[c] * best_divisor
+                    print(f"Warning: Auto-scaling by /{best_divisor} produced invalid OHLC, keeping original prices")
+                else:
+                    print(f"Auto-scaled prices for {symbol_upper} by /{best_divisor} (median {original_median:.2f} -> {scaled_median:.4f})")
 
         print(f"Successfully loaded {len(df)} rows of data")
         return df
@@ -202,6 +250,9 @@ def run_backtest(
     cash: float = 100000.0,
     commission: float = 0.0002,
     strategy_params: Optional[dict] = None,
+    spread_pips: Optional[float] = None,
+    pip_size: Optional[float] = None,
+    symbol: Optional[str] = None,
     **kwargs
 ) -> dict:
     """
@@ -214,9 +265,23 @@ def run_backtest(
     strategy : Strategy class
         Strategy class (not instance) that inherits from backtesting.Strategy
     cash : float
-        Initial cash amount (default: 10000)
+        Initial cash amount (default: 100000)
     commission : float
-        Commission rate per trade (default: 0.001 = 0.1%)
+        Commission rate per trade (default: 0.0002 = 0.02%).
+        If spread_pips is provided and commission is not explicitly overridden,
+        commission will be set to 0 (spread modeling replaces it).
+    strategy_params : dict, optional
+        Parameters to pass to strategy.run()
+    spread_pips : float, optional
+        Spread cost in pips (e.g., 1.5 for 1.5 pip spread).
+        If provided, will inject 'spread_price' into strategy via strategy_params.
+    pip_size : float, optional
+        Size of one pip in price units. If not provided, auto-detected:
+        - JPY pairs: 0.01
+        - XAUUSD: 0.1
+        - Others: 0.0001
+    symbol : str, optional
+        Trading symbol for pip_size auto-detection. Can be inferred from data.attrs.
     **kwargs : dict
         Additional arguments to pass to Backtest
     
@@ -224,8 +289,33 @@ def run_backtest(
     --------
     dict : Backtest statistics
     """
-    bt = Backtest(data, strategy, cash=cash, commission=commission, **kwargs)
     params = strategy_params or {}
+    
+    # Handle spread modeling
+    if spread_pips is not None:
+        # Infer symbol if not provided
+        if symbol is None:
+            symbol = data.attrs.get('symbol', '')
+        
+        # Determine pip_size
+        if pip_size is None:
+            symbol_upper = symbol.upper() if symbol else ''
+            if symbol_upper.endswith('JPY'):
+                pip_size = 0.01
+            elif symbol_upper == 'XAUUSD':
+                pip_size = 0.1
+            else:
+                pip_size = 0.0001
+        
+        # Convert spread to price units
+        spread_price = spread_pips * pip_size
+        params['spread_price'] = spread_price
+        
+        # Set commission=0 if not explicitly overridden in kwargs
+        if 'commission' not in kwargs:
+            commission = 0.0
+    
+    bt = Backtest(data, strategy, cash=cash, commission=commission, **kwargs)
     stats = bt.run(**params)
     return stats
 

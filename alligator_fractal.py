@@ -155,6 +155,7 @@ class AlligatorFractal(Strategy):
     spread_lookback = 5
     tp_rr = 2.0
     enable_tp = False
+    spread_price = 0.0  # Spread cost in price units (set via run_backtest spread_pips)
 
     def init(self):
         df = pd.DataFrame({
@@ -275,7 +276,7 @@ class AlligatorFractal(Strategy):
             
             # Use stop order at fractal level
             eps = max(1e-4, abs(last_bull) * 1e-6)
-            entry_stop = last_bull + eps
+            entry_stop = last_bull + eps + self.spread_price / 2.0
             
             # Check if we already have a pending order at this level
             if self._last_long_stop is not None and abs(entry_stop - self._last_long_stop) < eps:
@@ -317,7 +318,7 @@ class AlligatorFractal(Strategy):
             
             # Use stop order at fractal level
             eps = max(1e-4, abs(last_bear) * 1e-6)
-            entry_stop = last_bear - eps
+            entry_stop = last_bear - eps - self.spread_price / 2.0
             
             # Check if we already have a pending order at this level
             if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
