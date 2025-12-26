@@ -9,8 +9,8 @@ Usage:
     from backtesting import Strategy, Backtest
     from bt3 import fetch_data, run_backtest
     
-    # Fetch data from remote source
-    data = fetch_data(symbol="BTCUSDT", timeframe="1d")
+    # Fetch data from remote source (forex only)
+    data = fetch_data(symbol="GBPJPY", timeframe="1d")
     
     # Define your strategy
     class MyStrategy(Strategy):
@@ -36,6 +36,58 @@ import urllib.request
 from io import StringIO
 from backtesting import Backtest, Strategy
 
+# Allowed forex symbols (no crypto)
+SUPPORTED_SYMBOLS = {
+    "AUDJPY",
+    "AUDUSD",
+    "EURCHF",
+    "EURGBP",
+    "EURJPY",
+    "EURUSD",
+    "GBPJPY",
+    "GBPUSD",
+    "USDCAD",
+    "USDCHF",
+    "USDJPY",
+    "XAUUSD",
+}
+
+
+def _map_timeframe_suffix(tf: str) -> str:
+    """Map common timeframe inputs to ejtraderLabs filename suffixes.
+
+    Examples:
+    - "1d" or "d1" -> "d1"
+    - "1h" or "h1" -> "h1"
+    - "4h" or "h4" -> "h4"
+    - "15m" or "m15" -> "m15"
+    - "30m" or "m30" -> "m30"
+    - "5m" or "m5" -> "m5"
+    - "1w" or "w1" -> "w1"
+    """
+    tf = tf.strip().lower()
+    mapping = {
+        "1d": "d1",
+        "d1": "d1",
+        "1h": "h1",
+        "h1": "h1",
+        "4h": "h4",
+        "h4": "h4",
+        "15m": "m15",
+        "m15": "m15",
+        "30m": "m30",
+        "m30": "m30",
+        "5m": "m5",
+        "m5": "m5",
+        "1w": "w1",
+        "w1": "w1",
+    }
+    if tf in mapping:
+        return mapping[tf]
+    raise ValueError(
+        "Unsupported timeframe. Use one of: 1d/d1, 1h/h1, 4h/h4, 15m/m15, 30m/m30, 5m/m5, 1w/w1"
+    )
+
 
 def fetch_data(symbol: str, timeframe: str) -> pd.DataFrame:
     """
@@ -44,16 +96,25 @@ def fetch_data(symbol: str, timeframe: str) -> pd.DataFrame:
     Parameters:
     -----------
     symbol : str
-        Trading symbol (e.g., "BTCUSDT", "ETHUSDT")
+        Forex trading symbol (supported: AUDJPY, AUDUSD, EURCHF, EURGBP,
+        EURJPY, EURUSD, GBPJPY, GBPUSD, USDCAD, USDCHF, USDJPY, XAUUSD)
     timeframe : str
-        Timeframe for the data (e.g., "1d", "4h", "1h")
+        Timeframe for the data (e.g., "1d", "4h", "1h").
+        Internally mapped to ejtraderLabs suffix (e.g., "1d" -> "d1").
     
     Returns:
     --------
     pd.DataFrame : DataFrame with OHLCV data indexed by datetime
     """
+    symbol_upper = symbol.strip().upper()
+    if symbol_upper not in SUPPORTED_SYMBOLS:
+        raise ValueError(
+            f"Unsupported symbol '{symbol}'. Supported forex symbols: {sorted(SUPPORTED_SYMBOLS)}"
+        )
+
+    suffix = _map_timeframe_suffix(timeframe)
     url = "https://raw.githubusercontent.com/ejtraderLabs/historical-data/main/"
-    url += symbol + "/" + symbol + timeframe.lower() + ".csv"
+    url += symbol_upper + "/" + symbol_upper + suffix + ".csv"
     
     try:
         print(f"Fetching data from: {url}")
@@ -181,7 +242,7 @@ if __name__ == "__main__":
     # Try to fetch real data, fall back to sample data if unavailable
     try:
         print("\nAttempting to fetch real data from remote source...")
-        data = fetch_data(symbol="BTCUSDT", timeframe="1d")
+        data = fetch_data(symbol="GBPJPY", timeframe="1d")
     except Exception as e:
         print(f"\nCould not fetch real data: {e}")
         print("\nUsing sample data for demonstration...")

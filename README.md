@@ -1,10 +1,10 @@
 # BT3 - Simple Backtesting Framework
 
-A simple backtesting framework built on top of the [backtesting.py](https://github.com/kernc/backtesting.py) library, designed to work seamlessly with historical data from [ejtraderLabs/historical-data](https://github.com/ejtraderLabs/historical-data) repository.
+A simple backtesting framework built on top of the [backtesting.py](https://github.com/kernc/backtesting.py) library, designed to work seamlessly with historical forex data from [ejtraderLabs/historical-data](https://github.com/ejtraderLabs/historical-data) repository.
 
 ## Features
 
-- 🚀 Easy data fetching from ejtraderLabs historical data repository
+- 🚀 Easy data fetching from ejtraderLabs historical forex data repository
 - 📊 Simple wrapper around backtesting.py library
 - 💹 Support for multiple trading strategies
 - 📈 Comprehensive backtest statistics
@@ -50,8 +50,8 @@ class SMAStrategy(Strategy):
             if self.position:
                 self.position.close()
 
-# Fetch data from ejtraderLabs
-data = fetch_data(symbol="BTCUSDT", timeframe="1d")
+# Fetch forex data from ejtraderLabs (forex only)
+data = fetch_data(symbol="GBPJPY", timeframe="1d")
 
 # Run backtest
 stats = run_backtest(data, SMAStrategy, cash=10000, commission=0.001)
@@ -60,15 +60,20 @@ print(stats)
 
 ## Data Source
 
-The framework fetches data from the ejtraderLabs historical data repository using the URL pattern:
+The framework fetches forex data from the ejtraderLabs historical data repository using the URL pattern:
 
 ```
-https://raw.githubusercontent.com/ejtraderLabs/historical-data/main/{symbol}/{symbol}{timeframe}.csv
+https://raw.githubusercontent.com/ejtraderLabs/historical-data/main/{symbol}/{symbol}{suffix}.csv
 ```
 
-Examples:
-- `BTCUSDT` with `1d` timeframe → `BTCUSDT/BTCUSDT1d.csv`
-- `ETHUSDT` with `4h` timeframe → `ETHUSDT/ETHUSDT4h.csv`
+Timeframe suffix mapping:
+- Daily: `1d` or `d1` → `d1` (e.g., `GBPJPY/GBPJPYd1.csv`)
+- Hourly: `1h`/`h1` → `h1`, `4h`/`h4` → `h4`
+- Minutes: `5m`/`m5`, `15m`/`m15`, `30m`/`m30`
+- Weekly: `1w`/`w1` → `w1`
+
+Supported forex symbols (no crypto):
+`AUDJPY`, `AUDUSD`, `EURCHF`, `EURGBP`, `EURJPY`, `EURUSD`, `GBPJPY`, `GBPUSD`, `USDCAD`, `USDCHF`, `USDJPY`, `XAUUSD`
 
 ## API Reference
 
@@ -77,7 +82,7 @@ Examples:
 Fetches historical OHLCV data from the ejtraderLabs repository.
 
 **Parameters:**
-- `symbol` (str): Trading symbol (e.g., "BTCUSDT", "ETHUSDT")
+- `symbol` (str): Forex trading symbol (see supported list above)
 - `timeframe` (str): Timeframe for the data (e.g., "1d", "4h", "1h")
 
 **Returns:**
@@ -85,7 +90,7 @@ Fetches historical OHLCV data from the ejtraderLabs repository.
 
 **Example:**
 ```python
-data = fetch_data("BTCUSDT", "1d")
+data = fetch_data("GBPJPY", "1d")
 ```
 
 ### `run_backtest(data, strategy, cash=10000, commission=0.001, **kwargs)`

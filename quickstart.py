@@ -52,12 +52,12 @@ def main():
                     self.position.close()
     
     # Step 3: Get historical data
-    print("\n3. Fetch historical data:")
-    print("   data = fetch_data('BTCUSDT', '1d')")
+    print("\n3. Fetch historical data (forex only):")
+    print("   data = fetch_data('GBPJPY', '1d')")
     
     try:
         # Try to fetch real data
-        data = fetch_data(symbol="BTCUSDT", timeframe="1d")
+        data = fetch_data(symbol="GBPJPY", timeframe="1d")
         print(f"   ✓ Loaded {len(data)} rows from remote source")
     except Exception as e:
         # Use sample data if remote fetch fails

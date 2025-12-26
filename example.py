@@ -111,7 +111,7 @@ def main():
     # Try to fetch real data from remote source
     try:
         print("\nFetching data from remote source...")
-        data = fetch_data(symbol="BTCUSDT", timeframe="1d")
+        data = fetch_data(symbol="GBPJPY", timeframe="1d")
         print(f"Successfully loaded {len(data)} rows of real data")
     except Exception as e:
         print(f"Could not fetch real data: {e}")
