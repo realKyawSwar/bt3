@@ -155,7 +155,8 @@ class AlligatorFractal(Strategy):
             'Close': pd.Series(self.data.Close),
         })
 
-        params = AlligatorParams(
+        # Cache params once
+        self._params = AlligatorParams(
             jaw_period=self.jaw_period,
             jaw_shift=self.jaw_shift,
             teeth_period=self.teeth_period,
@@ -167,13 +168,22 @@ class AlligatorFractal(Strategy):
             tp_rr=self.tp_rr,
         )
 
-        alligator = compute_alligator_ohlc(df, params)
+        alligator = compute_alligator_ohlc(df, self._params)
         fractals = compute_fractals_ohlc(df)
         self.jaw = self.I(lambda x=alligator['jaw'].to_numpy(): x)
         self.teeth = self.I(lambda x=alligator['teeth'].to_numpy(): x)
         self.lips = self.I(lambda x=alligator['lips'].to_numpy(): x)
         self.bullish_fractal = self.I(lambda x=fractals['bullish_fractal_confirmed'].to_numpy(): x)
         self.bearish_fractal = self.I(lambda x=fractals['bearish_fractal_confirmed'].to_numpy(): x)
+
+        # Cache numpy arrays
+        self._closes = np.asarray(self.data.Close)
+        self._highs = np.asarray(self.data.High)
+        self._lows = np.asarray(self.data.Low)
+
+        # Track pending stop orders to avoid duplicates
+        self._last_long_stop = None
+        self._last_short_stop = None
 
     def next(self):
         i = len(self.data.Close) - 1
@@ -183,29 +193,19 @@ class AlligatorFractal(Strategy):
         if np.isnan(jaw) or np.isnan(teeth) or np.isnan(lips):
             return
 
-        closes = np.asarray(self.data.Close)
-        highs = np.asarray(self.data.High)
-        lows = np.asarray(self.data.Low)
+        # Use cached arrays
         jaws = np.asarray(self.jaw)
         teeths = np.asarray(self.teeth)
         lipss = np.asarray(self.lips)
 
-        params = AlligatorParams(
-            jaw_period=self.jaw_period,
-            jaw_shift=self.jaw_shift,
-            teeth_period=self.teeth_period,
-            teeth_shift=self.teeth_shift,
-            lips_period=self.lips_period,
-            lips_shift=self.lips_shift,
-            min_spread_factor=self.min_spread_factor,
-            spread_lookback=self.spread_lookback,
-            tp_rr=self.tp_rr,
-        )
-
-        state = _alligator_state(jaw, teeth, lips, closes, jaws, teeths, lipss, params)
+        state = _alligator_state(jaw, teeth, lips, self._closes, jaws, teeths, lipss, self._params)
 
         # Manage exits on structure loss
         if self.position:
+            # Reset pending order trackers when position exists
+            self._last_long_stop = None
+            self._last_short_stop = None
+            
             if state == 'sleeping':
                 self.position.close()
                 return
@@ -216,6 +216,15 @@ class AlligatorFractal(Strategy):
             if self.position.is_short and not (lips < teeth < jaw):
                 self.position.close()
                 return
+            # Position open, no new entry orders
+            return
+
+        # No position - check if we just closed one and reset trackers
+        if not self.position and (self._last_long_stop is not None or self._last_short_stop is not None):
+            # Position was closed, reset trackers
+            if not any(trade.is_open for trade in self.trades if hasattr(trade, 'is_open')):
+                self._last_long_stop = None
+                self._last_short_stop = None
 
         if state == 'sleeping' or state == 'crossing' or state == 'unknown':
             return
@@ -237,60 +246,92 @@ class AlligatorFractal(Strategy):
             # Require fractal above alligator
             if last_bull <= max(jaw, teeth, lips):
                 return
-            prev_high = highs[i - 1] if i - 1 >= 0 else np.nan
-            if not np.isnan(prev_high) and highs[i] >= last_bull and prev_high < last_bull:
-                entry = closes[i]
-                # Sanitize protective levels
-                eps = max(1e-4, abs(entry) * 1e-6)
-                if not np.isnan(last_bear):
-                    sl = min(last_bear, entry - eps)
-                    risk = max(entry - sl, eps)
-                    if self.enable_tp:
-                        tp = entry + params.tp_rr * risk
-                        # Use current close as conservative reference for broker's entry check
-                        entry_ref = float(self.data.Close[-1])
-                        # Ensure ordering SL < ENTRY < TP with buffer
-                        if sl + eps < entry_ref < tp - eps:
-                            try:
-                                self.buy(sl=sl, tp=tp)
-                            except Exception:
-                                # Broker rejected TP ordering; fall back to SL-only
-                                self.buy(sl=sl)
-                            return
+            
+            # Use stop order at fractal level
+            eps = max(1e-4, abs(last_bull) * 1e-6)
+            entry_stop = last_bull + eps
+            
+            # Check if we already have a pending order at this level
+            if self._last_long_stop is not None and abs(entry_stop - self._last_long_stop) < eps:
+                return  # Don't place duplicate order
+            
+            # Build SL/TP
+            sl = None
+            tp = None
+            if not np.isnan(last_bear):
+                sl = min(last_bear, entry_stop - eps)
+                risk = max(entry_stop - sl, eps)
+                if self.enable_tp:
+                    tp = entry_stop + self._params.tp_rr * risk
+                    # Ensure ordering: sl < entry_stop < tp
+                    if not (sl + eps < entry_stop < tp - eps):
+                        tp = None  # Invalid ordering, drop TP
+                # Ensure sl < entry_stop
+                if sl >= entry_stop:
+                    sl = entry_stop - eps
+            
+            # Place stop order
+            try:
+                if sl is not None:
+                    if tp is not None:
+                        self.buy(stop=entry_stop, sl=sl, tp=tp)
                     else:
-                        if sl < entry:
-                            self.buy(sl=sl)
-                            return
-                # Fallback to market order without brackets
-                self.buy()
+                        self.buy(stop=entry_stop, sl=sl)
+                else:
+                    self.buy(stop=entry_stop)
+                self._last_long_stop = entry_stop
+            except Exception:
+                # Broker rejected order, try without TP
+                if sl is not None:
+                    try:
+                        self.buy(stop=entry_stop, sl=sl)
+                        self._last_long_stop = entry_stop
+                    except Exception:
+                        pass
 
         if state == 'eating_down' and not self.position and not np.isnan(last_bear):
             # Require fractal below alligator
             if last_bear >= min(jaw, teeth, lips):
                 return
-            prev_low = lows[i - 1] if i - 1 >= 0 else np.nan
-            if not np.isnan(prev_low) and lows[i] <= last_bear and prev_low > last_bear:
-                entry = closes[i]
-                # Sanitize protective levels
-                eps = max(1e-4, abs(entry) * 1e-6)
-                if not np.isnan(last_bull):
-                    sl = max(last_bull, entry + eps)
-                    risk = max(sl - entry, eps)
-                    if self.enable_tp:
-                        tp = entry - params.tp_rr * risk
-                        # Use current close as conservative reference for broker's entry check
-                        entry_ref = float(self.data.Close[-1])
-                        # Ensure ordering TP < ENTRY < SL with buffer
-                        if tp + eps < entry_ref < sl - eps:
-                            try:
-                                self.sell(sl=sl, tp=tp)
-                            except Exception:
-                                # Broker rejected TP ordering; fall back to SL-only
-                                self.sell(sl=sl)
-                            return
+            
+            # Use stop order at fractal level
+            eps = max(1e-4, abs(last_bear) * 1e-6)
+            entry_stop = last_bear - eps
+            
+            # Check if we already have a pending order at this level
+            if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
+                return  # Don't place duplicate order
+            
+            # Build SL/TP
+            sl = None
+            tp = None
+            if not np.isnan(last_bull):
+                sl = max(last_bull, entry_stop + eps)
+                risk = max(sl - entry_stop, eps)
+                if self.enable_tp:
+                    tp = entry_stop - self._params.tp_rr * risk
+                    # Ensure ordering: tp < entry_stop < sl
+                    if not (tp + eps < entry_stop < sl - eps):
+                        tp = None  # Invalid ordering, drop TP
+                # Ensure entry_stop < sl
+                if entry_stop >= sl:
+                    sl = entry_stop + eps
+            
+            # Place stop order
+            try:
+                if sl is not None:
+                    if tp is not None:
+                        self.sell(stop=entry_stop, sl=sl, tp=tp)
                     else:
-                        if entry < sl:
-                            self.sell(sl=sl)
-                            return
-                # Fallback to market order without brackets
-                self.sell()
+                        self.sell(stop=entry_stop, sl=sl)
+                else:
+                    self.sell(stop=entry_stop)
+                self._last_short_stop = entry_stop
+            except Exception:
+                # Broker rejected order, try without TP
+                if sl is not None:
+                    try:
+                        self.sell(stop=entry_stop, sl=sl)
+                        self._last_short_stop = entry_stop
+                    except Exception:
+                        pass
