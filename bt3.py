@@ -34,7 +34,6 @@ import pandas as pd
 import numpy as np
 import urllib.request
 from io import StringIO
-from typing import Optional
 from backtesting import Backtest, Strategy
 
 

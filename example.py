@@ -62,6 +62,8 @@ class RSIStrategy(Strategy):
         delta = pd.Series(close).diff()
         gain = delta.where(delta > 0, 0).rolling(window=self.rsi_period).mean()
         loss = -delta.where(delta < 0, 0).rolling(window=self.rsi_period).mean()
+        # Prevent division by zero by replacing 0 with a small epsilon
+        loss = loss.replace(0, 1e-10)
         rs = gain / loss
         self.rsi = self.I(lambda: 100 - (100 / (1 + rs)))
     
