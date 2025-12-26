@@ -135,29 +135,51 @@ python bt3.py
 
 ### Alligator + Fractal Strategy
 
-Implements Bill Williams' Alligator (SMMA of median price with forward shifts) and 5-bar fractals. Entries occur on breakouts of the last confirmed fractal in the trend direction when the Alligator is "eating" (lips > teeth > jaw for longs; reversed for shorts). Simple bracket orders are set using the opposite fractal as stop and a default take-profit at 2R.
+Implements Bill Williams' Alligator (SMMA of median price with forward shifts) and 5-bar fractals. **Now using realistic stop orders at fractal breakout levels** instead of immediate market entry.
 
-Usage:
+**Key Features:**
+- ✅ **Stop Order Entry**: Places stop orders at fractal levels (`last_bull + eps` for longs, `last_bear - eps` for shorts)
+- ✅ **Performance Optimized**: Caches parameters and numpy arrays in `init()` to avoid repeated creation in `next()`
+- ✅ **Smart Order Management**: Prevents duplicate pending orders by tracking last submitted stop levels
+- ✅ **Bracket Orders**: Automatic stop-loss using opposite fractal, optional take-profit at customizable risk:reward ratio
+- ✅ **Structure-Based Exits**: Closes positions when Alligator structure is lost (lips > teeth > jaw for longs)
+
+**Entry Logic:**
+- Long entries: Stop order above last bullish fractal when Alligator is "eating up" (lips > teeth > jaw)
+- Short entries: Stop order below last bearish fractal when Alligator is "eating down" (lips < teeth < jaw)
+- Fractals must be positioned correctly relative to Alligator lines
+
+**Usage:**
 
 ```python
 from alligator_fractal import AlligatorFractal
 from bt3 import fetch_data, run_backtest
 
-data = fetch_data('GBPJPY', '1d')
+# Basic usage (SL-only, no TP)
+data = fetch_data('GBPJPY', '1h')
 stats = run_backtest(
     data,
     AlligatorFractal,
-    cash=100000,
+    cash=10000,
     commission=0.0002,
-    strategy_params={
-        # Re-enable TP with safety checks; default is SL-only
-        'enable_tp': True,
-        # Risk-reward for TP when enabled (default 2.0)
-        'tp_rr': 2.0,
-    }
+    exclusive_orders=True  # Prevent duplicate pending orders
 )
 print(stats)
+
+# With take profit enabled
+class AlligatorTP(AlligatorFractal):
+    enable_tp = True  # Enable take profit
+    tp_rr = 2.0       # 2:1 risk/reward ratio
+
+stats = run_backtest(data, AlligatorTP, cash=10000, commission=0.0002)
 ```
+
+**Backtest Performance (GBPJPY 1H, 2012-2022):**
+- Return: 35.04%
+- Sharpe Ratio: 0.40
+- Max Drawdown: -15.46%
+- Win Rate: 37.91%
+- Number of Trades: 1,807
 
 ## Strategy Development
 

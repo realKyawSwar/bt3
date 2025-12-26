@@ -27,6 +27,14 @@ class AlligatorParams:
     min_spread_factor: float = 0.0005
     spread_lookback: int = 5
     tp_rr: float = 2.0
+    
+    def keys(self):
+        """For compatibility with backtesting.py stats display"""
+        return self.__dataclass_fields__.keys()
+    
+    def values(self):
+        """For compatibility with backtesting.py stats display"""
+        return (getattr(self, k) for k in self.keys())
 
 
 def _smma_np(arr: np.ndarray, length: int) -> np.ndarray:
