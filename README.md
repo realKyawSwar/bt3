@@ -181,6 +181,16 @@ stats = run_backtest(data, AlligatorTP, cash=10000, commission=0.0002)
 - Win Rate: 37.91%
 - Number of Trades: 1,807
 
+### Compare strict vs classic Alligator+Fractal
+
+Use the `custom_alligator.py` runner to execute both the repo-strict strategy and the classic rule variant on the **same** data and timeframe. It exports per-strategy stats, trades, equity curves, plus a side-by-side comparison table.
+
+**Example:**
+
+```bash
+python custom_alligator.py
+```
+
 ## Strategy Development
 
 Strategies should inherit from `backtesting.Strategy` and implement two methods:

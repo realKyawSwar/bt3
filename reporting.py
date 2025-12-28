@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Optional, Union
-
-import matplotlib.pyplot as plt
 import pandas as pd
 
 
@@ -51,6 +49,7 @@ def plot_equity_curve(
     """
     Plot equity curve from stats['_equity_curve'].
     """
+    import matplotlib.pyplot as plt
     eq = stats.get("_equity_curve", None)
     if eq is None:
         raise ValueError("stats['_equity_curve'] not found.")
