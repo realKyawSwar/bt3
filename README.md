@@ -183,12 +183,12 @@ stats = run_backtest(data, AlligatorTP, cash=10000, commission=0.0002)
 
 ### Compare strict vs classic Alligator+Fractal
 
-Use the `custom_alligator.py` runner to execute both the repo-strict strategy and the classic rule variant on the **same** data and timeframe. It exports per-strategy stats, trades, equity curves, plus a side-by-side comparison table.
+Use the comparison runner to execute both the repo-strict strategy and the classic rule variant on the **same** data and timeframe. It exports per-strategy stats, trades, equity curves, plus a side-by-side comparison table.
 
 **Example:**
 
 ```bash
-python custom_alligator.py
+python compare_strategies.py --data data/GBPJPYh4.csv --tf H4 --cash 10000 --commission 0.0 --spread 0.0002 --outdir reports/gbpjpy_h4
 ```
 
 ## Strategy Development
