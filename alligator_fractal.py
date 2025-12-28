@@ -148,6 +148,7 @@ class AlligatorFractal(Strategy):
     tp_rr = 2.0
 
     enable_tp = False
+    eps = None
 
     # Spread model (price units). bt3.run_backtest can set this.
     spread_price = 0.0
@@ -280,7 +281,7 @@ class AlligatorFractal(Strategy):
                 self._prev_position_open = False
                 return
 
-            eps = max(1e-6, abs(last_bull) * 1e-6)
+            eps = self.eps if self.eps is not None else max(1e-6, abs(last_bull) * 1e-6)
             entry_stop = float(last_bull) + eps + half_spread
 
             # Don’t re-place identical stops every bar
@@ -324,7 +325,7 @@ class AlligatorFractal(Strategy):
                 self._prev_position_open = False
                 return
 
-            eps = max(1e-6, abs(last_bear) * 1e-6)
+            eps = self.eps if self.eps is not None else max(1e-6, abs(last_bear) * 1e-6)
             entry_stop = float(last_bear) - eps - half_spread
 
             if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
@@ -359,3 +360,162 @@ class AlligatorFractal(Strategy):
 
         self._prev_position_open = bool(self.position)
 
+
+class AlligatorFractalClassic(AlligatorFractal):
+    """
+    Classic rules variant:
+    - Entry requires 5 consecutive closes above/below teeth.
+    - Fractal only needs to be above/below teeth (not all lines).
+    - Exits on alligator line cross (ordering break), no "sleeping" exit.
+    """
+
+    consecutive_teeth_lookback = 5
+
+    def _has_consecutive_closes_above_teeth(self, i: int) -> bool:
+        look = self.consecutive_teeth_lookback
+        if i < look:
+            return False
+        closes = self._closes[i - look:i]
+        teeths = np.asarray(self.teeth, dtype=float)[i - look:i]
+        if np.isnan(closes).any() or np.isnan(teeths).any():
+            return False
+        return np.all(closes > teeths)
+
+    def _has_consecutive_closes_below_teeth(self, i: int) -> bool:
+        look = self.consecutive_teeth_lookback
+        if i < look:
+            return False
+        closes = self._closes[i - look:i]
+        teeths = np.asarray(self.teeth, dtype=float)[i - look:i]
+        if np.isnan(closes).any() or np.isnan(teeths).any():
+            return False
+        return np.all(closes < teeths)
+
+    def next(self):
+        i = len(self.data.Close) - 1
+
+        # Apply bracket orders right after position opens
+        self._arm_if_opened()
+
+        jaw = float(self.jaw[-1])
+        teeth = float(self.teeth[-1])
+        lips = float(self.lips[-1])
+        if np.isnan(jaw) or np.isnan(teeth) or np.isnan(lips):
+            self._prev_position_open = bool(self.position)
+            return
+
+        # Exits: close when ordering breaks (no sleeping exit)
+        if self.position:
+            self._last_long_stop = None
+            self._last_short_stop = None
+
+            if self.position.is_long and (lips < teeth or teeth < jaw):
+                self.position.close()
+                self._prev_position_open = bool(self.position)
+                return
+
+            if self.position.is_short and (lips > teeth or teeth > jaw):
+                self.position.close()
+                self._prev_position_open = bool(self.position)
+                return
+
+            self._prev_position_open = True
+            return
+
+        # Find last confirmed fractals
+        last_bull = np.nan
+        last_bear = np.nan
+        bf = np.asarray(self.bullish_fractal, dtype=float)
+        af = np.asarray(self.bearish_fractal, dtype=float)
+
+        for k in range(i, -1, -1):
+            if np.isnan(last_bull) and not np.isnan(bf[k]):
+                last_bull = bf[k]
+            if np.isnan(last_bear) and not np.isnan(af[k]):
+                last_bear = af[k]
+            if not np.isnan(last_bull) and not np.isnan(last_bear):
+                break
+
+        # Spread model (price units)
+        spr = float(getattr(self, "spread_price", 0.0))
+        half_spread = spr / 2.0
+
+        # Long setup: closes above teeth + bullish fractal above teeth
+        if not np.isnan(last_bull):
+            if last_bull <= teeth:
+                self._prev_position_open = False
+            elif not self._has_consecutive_closes_above_teeth(i):
+                self._prev_position_open = False
+            else:
+                eps = self.eps if self.eps is not None else max(1e-6, abs(last_bull) * 1e-6)
+                entry_stop = float(last_bull) + eps + half_spread
+
+                if self._last_long_stop is not None and abs(entry_stop - self._last_long_stop) < eps:
+                    self._prev_position_open = False
+                else:
+                    sl = None
+                    tp = None
+                    if not np.isnan(last_bear):
+                        sl = min(float(last_bear), entry_stop - eps)
+                        if sl >= entry_stop:
+                            sl = entry_stop - eps
+                        risk = max(entry_stop - sl, eps)
+
+                        if self.enable_tp:
+                            tp = entry_stop + self._cfg.tp_rr * risk
+                            if not (sl + eps < entry_stop < tp - eps):
+                                tp = None
+
+                    try:
+                        self.buy(stop=entry_stop)
+                        self._last_long_stop = entry_stop
+
+                        if sl is not None or (self.enable_tp and tp is not None):
+                            self._next_sl = sl
+                            self._next_tp = tp
+                            self._arm_brackets = True
+                    except Exception:
+                        self._arm_brackets = False
+                        self._next_sl = None
+                        self._next_tp = None
+
+        # Short setup: closes below teeth + bearish fractal below teeth
+        if not np.isnan(last_bear):
+            if last_bear >= teeth:
+                self._prev_position_open = False
+            elif not self._has_consecutive_closes_below_teeth(i):
+                self._prev_position_open = False
+            else:
+                eps = self.eps if self.eps is not None else max(1e-6, abs(last_bear) * 1e-6)
+                entry_stop = float(last_bear) - eps - half_spread
+
+                if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
+                    self._prev_position_open = False
+                else:
+                    sl = None
+                    tp = None
+                    if not np.isnan(last_bull):
+                        sl = max(float(last_bull), entry_stop + eps)
+                        if entry_stop >= sl:
+                            sl = entry_stop + eps
+                        risk = max(sl - entry_stop, eps)
+
+                        if self.enable_tp:
+                            tp = entry_stop - self._cfg.tp_rr * risk
+                            if not (tp + eps < entry_stop < sl - eps):
+                                tp = None
+
+                    try:
+                        self.sell(stop=entry_stop)
+                        self._last_short_stop = entry_stop
+
+                        if sl is not None or (self.enable_tp and tp is not None):
+                            self._next_sl = sl
+                            self._next_tp = tp
+                            self._arm_brackets = True
+                    except Exception:
+                        self._arm_brackets = False
+                        self._next_sl = None
+                        self._next_tp = None
+
+        self._prev_position_open = bool(self.position)
