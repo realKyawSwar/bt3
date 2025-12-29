@@ -9,7 +9,7 @@ from typing import Iterable, Optional
 import numpy as np
 import pandas as pd
 
-from alligator_fractal import AlligatorFractal, AlligatorFractalClassic
+from alligator_fractal import AlligatorFractal, AlligatorFractalClassic, AlligatorFractalPullback
 from bt3 import fetch_data, run_backtest
 from reporting import export_equity_curve_csv, export_trades_csv
 
@@ -180,7 +180,7 @@ def _is_number(value) -> bool:
     return isinstance(value, (int, float, np.integer, np.floating)) and not pd.isna(value)
 
 
-def _comparison_table(strict_stats, classic_stats) -> pd.DataFrame:
+def _comparison_table(stats_a, stats_b, label_a: str = "strict", label_b: str = "classic") -> pd.DataFrame:
     metrics = [
         ("Return %", ["Return [%]", "Return %"]),
         ("Buy&Hold %", ["Buy & Hold Return [%]", "Buy&Hold Return [%]", "Buy&Hold %"]),
@@ -196,16 +196,16 @@ def _comparison_table(strict_stats, classic_stats) -> pd.DataFrame:
 
     rows = []
     for label, keys in metrics:
-        strict_val = _metric_value(strict_stats, keys)
-        classic_val = _metric_value(classic_stats, keys)
-        if _is_number(strict_val) and _is_number(classic_val):
-            delta = classic_val - strict_val
+        val_a = _metric_value(stats_a, keys)
+        val_b = _metric_value(stats_b, keys)
+        if _is_number(val_a) and _is_number(val_b):
+            delta = val_b - val_a
         else:
             delta = None
         rows.append({
             "metric": label,
-            "strict": strict_val,
-            "classic": classic_val,
+            label_a: val_a,
+            label_b: val_b,
             "delta": delta,
         })
 
@@ -217,6 +217,24 @@ def _print_stats(label: str, stats) -> None:
     print(label)
     print("=" * 70)
     print(stats)
+
+
+def _summary_table(stats_by_name: dict[str, dict]) -> pd.DataFrame:
+    metrics = [
+        ("Return %", ["Return [%]", "Return %"]),
+        ("Max DD %", ["Max. Drawdown [%]", "Max Drawdown [%]", "Max Drawdown %"]),
+        ("Sharpe", ["Sharpe Ratio", "Sharpe"]),
+        ("Profit Factor", ["Profit Factor"]),
+        ("Expectancy %", ["Expectancy [%]", "Expectancy %"]),
+        ("# Trades", ["# Trades", "Trades"]),
+    ]
+    rows = []
+    for name, stats in stats_by_name.items():
+        row = {"strategy": name}
+        for label, keys in metrics:
+            row[label] = _metric_value(stats, keys)
+        rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def main() -> None:
@@ -237,6 +255,8 @@ def main() -> None:
     parser.add_argument("--atr-long", type=int, default=100, help="ATR long SMA length.")
     parser.add_argument("--exclusive_orders", action="store_true", default=False)
     parser.add_argument("--outdir", default="reports/", help="Output directory for reports.")
+    parser.add_argument("--pullback-k", type=float, default=None, help="Override pullback_k_atr for pullback strategy.")
+    parser.add_argument("--touch-teeth", action="store_true", default=False, help="Require pullback to touch teeth.")
 
     args = parser.parse_args()
 
@@ -253,9 +273,11 @@ def main() -> None:
 
     strict_df = df.copy()
     classic_df = df.copy()
+    pullback_df = df.copy()
     _assert_identical(strict_df, classic_df)
+    _assert_identical(strict_df, pullback_df)
 
-    strategy_params = {
+    base_params = {
         "use_htf_bias": not args.no_htf_bias,
         "use_vol_filter": not args.no_vol_filter,
         "htf_tf": _parse_timeframe(args.htf),
@@ -263,7 +285,13 @@ def main() -> None:
         "atr_long": args.atr_long,
     }
     if args.eps is not None:
-        strategy_params["eps"] = args.eps
+        base_params["eps"] = args.eps
+
+    pullback_params = dict(base_params)
+    if args.pullback_k is not None:
+        pullback_params["pullback_k_atr"] = args.pullback_k
+    if args.touch_teeth:
+        pullback_params["require_touch_teeth"] = True
 
     strict_stats = run_backtest(
         data=strict_df,
@@ -272,7 +300,7 @@ def main() -> None:
         commission=args.commission,
         spread_pips=args.spread,
         exclusive_orders=args.exclusive_orders,
-        strategy_params=strategy_params,
+        strategy_params=base_params,
     )
 
     classic_stats = run_backtest(
@@ -282,11 +310,22 @@ def main() -> None:
         commission=args.commission,
         spread_pips=args.spread,
         exclusive_orders=args.exclusive_orders,
-        strategy_params=strategy_params,
+        strategy_params=base_params,
+    )
+
+    pullback_stats = run_backtest(
+        data=pullback_df,
+        strategy=AlligatorFractalPullback,
+        cash=args.cash,
+        commission=args.commission,
+        spread_pips=args.spread,
+        exclusive_orders=args.exclusive_orders,
+        strategy_params=pullback_params,
     )
 
     _print_stats("Strict Strategy Stats", strict_stats)
     _print_stats("Classic Strategy Stats", classic_stats)
+    _print_stats("Pullback Strategy Stats", pullback_stats)
 
     # Generate timestamp for unique output folder
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -311,21 +350,40 @@ def main() -> None:
     # Save stats to stats subdirectory
     (stats_dir / "strict_stats.json").write_text(json.dumps(_stats_to_json(strict_stats), indent=2))
     (stats_dir / "classic_stats.json").write_text(json.dumps(_stats_to_json(classic_stats), indent=2))
+    (stats_dir / "pullback_stats.json").write_text(json.dumps(_stats_to_json(pullback_stats), indent=2))
 
     # Save trades to trades subdirectory
     export_trades_csv(strict_stats, trades_dir / "strict_trades.csv")
     export_trades_csv(classic_stats, trades_dir / "classic_trades.csv")
+    export_trades_csv(pullback_stats, trades_dir / "pullback_trades.csv")
     
     # Save equity curves to equity subdirectory
     export_equity_curve_csv(strict_stats, equity_dir / "strict_equity.csv")
     export_equity_curve_csv(classic_stats, equity_dir / "classic_equity.csv")
+    export_equity_curve_csv(pullback_stats, equity_dir / "pullback_equity.csv")
 
-    # Save comparison to root of run directory
-    comparison = _comparison_table(strict_stats, classic_stats)
-    comparison.to_csv(outdir / "comparison.csv", index=False)
+    # Save comparisons to root of run directory
+    comparison_strict_classic = _comparison_table(strict_stats, classic_stats, "strict", "classic")
+    comparison_strict_pullback = _comparison_table(strict_stats, pullback_stats, "strict", "pullback")
+    comparison_classic_pullback = _comparison_table(classic_stats, pullback_stats, "classic", "pullback")
+    comparison_strict_classic.to_csv(outdir / "comparison_strict_classic.csv", index=False)
+    comparison_strict_pullback.to_csv(outdir / "comparison_strict_pullback.csv", index=False)
+    comparison_classic_pullback.to_csv(outdir / "comparison_classic_pullback.csv", index=False)
+
+    summary = _summary_table({
+        "strict": strict_stats,
+        "classic": classic_stats,
+        "pullback": pullback_stats,
+    })
+    print("\nSummary")
+    print(summary.to_string(index=False))
 
     print("\nComparison (Strict vs Classic)")
-    print(comparison.to_string(index=False))
+    print(comparison_strict_classic.to_string(index=False))
+    print("\nComparison (Strict vs Pullback)")
+    print(comparison_strict_pullback.to_string(index=False))
+    print("\nComparison (Classic vs Pullback)")
+    print(comparison_classic_pullback.to_string(index=False))
     print(f"\nAll reports saved to: {outdir}")
 
 

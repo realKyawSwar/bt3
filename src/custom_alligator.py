@@ -7,7 +7,7 @@ from typing import Iterable, Optional
 import numpy as np
 import pandas as pd
 
-from alligator_fractal import AlligatorFractal, AlligatorFractalClassic
+from alligator_fractal import AlligatorFractal, AlligatorFractalClassic, AlligatorFractalPullback
 from bt3 import fetch_data, run_backtest
 from reporting import export_equity_curve_csv, export_trades_csv
 
@@ -178,7 +178,7 @@ def _is_number(value) -> bool:
     return isinstance(value, (int, float, np.integer, np.floating)) and not pd.isna(value)
 
 
-def _comparison_table(strict_stats, classic_stats) -> pd.DataFrame:
+def _comparison_table(stats_a, stats_b, label_a: str = "strict", label_b: str = "classic") -> pd.DataFrame:
     metrics = [
         ("Return %", ["Return [%]", "Return %"]),
         ("Buy&Hold %", ["Buy & Hold Return [%]", "Buy&Hold Return [%]", "Buy&Hold %"]),
@@ -194,16 +194,16 @@ def _comparison_table(strict_stats, classic_stats) -> pd.DataFrame:
 
     rows = []
     for label, keys in metrics:
-        strict_val = _metric_value(strict_stats, keys)
-        classic_val = _metric_value(classic_stats, keys)
-        if _is_number(strict_val) and _is_number(classic_val):
-            delta = classic_val - strict_val
+        val_a = _metric_value(stats_a, keys)
+        val_b = _metric_value(stats_b, keys)
+        if _is_number(val_a) and _is_number(val_b):
+            delta = val_b - val_a
         else:
             delta = None
         rows.append({
             "metric": label,
-            "strict": strict_val,
-            "classic": classic_val,
+            label_a: val_a,
+            label_b: val_b,
             "delta": delta,
         })
 
@@ -294,7 +294,87 @@ def run_comparison(
     }
 
 
+def run_single(
+    data: pd.DataFrame,
+    *,
+    strategy_name: str,
+    cash: float,
+    commission: float,
+    spread_pips: Optional[float],
+    outdir: Path,
+    eps: Optional[float] = None,
+    use_htf_bias: bool = True,
+    use_vol_filter: bool = True,
+    htf_tf: str = "4h",
+    atr_period: int = 14,
+    atr_long: int = 100,
+    exclusive_orders: bool = False,
+    export: bool = True,
+    print_table: bool = True,
+    pullback_k_atr: Optional[float] = None,
+    require_touch_teeth: bool = False,
+) -> dict:
+    print(_data_fingerprint(data))
+
+    strategy_map = {
+        "strict": AlligatorFractal,
+        "classic": AlligatorFractalClassic,
+        "pullback": AlligatorFractalPullback,
+    }
+    if strategy_name not in strategy_map:
+        raise ValueError(f"Unsupported strategy: {strategy_name}")
+
+    strategy_params = {
+        "use_htf_bias": use_htf_bias,
+        "use_vol_filter": use_vol_filter,
+        "htf_tf": htf_tf,
+        "atr_period": atr_period,
+        "atr_long": atr_long,
+    }
+    if eps is not None:
+        strategy_params["eps"] = eps
+    if strategy_name == "pullback":
+        if pullback_k_atr is not None:
+            strategy_params["pullback_k_atr"] = pullback_k_atr
+        if require_touch_teeth:
+            strategy_params["require_touch_teeth"] = True
+
+    stats = run_backtest(
+        data=data.copy(),
+        strategy=strategy_map[strategy_name],
+        cash=cash,
+        commission=commission,
+        spread_pips=spread_pips,
+        exclusive_orders=exclusive_orders,
+        strategy_params=strategy_params,
+    )
+
+    if export:
+        outdir.mkdir(parents=True, exist_ok=True)
+        (outdir / f"{strategy_name}_stats.json").write_text(json.dumps(_stats_to_json(stats), indent=2))
+        export_trades_csv(stats, outdir / f"{strategy_name}_trades.csv")
+        export_equity_curve_csv(stats, outdir / f"{strategy_name}_equity.csv")
+
+    if print_table:
+        print("=" * 70)
+        print(f"{strategy_name.title()} Strategy Stats")
+        print("=" * 70)
+        print(stats)
+
+    return {
+        strategy_name: stats,
+    }
+
+
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run a single Alligator+Fractal strategy.")
+    parser.add_argument("--strategy", choices=["strict", "classic", "pullback"], default=None)
+    parser.add_argument("--pullback-k", type=float, default=None)
+    parser.add_argument("--touch-teeth", action="store_true", default=False)
+    args = parser.parse_args()
+
     currency = "GBPJPY"
     timeframe = "1h"
     data_path = None
@@ -308,19 +388,40 @@ if __name__ == "__main__":
     if data.empty:
         raise ValueError("No data available after filtering/resampling.")
 
-    run_comparison(
-        data,
-        cash=10000.0,
-        commission=0.0,
-        spread_pips=1.5,
-        outdir=Path("reports/gbpjpy_h1"),
-        eps=None,
-        use_htf_bias=True,
-        use_vol_filter=True,
-        htf_tf="4h",
-        atr_period=14,
-        atr_long=100,
-        exclusive_orders=True,
-        export=True,
-        print_table=True,
-    )
+    if args.strategy is None:
+        run_comparison(
+            data,
+            cash=10000.0,
+            commission=0.0,
+            spread_pips=1.5,
+            outdir=Path("reports/gbpjpy_h1"),
+            eps=None,
+            use_htf_bias=True,
+            use_vol_filter=True,
+            htf_tf="4h",
+            atr_period=14,
+            atr_long=100,
+            exclusive_orders=True,
+            export=True,
+            print_table=True,
+        )
+    else:
+        run_single(
+            data,
+            strategy_name=args.strategy,
+            cash=10000.0,
+            commission=0.0,
+            spread_pips=1.5,
+            outdir=Path("reports/gbpjpy_h1"),
+            eps=None,
+            use_htf_bias=True,
+            use_vol_filter=True,
+            htf_tf="4h",
+            atr_period=14,
+            atr_long=100,
+            exclusive_orders=True,
+            export=True,
+            print_table=True,
+            pullback_k_atr=args.pullback_k,
+            require_touch_teeth=args.touch_teeth,
+        )
