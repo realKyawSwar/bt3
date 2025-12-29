@@ -278,7 +278,7 @@ class AlligatorFractal(Strategy):
         if self.use_vol_filter:
             atr = compute_atr_ohlc(df, self.atr_period)
             atr_sma = atr.rolling(self.atr_long, min_periods=self.atr_long).mean()
-            self._vol_ok = (atr > atr_sma).fillna(False).to_numpy()
+            self._vol_ok = (atr > 0.9 * atr_sma).fillna(False).to_numpy()
 
         bias_series = (
             pd.Series(self._htf_bias, index=df.index, dtype=object)

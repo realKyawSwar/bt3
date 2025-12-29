@@ -220,6 +220,14 @@ The `run_backtest()` function returns comprehensive statistics:
 - **Trade Statistics**: Win Rate, # of Trades, Profit Factor
 - **Execution**: Exposure Time, Commissions
 
+## “baseline v1”
+
+-HTF bias ON
+-ATR period 14
+-ATR long 50
+-Spread 1.5
+
+Exclusive orders ON
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
