@@ -9,7 +9,14 @@ from typing import Iterable, Optional
 import numpy as np
 import pandas as pd
 
-from alligator_fractal import AlligatorFractal, AlligatorFractalClassic, AlligatorFractalPullback
+from alligator_fractal import (
+    AlligatorFractal,
+    AlligatorFractalClassic,
+    AlligatorFractalPullback,
+    AlligatorParams,
+    compute_atr_ohlc,
+    compute_htf_bias,
+)
 from bt3 import fetch_data, run_backtest
 from reporting import export_equity_curve_csv, export_trades_csv
 
@@ -237,6 +244,42 @@ def _summary_table(stats_by_name: dict[str, dict]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def compute_gating_debug(
+    df: pd.DataFrame,
+    use_htf_bias: bool,
+    use_vol_filter: bool,
+    htf_tf: str,
+    atr_period: int,
+    atr_long: int,
+    cfg: AlligatorParams,
+) -> dict:
+    if use_htf_bias:
+        bias_series = compute_htf_bias(df, htf_tf, cfg)
+    else:
+        bias_series = pd.Series("neutral", index=df.index, dtype=object)
+
+    bias_counts = bias_series.value_counts(normalize=True)
+    bias_dist = {
+        "bullish": float(bias_counts.get("bullish", 0.0)),
+        "bearish": float(bias_counts.get("bearish", 0.0)),
+        "neutral": float(bias_counts.get("neutral", 0.0)),
+    }
+
+    if use_vol_filter:
+        atr = compute_atr_ohlc(df, atr_period)
+        atr_sma = atr.rolling(atr_long, min_periods=atr_long).mean()
+        vol_ok_series = (atr > 0.9 * atr_sma).fillna(False)
+    else:
+        vol_ok_series = pd.Series(True, index=df.index, dtype=bool)
+
+    both_ok = (bias_series != "neutral") & vol_ok_series
+    return {
+        "bias_dist": bias_dist,
+        "vol_ok": float(vol_ok_series.mean()),
+        "both_ok": float(both_ok.mean()),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare strict vs classic Alligator+Fractal strategies.")
     parser.add_argument("--data", help="Path or URL to CSV/Parquet data.")
@@ -270,6 +313,19 @@ def main() -> None:
         raise ValueError("No data available after filtering/resampling.")
 
     print(_data_fingerprint(df))
+
+    gate_debug = compute_gating_debug(
+        df,
+        use_htf_bias=not args.no_htf_bias,
+        use_vol_filter=not args.no_vol_filter,
+        htf_tf=_parse_timeframe(args.htf),
+        atr_period=args.atr,
+        atr_long=args.atr_long,
+        cfg=AlligatorParams(),
+    )
+    print(f"HTF bias %: {gate_debug['bias_dist']}")
+    print(f"VOL ok %: {gate_debug['vol_ok']:.2f}")
+    print(f"BOTH ok %: {gate_debug['both_ok']:.2f}")
 
     strict_df = df.copy()
     classic_df = df.copy()
