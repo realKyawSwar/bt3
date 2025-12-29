@@ -180,6 +180,14 @@ reports/
 - `--atr-long` sets ATR SMA length for volatility filter (default `100`)
 - `--outdir` base output folder (default `reports/`)
 
+## Regression Checks
+
+Run the lightweight filter-coverage check to ensure enabling HTF bias + volatility filter reduces trades moderately:
+
+```bash
+python scripts/regression_filter_check.py
+```
+
 ## Strategy Development
 
 Strategies should inherit from `backtesting.Strategy` and implement two methods:

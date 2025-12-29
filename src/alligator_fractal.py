@@ -139,7 +139,18 @@ def compute_htf_bias(
     df_htf = df_htf.dropna(subset=["Open", "High", "Low", "Close"])
 
     cfg = params or AlligatorParams()
-    alligator = compute_alligator_ohlc(df_htf, cfg)
+    cfg_bias = AlligatorParams(
+        jaw_period=cfg.jaw_period,
+        jaw_shift=0,
+        teeth_period=cfg.teeth_period,
+        teeth_shift=0,
+        lips_period=cfg.lips_period,
+        lips_shift=0,
+        min_spread_factor=cfg.min_spread_factor,
+        spread_lookback=cfg.spread_lookback,
+        tp_rr=cfg.tp_rr,
+    )
+    alligator = compute_alligator_ohlc(df_htf, cfg_bias)
 
     lips = alligator["lips"]
     teeth = alligator["teeth"]
@@ -151,6 +162,7 @@ def compute_htf_bias(
     bias = bias.where(~bullish, "bullish")
     bias = bias.where(~bearish, "bearish")
 
+    bias = bias.shift(1)
     bias = bias.reindex(df_ltf.index, method="ffill")
     return bias.fillna("neutral")
 
@@ -267,6 +279,28 @@ class AlligatorFractal(Strategy):
             atr = compute_atr_ohlc(df, self.atr_period)
             atr_sma = atr.rolling(self.atr_long, min_periods=self.atr_long).mean()
             self._vol_ok = (atr > atr_sma).fillna(False).to_numpy()
+
+        bias_series = (
+            pd.Series(self._htf_bias, index=df.index, dtype=object)
+            if self._htf_bias is not None
+            else pd.Series("neutral", index=df.index, dtype=object)
+        )
+        bias_counts = bias_series.value_counts(normalize=True)
+        bias_dist = {
+            "bullish": float(bias_counts.get("bullish", 0.0)),
+            "bearish": float(bias_counts.get("bearish", 0.0)),
+            "neutral": float(bias_counts.get("neutral", 0.0)),
+        }
+        print(f"HTF bias %: {bias_dist}")
+
+        vol_ok_series = (
+            pd.Series(self._vol_ok, index=df.index, dtype=bool)
+            if self._vol_ok is not None
+            else pd.Series(True, index=df.index, dtype=bool)
+        )
+        print(f"VOL ok %: {vol_ok_series.mean():.2f}")
+        both_ok = (bias_series != "neutral") & vol_ok_series
+        print(f"BOTH ok %: {both_ok.mean():.2f}")
 
         # Internal state for stop-order realism & bracket arming
         self._last_long_stop = None
