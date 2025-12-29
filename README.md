@@ -26,36 +26,17 @@ pip install backtesting pandas numpy
 
 ## Quick Start
 
-### Basic Usage
+For a ready-to-run comparison between strict and classic Alligator+Fractal strategies, call the comparison runner from the repo root (or inside `src/`):
 
-```python
-from backtesting import Strategy
-from backtesting.test import SMA
-from bt3 import fetch_data, run_backtest
+```bash
+# From repo root
+python src/compare_strategies.py --asset GBPJPY --tf 1h --spread 1.5 --exclusive_orders
+```
 
-# Define your strategy
-class SMAStrategy(Strategy):
-    fast_period = 10
-    slow_period = 30
-    
-    def init(self):
-        self.sma_fast = self.I(SMA, self.data.Close, self.fast_period)
-        self.sma_slow = self.I(SMA, self.data.Close, self.slow_period)
-    
-    def next(self):
-        if self.sma_fast[-1] > self.sma_slow[-1]:
-            if not self.position:
-                self.buy()
-        elif self.sma_fast[-1] < self.sma_slow[-1]:
-            if self.position:
-                self.position.close()
+You can also point to your own CSV/Parquet data instead of remote fetch:
 
-# Fetch forex data from ejtraderLabs (forex only)
-data = fetch_data(symbol="GBPJPY", timeframe="1d")
-
-# Run backtest
-stats = run_backtest(data, SMAStrategy, cash=100000, commission=0.0002)
-print(stats)
+```bash
+python src/compare_strategies.py --data "path/to/data.csv" --tf 4h --start 2023-01-01 --end 2024-12-31 --cash 50000
 ```
 
 ## Data Source
@@ -112,28 +93,7 @@ Runs a backtest using the backtesting.py library.
 stats = run_backtest(data, MyStrategy, cash=50000, commission=0.002)
 ```
 
-## Examples
-
-The repository includes `example.py` with three complete strategy examples:
-
-1. **SMA Crossover Strategy** - Moving average crossover
-2. **RSI Strategy** - Mean reversion based on RSI
-3. **Breakout Strategy** - Channel breakout
-4. **Alligator + Fractal** - Bill Williams Alligator with fractal breakouts
-
-Run the examples:
-
-```bash
-python example.py
-```
-
-Or run the built-in demo:
-
-```bash
-python bt3.py
-```
-
-### Alligator + Fractal Strategy
+## Alligator + Fractal Strategy
 
 Implements Bill Williams' Alligator (SMMA of median price with forward shifts) and 5-bar fractals. **Now using realistic stop orders at fractal breakout levels** instead of immediate market entry.
 
@@ -188,8 +148,32 @@ Use the comparison runner to execute both the repo-strict strategy and the class
 **Example:**
 
 ```bash
-python compare_strategies.py --data data/GBPJPYh4.csv --tf H4 --cash 10000 --commission 0.0 --spread 0.0002 --outdir reports/gbpjpy_h4
+python src/compare_strategies.py --asset GBPJPY --tf 1h --spread 1.5 --exclusive_orders
 ```
+
+**Output layout:**
+
+```
+reports/
+└── {asset}_{timeframe}_{timestamp}/
+    ├── stats/
+    │   ├── strict_stats.json
+    │   └── classic_stats.json
+    ├── trades/
+    │   ├── strict_trades.csv
+    │   └── classic_trades.csv
+    ├── equity/
+    │   ├── strict_equity.csv
+    │   └── classic_equity.csv
+    └── comparison.csv
+```
+
+**Key arguments:**
+- `--asset` and `--tf` fetch remote data (e.g., `GBPJPY`, `1h`, `4h`, `15m`)
+- `--data` lets you supply a CSV/Parquet file instead of remote fetch
+- `--spread` FX spread in pips (e.g., `1.5`)
+- `--exclusive_orders` prevents overlapping pending orders
+- `--outdir` base output folder (default `reports/`)
 
 ## Strategy Development
 

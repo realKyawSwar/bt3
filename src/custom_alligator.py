@@ -258,7 +258,7 @@ def run_comparison(
 
 
 if __name__ == "__main__":
-    currency = "USDJPY"
+    currency = "GBPJPY"
     timeframe = "1h"
     data_path = None
 
@@ -276,7 +276,7 @@ if __name__ == "__main__":
         cash=10000.0,
         commission=0.0,
         spread_pips=1.5,
-        outdir=Path("reports/usdjpy_h1"),
+        outdir=Path("reports/gbpjpy_h1"),
         eps=None,
         exclusive_orders=True,
         export=True,

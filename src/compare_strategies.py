@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -249,22 +250,45 @@ def main() -> None:
     _print_stats("Strict Strategy Stats", strict_stats)
     _print_stats("Classic Strategy Stats", classic_stats)
 
-    outdir = Path(args.outdir)
+    # Generate timestamp for unique output folder
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Create dynamic output directory name based on asset and timeframe
+    asset_name = args.asset if args.asset else "data"
+    tf_name = args.tf if args.tf else "custom"
+    run_dir = f"{asset_name}_{tf_name}_{timestamp}"
+    
+    outdir = Path(args.outdir) / run_dir
     outdir.mkdir(parents=True, exist_ok=True)
+    
+    # Create subdirectories
+    stats_dir = outdir / "stats"
+    trades_dir = outdir / "trades"
+    equity_dir = outdir / "equity"
+    
+    stats_dir.mkdir(exist_ok=True)
+    trades_dir.mkdir(exist_ok=True)
+    equity_dir.mkdir(exist_ok=True)
 
-    (outdir / "strict_stats.json").write_text(json.dumps(_stats_to_json(strict_stats), indent=2))
-    (outdir / "classic_stats.json").write_text(json.dumps(_stats_to_json(classic_stats), indent=2))
+    # Save stats to stats subdirectory
+    (stats_dir / "strict_stats.json").write_text(json.dumps(_stats_to_json(strict_stats), indent=2))
+    (stats_dir / "classic_stats.json").write_text(json.dumps(_stats_to_json(classic_stats), indent=2))
 
-    export_trades_csv(strict_stats, outdir / "strict_trades.csv")
-    export_equity_curve_csv(strict_stats, outdir / "strict_equity.csv")
-    export_trades_csv(classic_stats, outdir / "classic_trades.csv")
-    export_equity_curve_csv(classic_stats, outdir / "classic_equity.csv")
+    # Save trades to trades subdirectory
+    export_trades_csv(strict_stats, trades_dir / "strict_trades.csv")
+    export_trades_csv(classic_stats, trades_dir / "classic_trades.csv")
+    
+    # Save equity curves to equity subdirectory
+    export_equity_curve_csv(strict_stats, equity_dir / "strict_equity.csv")
+    export_equity_curve_csv(classic_stats, equity_dir / "classic_equity.csv")
 
+    # Save comparison to root of run directory
     comparison = _comparison_table(strict_stats, classic_stats)
     comparison.to_csv(outdir / "comparison.csv", index=False)
 
     print("\nComparison (Strict vs Classic)")
     print(comparison.to_string(index=False))
+    print(f"\nAll reports saved to: {outdir}")
 
 
 if __name__ == "__main__":
