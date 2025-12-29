@@ -7,7 +7,14 @@ from typing import Iterable, Optional
 import numpy as np
 import pandas as pd
 
-from alligator_fractal import AlligatorFractal, AlligatorFractalClassic, AlligatorFractalPullback
+from alligator_fractal import (
+    AlligatorFractal,
+    AlligatorFractalClassic,
+    AlligatorFractalPullback,
+    AlligatorParams,
+    compute_atr_ohlc,
+    compute_htf_bias,
+)
 from bt3 import fetch_data, run_backtest
 from reporting import export_equity_curve_csv, export_trades_csv
 
@@ -228,6 +235,42 @@ def _comparison_table(stats_a, stats_b, label_a: str = "strict", label_b: str = 
     return pd.DataFrame(rows)
 
 
+def compute_gating_debug(
+    df: pd.DataFrame,
+    use_htf_bias: bool,
+    use_vol_filter: bool,
+    htf_tf: str,
+    atr_period: int,
+    atr_long: int,
+    cfg: AlligatorParams,
+) -> dict:
+    if use_htf_bias:
+        bias_series = compute_htf_bias(df, htf_tf, cfg)
+    else:
+        bias_series = pd.Series("neutral", index=df.index, dtype=object)
+
+    bias_counts = bias_series.value_counts(normalize=True)
+    bias_dist = {
+        "bullish": float(bias_counts.get("bullish", 0.0)),
+        "bearish": float(bias_counts.get("bearish", 0.0)),
+        "neutral": float(bias_counts.get("neutral", 0.0)),
+    }
+
+    if use_vol_filter:
+        atr = compute_atr_ohlc(df, atr_period)
+        atr_sma = atr.rolling(atr_long, min_periods=atr_long).mean()
+        vol_ok_series = (atr > 0.9 * atr_sma).fillna(False)
+    else:
+        vol_ok_series = pd.Series(True, index=df.index, dtype=bool)
+
+    both_ok = (bias_series != "neutral") & vol_ok_series
+    return {
+        "bias_dist": bias_dist,
+        "vol_ok": float(vol_ok_series.mean()),
+        "both_ok": float(both_ok.mean()),
+    }
+
+
 def run_comparison(
     data: pd.DataFrame,
     *,
@@ -251,6 +294,19 @@ def run_comparison(
     strict_df = data.copy()
     classic_df = data.copy()
     _assert_identical(strict_df, classic_df)
+
+    gate_debug = compute_gating_debug(
+        data,
+        use_htf_bias=use_htf_bias,
+        use_vol_filter=use_vol_filter,
+        htf_tf=htf_tf,
+        atr_period=atr_period,
+        atr_long=atr_long,
+        cfg=AlligatorParams(),
+    )
+    print(f"HTF bias %: {gate_debug['bias_dist']}")
+    print(f"VOL ok %: {gate_debug['vol_ok']:.2f}")
+    print(f"BOTH ok %: {gate_debug['both_ok']:.2f}")
 
     strategy_params = {
         "use_htf_bias": use_htf_bias,
@@ -377,6 +433,19 @@ def run_single(
     require_touch_teeth: bool = False,
 ) -> dict:
     print(_data_fingerprint(data))
+
+    gate_debug = compute_gating_debug(
+        data,
+        use_htf_bias=use_htf_bias,
+        use_vol_filter=use_vol_filter,
+        htf_tf=htf_tf,
+        atr_period=atr_period,
+        atr_long=atr_long,
+        cfg=AlligatorParams(),
+    )
+    print(f"HTF bias %: {gate_debug['bias_dist']}")
+    print(f"VOL ok %: {gate_debug['vol_ok']:.2f}")
+    print(f"BOTH ok %: {gate_debug['both_ok']:.2f}")
 
     strategy_map = {
         "strict": AlligatorFractal,

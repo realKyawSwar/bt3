@@ -126,6 +126,8 @@ def compute_htf_bias(
 ) -> pd.Series:
     if not isinstance(df_ltf.index, pd.DatetimeIndex):
         raise ValueError("df_ltf must use a DatetimeIndex for HTF resampling.")
+    if not df_ltf.index.is_monotonic_increasing:
+        df_ltf = df_ltf.sort_index()
 
     ohlc = {
         "Open": "first",
@@ -134,8 +136,7 @@ def compute_htf_bias(
         "Close": "last",
         "Volume": "sum",
     }
-    rule = htf_rule.lower()
-    df_htf = df_ltf.resample(rule, label="right", closed="right").agg(ohlc)
+    df_htf = df_ltf.resample(htf_rule, label="right", closed="right").agg(ohlc)
     df_htf = df_htf.dropna(subset=["Open", "High", "Low", "Close"])
 
     cfg = params or AlligatorParams()
@@ -291,16 +292,18 @@ class AlligatorFractal(Strategy):
             "bearish": float(bias_counts.get("bearish", 0.0)),
             "neutral": float(bias_counts.get("neutral", 0.0)),
         }
-        print(f"HTF bias %: {bias_dist}")
 
         vol_ok_series = (
             pd.Series(self._vol_ok, index=df.index, dtype=bool)
             if self._vol_ok is not None
             else pd.Series(True, index=df.index, dtype=bool)
         )
-        print(f"VOL ok %: {vol_ok_series.mean():.2f}")
         both_ok = (bias_series != "neutral") & vol_ok_series
-        print(f"BOTH ok %: {both_ok.mean():.2f}")
+        self._gate_debug = {
+            "bias_dist": bias_dist,
+            "vol_ok": float(vol_ok_series.mean()),
+            "both_ok": float(both_ok.mean()),
+        }
 
         # Internal state for stop-order realism & bracket arming
         self._last_long_stop = None
