@@ -230,6 +230,11 @@ def main() -> None:
     parser.add_argument("--commission", type=float, default=0.0)
     parser.add_argument("--spread", type=float, default=None, help="FX spread in pips.")
     parser.add_argument("--eps", type=float, default=None, help="Optional epsilon override for stop entries.")
+    parser.add_argument("--no-htf-bias", action="store_true", default=False, help="Disable H4 bias filter.")
+    parser.add_argument("--no-vol-filter", action="store_true", default=False, help="Disable ATR regime filter.")
+    parser.add_argument("--htf", default="4h", help="Higher timeframe for bias (e.g. 4h, 1d).")
+    parser.add_argument("--atr", type=int, default=14, help="ATR period for volatility filter.")
+    parser.add_argument("--atr-long", type=int, default=100, help="ATR long SMA length.")
     parser.add_argument("--exclusive_orders", action="store_true", default=False)
     parser.add_argument("--outdir", default="reports/", help="Output directory for reports.")
 
@@ -250,7 +255,15 @@ def main() -> None:
     classic_df = df.copy()
     _assert_identical(strict_df, classic_df)
 
-    strategy_params = {"eps": args.eps} if args.eps is not None else None
+    strategy_params = {
+        "use_htf_bias": not args.no_htf_bias,
+        "use_vol_filter": not args.no_vol_filter,
+        "htf_tf": _parse_timeframe(args.htf),
+        "atr_period": args.atr,
+        "atr_long": args.atr_long,
+    }
+    if args.eps is not None:
+        strategy_params["eps"] = args.eps
 
     strict_stats = run_backtest(
         data=strict_df,

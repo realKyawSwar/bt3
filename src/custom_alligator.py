@@ -218,6 +218,11 @@ def run_comparison(
     spread_pips: Optional[float],
     outdir: Path,
     eps: Optional[float] = None,
+    use_htf_bias: bool = True,
+    use_vol_filter: bool = True,
+    htf_tf: str = "4h",
+    atr_period: int = 14,
+    atr_long: int = 100,
     exclusive_orders: bool = False,
     export: bool = True,
     print_table: bool = True,
@@ -227,7 +232,15 @@ def run_comparison(
     classic_df = data.copy()
     _assert_identical(strict_df, classic_df)
 
-    strategy_params = {"eps": eps} if eps is not None else None
+    strategy_params = {
+        "use_htf_bias": use_htf_bias,
+        "use_vol_filter": use_vol_filter,
+        "htf_tf": htf_tf,
+        "atr_period": atr_period,
+        "atr_long": atr_long,
+    }
+    if eps is not None:
+        strategy_params["eps"] = eps
 
     strict_stats = run_backtest(
         data=strict_df,
@@ -302,6 +315,11 @@ if __name__ == "__main__":
         spread_pips=1.5,
         outdir=Path("reports/gbpjpy_h1"),
         eps=None,
+        use_htf_bias=True,
+        use_vol_filter=True,
+        htf_tf="4h",
+        atr_period=14,
+        atr_long=100,
         exclusive_orders=True,
         export=True,
         print_table=True,

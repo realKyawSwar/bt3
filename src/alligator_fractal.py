@@ -102,6 +102,59 @@ def compute_fractals_ohlc(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def compute_atr_ohlc(df: pd.DataFrame, period: int) -> pd.Series:
+    high = df["High"].astype(float)
+    low = df["Low"].astype(float)
+    close = df["Close"].astype(float)
+    prev_close = close.shift(1)
+
+    tr = pd.concat(
+        [
+            (high - low).abs(),
+            (high - prev_close).abs(),
+            (low - prev_close).abs(),
+        ],
+        axis=1,
+    ).max(axis=1)
+    return tr.rolling(period, min_periods=period).mean()
+
+
+def compute_htf_bias(
+    df_ltf: pd.DataFrame,
+    htf_rule: str = "4H",
+    params: AlligatorParams | None = None,
+) -> pd.Series:
+    if not isinstance(df_ltf.index, pd.DatetimeIndex):
+        raise ValueError("df_ltf must use a DatetimeIndex for HTF resampling.")
+
+    ohlc = {
+        "Open": "first",
+        "High": "max",
+        "Low": "min",
+        "Close": "last",
+        "Volume": "sum",
+    }
+    rule = htf_rule.lower()
+    df_htf = df_ltf.resample(rule, label="right", closed="right").agg(ohlc)
+    df_htf = df_htf.dropna(subset=["Open", "High", "Low", "Close"])
+
+    cfg = params or AlligatorParams()
+    alligator = compute_alligator_ohlc(df_htf, cfg)
+
+    lips = alligator["lips"]
+    teeth = alligator["teeth"]
+    jaw = alligator["jaw"]
+
+    bias = pd.Series("neutral", index=df_htf.index, dtype=object)
+    bullish = (lips > teeth) & (teeth > jaw)
+    bearish = (lips < teeth) & (teeth < jaw)
+    bias = bias.where(~bullish, "bullish")
+    bias = bias.where(~bearish, "bearish")
+
+    bias = bias.reindex(df_ltf.index, method="ffill")
+    return bias.fillna("neutral")
+
+
 def _alligator_state(
     jaw: float, teeth: float, lips: float,
     closes: np.ndarray, jaws: np.ndarray, teeths: np.ndarray, lipss: np.ndarray,
@@ -150,6 +203,12 @@ class AlligatorFractal(Strategy):
     enable_tp = False
     eps = None
 
+    htf_tf = "4H"
+    use_htf_bias = True
+    use_vol_filter = True
+    atr_period = 14
+    atr_long = 100
+
     # Spread model (price units). bt3.run_backtest can set this.
     spread_price = 0.0
 
@@ -175,11 +234,18 @@ class AlligatorFractal(Strategy):
             tp_rr=self.tp_rr,
         )
 
-        df = pd.DataFrame({
-            "High": pd.Series(self._highs),
-            "Low": pd.Series(self._lows),
-            "Close": pd.Series(self._closes),
-        })
+        index = pd.Index(self.data.index)
+        volumes = getattr(self.data, "Volume", np.zeros(len(self.data)))
+        df = pd.DataFrame(
+            {
+                "Open": pd.Series(self.data.Open, index=index, dtype=float),
+                "High": pd.Series(self._highs, index=index, dtype=float),
+                "Low": pd.Series(self._lows, index=index, dtype=float),
+                "Close": pd.Series(self._closes, index=index, dtype=float),
+                "Volume": pd.Series(volumes, index=index, dtype=float),
+            },
+            index=index,
+        )
 
         alligator = compute_alligator_ohlc(df, self._cfg)
         fractals = compute_fractals_ohlc(df)
@@ -191,6 +257,17 @@ class AlligatorFractal(Strategy):
         self.bullish_fractal = self.I(lambda x=fractals["bullish_fractal_confirmed"].to_numpy(): x)
         self.bearish_fractal = self.I(lambda x=fractals["bearish_fractal_confirmed"].to_numpy(): x)
 
+        self._htf_bias = None
+        if self.use_htf_bias:
+            htf_bias = compute_htf_bias(df, self.htf_tf, self._cfg)
+            self._htf_bias = htf_bias.to_numpy(dtype=object)
+
+        self._vol_ok = None
+        if self.use_vol_filter:
+            atr = compute_atr_ohlc(df, self.atr_period)
+            atr_sma = atr.rolling(self.atr_long, min_periods=self.atr_long).mean()
+            self._vol_ok = (atr > atr_sma).fillna(False).to_numpy()
+
         # Internal state for stop-order realism & bracket arming
         self._last_long_stop = None
         self._last_short_stop = None
@@ -198,6 +275,27 @@ class AlligatorFractal(Strategy):
         self._next_sl = None
         self._next_tp = None
         self._prev_position_open = False
+
+    def _entry_permissions(self, i: int) -> tuple[bool, bool]:
+        allow_long = True
+        allow_short = True
+
+        if self.use_htf_bias and self._htf_bias is not None:
+            bias = self._htf_bias[i]
+            if bias == "bullish":
+                allow_short = False
+            elif bias == "bearish":
+                allow_long = False
+            else:
+                allow_long = False
+                allow_short = False
+
+        if self.use_vol_filter and self._vol_ok is not None:
+            if not bool(self._vol_ok[i]):
+                allow_long = False
+                allow_short = False
+
+        return allow_long, allow_short
 
     def _arm_if_opened(self):
         """Apply SL/TP only after the stop order has turned into a trade (avoid same-bar ambiguity warning)."""
@@ -252,6 +350,11 @@ class AlligatorFractal(Strategy):
             self._prev_position_open = True
             return
 
+        allow_long, allow_short = self._entry_permissions(i)
+        if not allow_long and not allow_short:
+            self._prev_position_open = False
+            return
+
         # No new entries in non-trending states
         if state in ("sleeping", "crossing", "unknown"):
             self._prev_position_open = False
@@ -276,7 +379,7 @@ class AlligatorFractal(Strategy):
         half_spread = spr / 2.0
 
         # Long setup: eating_up + bullish fractal above alligator
-        if state == "eating_up" and not np.isnan(last_bull):
+        if allow_long and state == "eating_up" and not np.isnan(last_bull):
             if last_bull <= max(jaw, teeth, lips):
                 self._prev_position_open = False
                 return
@@ -320,7 +423,7 @@ class AlligatorFractal(Strategy):
                 self._next_tp = None
 
         # Short setup: eating_down + bearish fractal below alligator
-        if state == "eating_down" and not np.isnan(last_bear):
+        if allow_short and state == "eating_down" and not np.isnan(last_bear):
             if last_bear >= min(jaw, teeth, lips):
                 self._prev_position_open = False
                 return
@@ -422,6 +525,11 @@ class AlligatorFractalClassic(AlligatorFractal):
             self._prev_position_open = True
             return
 
+        allow_long, allow_short = self._entry_permissions(i)
+        if not allow_long and not allow_short:
+            self._prev_position_open = False
+            return
+
         # Find last confirmed fractals
         last_bull = np.nan
         last_bear = np.nan
@@ -441,7 +549,7 @@ class AlligatorFractalClassic(AlligatorFractal):
         half_spread = spr / 2.0
 
         # Long setup: closes above teeth + bullish fractal above teeth
-        if not np.isnan(last_bull):
+        if allow_long and not np.isnan(last_bull):
             if last_bull <= teeth:
                 self._prev_position_open = False
             elif not self._has_consecutive_closes_above_teeth(i):
@@ -480,7 +588,7 @@ class AlligatorFractalClassic(AlligatorFractal):
                         self._next_tp = None
 
         # Short setup: closes below teeth + bearish fractal below teeth
-        if not np.isnan(last_bear):
+        if allow_short and not np.isnan(last_bear):
             if last_bear >= teeth:
                 self._prev_position_open = False
             elif not self._has_consecutive_closes_below_teeth(i):
