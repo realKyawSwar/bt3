@@ -661,3 +661,198 @@ class AlligatorFractalClassic(AlligatorFractal):
                         self._next_tp = None
 
         self._prev_position_open = bool(self.position)
+
+
+class AlligatorFractalPullback(AlligatorFractal):
+    """
+    Trend + Pullback variant (Structure-First):
+    - Requires pullback into Teeth zone before allowing the strict fractal breakout entry.
+    - Uses existing HTF bias + vol filter gating via _entry_permissions().
+    - Keeps Strict exits/trailing/brackets unchanged.
+    """
+
+    pullback_k_atr = 0.5
+    require_touch_teeth = False
+
+    def init(self):
+        super().init()
+
+        index = pd.Index(self.data.index)
+        df = pd.DataFrame(
+            {
+                "Open": pd.Series(self.data.Open, index=index, dtype=float),
+                "High": pd.Series(self._highs, index=index, dtype=float),
+                "Low": pd.Series(self._lows, index=index, dtype=float),
+                "Close": pd.Series(self._closes, index=index, dtype=float),
+            },
+            index=index,
+        )
+        atr = compute_atr_ohlc(df, self.atr_period)
+        self._atr = atr.to_numpy(dtype=float)
+
+    def next(self):
+        i = len(self.data.Close) - 1
+
+        # Apply bracket orders right after position opens
+        self._arm_if_opened()
+
+        jaw = float(self.jaw[-1])
+        teeth = float(self.teeth[-1])
+        lips = float(self.lips[-1])
+        if np.isnan(jaw) or np.isnan(teeth) or np.isnan(lips):
+            self._prev_position_open = bool(self.position)
+            return
+
+        jaws = np.asarray(self.jaw, dtype=float)
+        teeths = np.asarray(self.teeth, dtype=float)
+        lipss = np.asarray(self.lips, dtype=float)
+
+        state = _alligator_state(jaw, teeth, lips, self._closes[: i + 1], jaws[: i + 1], teeths[: i + 1], lipss[: i + 1], self._cfg)
+
+        # Exits: close on sleeping or structure loss
+        if self.position:
+            self._last_long_stop = None
+            self._last_short_stop = None
+
+            if state == "sleeping":
+                self.position.close()
+                self._prev_position_open = bool(self.position)
+                return
+
+            if self.position.is_long and not (lips > teeth > jaw):
+                self.position.close()
+                self._prev_position_open = bool(self.position)
+                return
+
+            if self.position.is_short and not (lips < teeth < jaw):
+                self.position.close()
+                self._prev_position_open = bool(self.position)
+                return
+
+            self._prev_position_open = True
+            return
+
+        allow_long, allow_short = self._entry_permissions(i)
+        if not allow_long and not allow_short:
+            self._prev_position_open = False
+            return
+
+        # No new entries in non-trending states
+        if state in ("sleeping", "crossing", "unknown"):
+            self._prev_position_open = False
+            return
+
+        atr_now = self._atr[i] if i < len(self._atr) else np.nan
+        if np.isnan(atr_now):
+            self._prev_position_open = False
+            return
+
+        if self.require_touch_teeth:
+            long_pullback = self._lows[i] <= teeth
+            short_pullback = self._highs[i] >= teeth
+        else:
+            long_pullback = self._lows[i] <= teeth + self.pullback_k_atr * atr_now
+            short_pullback = self._highs[i] >= teeth - self.pullback_k_atr * atr_now
+
+        # Find last confirmed fractals
+        last_bull = np.nan
+        last_bear = np.nan
+        bf = np.asarray(self.bullish_fractal, dtype=float)
+        af = np.asarray(self.bearish_fractal, dtype=float)
+
+        for k in range(i, -1, -1):
+            if np.isnan(last_bull) and not np.isnan(bf[k]):
+                last_bull = bf[k]
+            if np.isnan(last_bear) and not np.isnan(af[k]):
+                last_bear = af[k]
+            if not np.isnan(last_bull) and not np.isnan(last_bear):
+                break
+
+        # Spread model (price units)
+        spr = float(getattr(self, "spread_price", 0.0))
+        half_spread = spr / 2.0
+
+        # Long setup: eating_up + bullish fractal above alligator + pullback
+        if allow_long and state == "eating_up" and long_pullback and not np.isnan(last_bull):
+            if last_bull <= max(jaw, teeth, lips):
+                self._prev_position_open = False
+                return
+
+            eps = self.eps if self.eps is not None else max(1e-6, abs(last_bull) * 1e-6)
+            entry_stop = float(last_bull) + eps + half_spread
+
+            # Don’t re-place identical stops every bar
+            if self._last_long_stop is not None and abs(entry_stop - self._last_long_stop) < eps:
+                self._prev_position_open = False
+                return
+
+            sl = None
+            tp = None
+            if not np.isnan(last_bear):
+                sl = min(float(last_bear), entry_stop - eps)
+                # Ensure SL < entry
+                if sl >= entry_stop:
+                    sl = entry_stop - eps
+                risk = max(entry_stop - sl, eps)
+
+                if self.enable_tp:
+                    tp = entry_stop + self._cfg.tp_rr * risk
+                    # Ensure ordering
+                    if not (sl + eps < entry_stop < tp - eps):
+                        tp = None
+
+            # Place stop entry (NO sl/tp here to avoid same-bar contingent warning)
+            try:
+                self.buy(stop=entry_stop)
+                self._last_long_stop = entry_stop
+
+                # Arm bracket for when position opens
+                if sl is not None or (self.enable_tp and tp is not None):
+                    self._next_sl = sl
+                    self._next_tp = tp
+                    self._arm_brackets = True
+            except Exception:
+                self._arm_brackets = False
+                self._next_sl = None
+                self._next_tp = None
+
+        # Short setup: eating_down + bearish fractal below alligator + pullback
+        if allow_short and state == "eating_down" and short_pullback and not np.isnan(last_bear):
+            if last_bear >= min(jaw, teeth, lips):
+                self._prev_position_open = False
+                return
+
+            eps = self.eps if self.eps is not None else max(1e-6, abs(last_bear) * 1e-6)
+            entry_stop = float(last_bear) - eps - half_spread
+
+            if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
+                self._prev_position_open = False
+                return
+
+            sl = None
+            tp = None
+            if not np.isnan(last_bull):
+                sl = max(float(last_bull), entry_stop + eps)
+                if entry_stop >= sl:
+                    sl = entry_stop + eps
+                risk = max(sl - entry_stop, eps)
+
+                if self.enable_tp:
+                    tp = entry_stop - self._cfg.tp_rr * risk
+                    if not (tp + eps < entry_stop < sl - eps):
+                        tp = None
+
+            try:
+                self.sell(stop=entry_stop)
+                self._last_short_stop = entry_stop
+
+                if sl is not None or (self.enable_tp and tp is not None):
+                    self._next_sl = sl
+                    self._next_tp = tp
+                    self._arm_brackets = True
+            except Exception:
+                self._arm_brackets = False
+                self._next_sl = None
+                self._next_tp = None
+
+        self._prev_position_open = bool(self.position)
