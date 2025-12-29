@@ -241,6 +241,8 @@ def run_comparison(
     htf_tf: str = "4h",
     atr_period: int = 14,
     atr_long: int = 100,
+    pullback_k_atr: float = 0.5,
+    require_touch_teeth: bool = False,
     exclusive_orders: bool = False,
     export: bool = True,
     print_table: bool = True,
@@ -287,7 +289,11 @@ def run_comparison(
         commission=commission,
         spread_pips=spread_pips,
         exclusive_orders=exclusive_orders,
-        strategy_params={**strategy_params, "pullback_k_atr": 0.5},  # or pass from args
+        strategy_params={
+            **strategy_params,
+            "pullback_k_atr": pullback_k_atr,
+            "require_touch_teeth": require_touch_teeth,
+        },
     )
 
     # comparisons
@@ -299,12 +305,26 @@ def run_comparison(
         outdir.mkdir(parents=True, exist_ok=True)
         (outdir / "strict_stats.json").write_text(json.dumps(_stats_to_json(strict_stats), indent=2))
         (outdir / "classic_stats.json").write_text(json.dumps(_stats_to_json(classic_stats), indent=2))
+        (outdir / "pullback_stats.json").write_text(json.dumps(_stats_to_json(pullback_stats), indent=2))
 
         export_trades_csv(strict_stats, outdir / "strict_trades.csv")
         export_equity_curve_csv(strict_stats, outdir / "strict_equity.csv")
         export_trades_csv(classic_stats, outdir / "classic_trades.csv")
         export_equity_curve_csv(classic_stats, outdir / "classic_equity.csv")
-        comparison_sc.to_csv(outdir / "comparison.csv", index=False)
+        export_trades_csv(pullback_stats, outdir / "pullback_trades.csv")
+        export_equity_curve_csv(pullback_stats, outdir / "pullback_equity.csv")
+        comparison_sc.to_csv(outdir / "comparison_strict_classic.csv", index=False)
+        comparison_sp.to_csv(outdir / "comparison_strict_pullback.csv", index=False)
+        comparison_cp.to_csv(outdir / "comparison_classic_pullback.csv", index=False)
+
+    pb_trades = pullback_stats.get("# Trades")
+    strict_trades = strict_stats.get("# Trades")
+    if _is_number(pb_trades) and _is_number(strict_trades):
+        if pb_trades <= 0 or pb_trades < 0.5 * strict_trades:
+            print(
+                "WARNING: Pullback trade count collapsed; likely gating bug. "
+                f"pullback={pb_trades}, strict={strict_trades}"
+            )
 
     if print_table:
         print("=" * 70)
@@ -315,13 +335,24 @@ def run_comparison(
         print("Classic Strategy Stats")
         print("=" * 70)
         print(classic_stats)
+        print("=" * 70)
+        print("Pullback Strategy Stats")
+        print("=" * 70)
+        print(pullback_stats)
         print("\nComparison (Strict vs Classic)")
         print(comparison_sc.to_string(index=False))
+        print("\nComparison (Strict vs Pullback)")
+        print(comparison_sp.to_string(index=False))
+        print("\nComparison (Classic vs Pullback)")
+        print(comparison_cp.to_string(index=False))
 
     return {
         "strict": strict_stats,
         "classic": classic_stats,
-        "comparison": comparison_sc,
+        "pullback": pullback_stats,
+        "comparison_sc": comparison_sc,
+        "comparison_sp": comparison_sp,
+        "comparison_cp": comparison_cp,
     }
 
 
@@ -406,7 +437,7 @@ if __name__ == "__main__":
 
     # mode
     parser.add_argument("--strategy", choices=["strict", "classic", "pullback"], default=None,
-                        help="If omitted, runs comparison (strict vs classic).")
+                        help="If omitted, runs comparison (strict vs classic vs pullback).")
 
     # data selection
     parser.add_argument("--data", help="Path/URL to CSV/Parquet data.")
@@ -484,7 +515,7 @@ if __name__ == "__main__":
 
     # --- run ---
     if args.strategy is None:
-        # comparison default: strict vs classic using optimized params
+        # comparison default: strict vs classic vs pullback using optimized params
         run_comparison(
             data,
             cash=cash,
@@ -497,6 +528,8 @@ if __name__ == "__main__":
             htf_tf=htf_tf,
             atr_period=atr_period,
             atr_long=atr_long,
+            pullback_k_atr=pullback_k_atr,
+            require_touch_teeth=require_touch_teeth,
             exclusive_orders=exclusive_orders,
             export=True,
             print_table=True,

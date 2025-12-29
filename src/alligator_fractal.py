@@ -673,6 +673,7 @@ class AlligatorFractalPullback(AlligatorFractal):
 
     pullback_k_atr = 0.5
     require_touch_teeth = False
+    pullback_max_bars = 20
 
     def init(self):
         super().init()
@@ -689,6 +690,10 @@ class AlligatorFractalPullback(AlligatorFractal):
         )
         atr = compute_atr_ohlc(df, self.atr_period)
         self._atr = atr.to_numpy(dtype=float)
+        self._pb_long_armed = False
+        self._pb_short_armed = False
+        self._pb_long_armed_i = None
+        self._pb_short_armed_i = None
 
     def next(self):
         i = len(self.data.Close) - 1
@@ -739,13 +744,28 @@ class AlligatorFractalPullback(AlligatorFractal):
 
         # No new entries in non-trending states
         if state in ("sleeping", "crossing", "unknown"):
+            self._pb_long_armed = False
+            self._pb_short_armed = False
+            self._pb_long_armed_i = None
+            self._pb_short_armed_i = None
             self._prev_position_open = False
             return
 
         atr_now = self._atr[i] if i < len(self._atr) else np.nan
         if np.isnan(atr_now):
+            self._pb_long_armed = False
+            self._pb_short_armed = False
+            self._pb_long_armed_i = None
+            self._pb_short_armed_i = None
             self._prev_position_open = False
             return
+
+        if not allow_long or state != "eating_up":
+            self._pb_long_armed = False
+            self._pb_long_armed_i = None
+        if not allow_short or state != "eating_down":
+            self._pb_short_armed = False
+            self._pb_short_armed_i = None
 
         if self.require_touch_teeth:
             long_pullback = self._lows[i] <= teeth
@@ -753,6 +773,28 @@ class AlligatorFractalPullback(AlligatorFractal):
         else:
             long_pullback = self._lows[i] <= teeth + self.pullback_k_atr * atr_now
             short_pullback = self._highs[i] >= teeth - self.pullback_k_atr * atr_now
+
+        if allow_long and state == "eating_up" and long_pullback:
+            self._pb_long_armed = True
+            self._pb_long_armed_i = i
+        if allow_short and state == "eating_down" and short_pullback:
+            self._pb_short_armed = True
+            self._pb_short_armed_i = i
+
+        if (
+            self._pb_long_armed
+            and self._pb_long_armed_i is not None
+            and i - self._pb_long_armed_i >= self.pullback_max_bars
+        ):
+            self._pb_long_armed = False
+            self._pb_long_armed_i = None
+        if (
+            self._pb_short_armed
+            and self._pb_short_armed_i is not None
+            and i - self._pb_short_armed_i >= self.pullback_max_bars
+        ):
+            self._pb_short_armed = False
+            self._pb_short_armed_i = None
 
         # Find last confirmed fractals
         last_bull = np.nan
@@ -773,7 +815,11 @@ class AlligatorFractalPullback(AlligatorFractal):
         half_spread = spr / 2.0
 
         # Long setup: eating_up + bullish fractal above alligator + pullback
-        if allow_long and state == "eating_up" and long_pullback and not np.isnan(last_bull):
+        if allow_long and state == "eating_up" and self._pb_long_armed and not np.isnan(last_bull):
+            if self._closes[i] <= teeth:
+                self._prev_position_open = False
+                return
+
             if last_bull <= max(jaw, teeth, lips):
                 self._prev_position_open = False
                 return
@@ -805,6 +851,8 @@ class AlligatorFractalPullback(AlligatorFractal):
             try:
                 self.buy(stop=entry_stop)
                 self._last_long_stop = entry_stop
+                self._pb_long_armed = False
+                self._pb_long_armed_i = None
 
                 # Arm bracket for when position opens
                 if sl is not None or (self.enable_tp and tp is not None):
@@ -817,7 +865,11 @@ class AlligatorFractalPullback(AlligatorFractal):
                 self._next_tp = None
 
         # Short setup: eating_down + bearish fractal below alligator + pullback
-        if allow_short and state == "eating_down" and short_pullback and not np.isnan(last_bear):
+        if allow_short and state == "eating_down" and self._pb_short_armed and not np.isnan(last_bear):
+            if self._closes[i] >= teeth:
+                self._prev_position_open = False
+                return
+
             if last_bear >= min(jaw, teeth, lips):
                 self._prev_position_open = False
                 return
@@ -845,6 +897,8 @@ class AlligatorFractalPullback(AlligatorFractal):
             try:
                 self.sell(stop=entry_stop)
                 self._last_short_stop = entry_stop
+                self._pb_short_armed = False
+                self._pb_short_armed_i = None
 
                 if sl is not None or (self.enable_tp and tp is not None):
                     self._next_sl = sl
