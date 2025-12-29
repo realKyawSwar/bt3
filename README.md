@@ -173,6 +173,11 @@ reports/
 - `--data` lets you supply a CSV/Parquet file instead of remote fetch
 - `--spread` FX spread in pips (e.g., `1.5`)
 - `--exclusive_orders` prevents overlapping pending orders
+- `--no-htf-bias` disables the higher-timeframe (default H4) Alligator bias gate
+- `--no-vol-filter` disables the ATR(14) > SMA(100) volatility regime gate
+- `--htf` sets the higher-timeframe rule for bias (e.g., `4h`, `1d`)
+- `--atr` sets ATR period for volatility filter (default `14`)
+- `--atr-long` sets ATR SMA length for volatility filter (default `100`)
 - `--outdir` base output folder (default `reports/`)
 
 ## Strategy Development
