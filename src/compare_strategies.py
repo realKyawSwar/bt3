@@ -91,6 +91,9 @@ def _load_data(data_path: Optional[str], asset: Optional[str], tf: Optional[str]
 def _resample_ohlcv(df: pd.DataFrame, tf: Optional[str]) -> pd.DataFrame:
     if not tf:
         return df
+    df_tf = df.attrs.get("timeframe")
+    if df_tf is not None and str(df_tf).strip().lower() == tf.strip().lower():
+        return df
     rule = _parse_timeframe(tf)
     ohlc = {
         "Open": "first",
@@ -100,6 +103,26 @@ def _resample_ohlcv(df: pd.DataFrame, tf: Optional[str]) -> pd.DataFrame:
         "Volume": "sum",
     }
     return df.resample(rule).agg(ohlc)
+
+
+def _data_fingerprint(df: pd.DataFrame) -> str:
+    start = df.index.min() if not df.empty else None
+    end = df.index.max() if not df.empty else None
+    try:
+        infer_freq = pd.infer_freq(df.index)
+    except ValueError:
+        infer_freq = None
+    median_close = df["Close"].median() if "Close" in df.columns and not df.empty else None
+    attrs = dict(df.attrs) if df.attrs else {}
+    return (
+        "DATA "
+        f"rows={len(df)} "
+        f"start={start} "
+        f"end={end} "
+        f"infer_freq={infer_freq} "
+        f"median_close={median_close} "
+        f"attrs={attrs}"
+    )
 
 
 def _ensure_ohlc(df: pd.DataFrame) -> pd.DataFrame:
@@ -220,6 +243,8 @@ def main() -> None:
 
     if df.empty:
         raise ValueError("No data available after filtering/resampling.")
+
+    print(_data_fingerprint(df))
 
     strict_df = df.copy()
     classic_df = df.copy()
