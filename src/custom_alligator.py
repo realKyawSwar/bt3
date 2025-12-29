@@ -11,6 +11,24 @@ from alligator_fractal import AlligatorFractal, AlligatorFractalClassic, Alligat
 from bt3 import fetch_data, run_backtest
 from reporting import export_equity_curve_csv, export_trades_csv
 
+# --- Optimized defaults (used when CLI args not provided) ---
+OPT_DEFAULTS = dict(
+    currency="GBPJPY",
+    timeframe="1h",
+    spread_pips=1.5,
+    cash=10000.0,
+    commission=0.0,
+    exclusive_orders=True,
+    use_htf_bias=True,
+    use_vol_filter=True,
+    htf_tf="4h",
+    atr_period=14,
+    atr_long=50,         # <-- optimized value from your latest run
+    eps=None,
+    outdir=Path("reports/gbpjpy_h1_opt"),
+    pullback_k_atr=0.5,  # optional: only applies to pullback strategy
+    require_touch_teeth=False,
+)
 
 def _parse_timeframe(tf: str) -> str:
     tf_norm = tf.strip().lower()
@@ -262,7 +280,20 @@ def run_comparison(
         strategy_params=strategy_params,
     )
 
-    comparison = _comparison_table(strict_stats, classic_stats)
+    pullback_stats = run_backtest(
+        data=data.copy(),
+        strategy=AlligatorFractalPullback,
+        cash=cash,
+        commission=commission,
+        spread_pips=spread_pips,
+        exclusive_orders=exclusive_orders,
+        strategy_params={**strategy_params, "pullback_k_atr": 0.5},  # or pass from args
+    )
+
+    # comparisons
+    comparison_sc = _comparison_table(strict_stats, classic_stats, "strict", "classic")
+    comparison_sp = _comparison_table(strict_stats, pullback_stats, "strict", "pullback")
+    comparison_cp = _comparison_table(classic_stats, pullback_stats, "classic", "pullback")
 
     if export:
         outdir.mkdir(parents=True, exist_ok=True)
@@ -273,7 +304,7 @@ def run_comparison(
         export_equity_curve_csv(strict_stats, outdir / "strict_equity.csv")
         export_trades_csv(classic_stats, outdir / "classic_trades.csv")
         export_equity_curve_csv(classic_stats, outdir / "classic_equity.csv")
-        comparison.to_csv(outdir / "comparison.csv", index=False)
+        comparison_sc.to_csv(outdir / "comparison.csv", index=False)
 
     if print_table:
         print("=" * 70)
@@ -285,12 +316,12 @@ def run_comparison(
         print("=" * 70)
         print(classic_stats)
         print("\nComparison (Strict vs Classic)")
-        print(comparison.to_string(index=False))
+        print(comparison_sc.to_string(index=False))
 
     return {
         "strict": strict_stats,
         "classic": classic_stats,
-        "comparison": comparison,
+        "comparison": comparison_sc,
     }
 
 
@@ -367,61 +398,127 @@ def run_single(
 
 
 if __name__ == "__main__":
+
+    
     import argparse
 
-    parser = argparse.ArgumentParser(description="Run a single Alligator+Fractal strategy.")
-    parser.add_argument("--strategy", choices=["strict", "classic", "pullback"], default=None)
+    parser = argparse.ArgumentParser(description="Compare or run Alligator+Fractal strategies.")
+
+    # mode
+    parser.add_argument("--strategy", choices=["strict", "classic", "pullback"], default=None,
+                        help="If omitted, runs comparison (strict vs classic).")
+
+    # data selection
+    parser.add_argument("--data", help="Path/URL to CSV/Parquet data.")
+    parser.add_argument("--asset", help="Symbol for remote fetch via bt3.fetch_data.")
+    parser.add_argument("--tf", help="Timeframe (e.g. 1h, 4h, 15m).")
+
+    # backtest controls
+    parser.add_argument("--start", help="Start date (YYYY-MM-DD).")
+    parser.add_argument("--end", help="End date (YYYY-MM-DD).")
+    parser.add_argument("--cash", type=float, default=None)
+    parser.add_argument("--commission", type=float, default=None)
+    parser.add_argument("--spread", type=float, default=None)
+    parser.add_argument("--exclusive_orders", action="store_true", default=None)
+    parser.add_argument("--eps", type=float, default=None)
+
+    # filters
+    parser.add_argument("--no-htf-bias", action="store_true", default=False)
+    parser.add_argument("--no-vol-filter", action="store_true", default=False)
+    parser.add_argument("--htf", default=None, help="HTF timeframe (e.g. 4h).")
+    parser.add_argument("--atr", type=int, default=None)
+    parser.add_argument("--atr-long", type=int, default=None)
+
+    # pullback params (only used for pullback)
     parser.add_argument("--pullback-k", type=float, default=None)
     parser.add_argument("--touch-teeth", action="store_true", default=False)
+
+    # output
+    parser.add_argument("--outdir", default=None)
+
     args = parser.parse_args()
 
-    currency = "GBPJPY"
-    timeframe = "1h"
-    data_path = None
+    # --- resolve defaults + overrides ---
+    currency = args.asset or OPT_DEFAULTS["currency"]
+    timeframe = args.tf or OPT_DEFAULTS["timeframe"]
+    spread_pips = args.spread if args.spread is not None else OPT_DEFAULTS["spread_pips"]
+    cash = args.cash if args.cash is not None else OPT_DEFAULTS["cash"]
+    commission = args.commission if args.commission is not None else OPT_DEFAULTS["commission"]
 
-    data = _load_data(data_path, currency, timeframe)
-    data = _ensure_ohlc(data)
-    data = _filter_range(data, start=None, end=None)
+    # exclusive_orders: default to optimized True unless explicitly disabled
+    if args.exclusive_orders is None:
+        exclusive_orders = OPT_DEFAULTS["exclusive_orders"]
+    else:
+        exclusive_orders = bool(args.exclusive_orders)
+
+    use_htf_bias = OPT_DEFAULTS["use_htf_bias"] and (not args.no_htf_bias)
+    use_vol_filter = OPT_DEFAULTS["use_vol_filter"] and (not args.no_vol_filter)
+
+    htf_tf = args.htf or OPT_DEFAULTS["htf_tf"]
+    atr_period = args.atr if args.atr is not None else OPT_DEFAULTS["atr_period"]
+    atr_long = args.atr_long if args.atr_long is not None else OPT_DEFAULTS["atr_long"]
+
+    eps = args.eps if args.eps is not None else OPT_DEFAULTS["eps"]
+
+    outdir = Path(args.outdir) if args.outdir else OPT_DEFAULTS["outdir"]
+
+    # pullback strategy tuning
+    pullback_k_atr = args.pullback_k if args.pullback_k is not None else OPT_DEFAULTS["pullback_k_atr"]
+    require_touch_teeth = bool(args.touch_teeth) or OPT_DEFAULTS["require_touch_teeth"]
+
+    # --- load & prep data ---
+    # data = _load_data(args.data, currency, timeframe)
+    # Use optimized defaults when flags not provided
+    asset = args.asset or "GBPJPY"
+    tf = args.tf or "1h"
+
+    df = _load_data(args.data, asset, tf)
+
+    data = _ensure_ohlc(df)
+    data = _filter_range(data, start=args.start, end=args.end)
     data = _resample_ohlcv(data, timeframe)
     data = data.dropna(subset=["Open", "High", "Low", "Close"])
 
     if data.empty:
         raise ValueError("No data available after filtering/resampling.")
 
+    # --- run ---
     if args.strategy is None:
+        # comparison default: strict vs classic using optimized params
         run_comparison(
             data,
-            cash=10000.0,
-            commission=0.0,
-            spread_pips=1.5,
-            outdir=Path("reports/gbpjpy_h1"),
-            eps=None,
-            use_htf_bias=True,
-            use_vol_filter=True,
-            htf_tf="4h",
-            atr_period=14,
-            atr_long=100,
-            exclusive_orders=True,
+            cash=cash,
+            commission=commission,
+            spread_pips=spread_pips,
+            outdir=outdir,
+            eps=eps,
+            use_htf_bias=use_htf_bias,
+            use_vol_filter=use_vol_filter,
+            htf_tf=htf_tf,
+            atr_period=atr_period,
+            atr_long=atr_long,
+            exclusive_orders=exclusive_orders,
             export=True,
             print_table=True,
         )
     else:
+        # single strategy mode (strict/classic/pullback)
         run_single(
             data,
             strategy_name=args.strategy,
-            cash=10000.0,
-            commission=0.0,
-            spread_pips=1.5,
-            outdir=Path("reports/gbpjpy_h1"),
-            eps=None,
-            use_htf_bias=True,
-            use_vol_filter=True,
-            htf_tf="4h",
-            atr_period=14,
-            atr_long=100,
-            exclusive_orders=True,
+            cash=cash,
+            commission=commission,
+            spread_pips=spread_pips,
+            outdir=outdir,
+            eps=eps,
+            use_htf_bias=use_htf_bias,
+            use_vol_filter=use_vol_filter,
+            htf_tf=htf_tf,
+            atr_period=atr_period,
+            atr_long=atr_long,
+            exclusive_orders=exclusive_orders,
             export=True,
             print_table=True,
-            pullback_k_atr=args.pullback_k,
-            require_touch_teeth=args.touch_teeth,
+            pullback_k_atr=pullback_k_atr,
+            require_touch_teeth=require_touch_teeth,
         )

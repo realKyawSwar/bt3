@@ -255,6 +255,20 @@ The `run_backtest()` function returns comprehensive statistics:
 -Spread 1.5
 
 Exclusive orders ON
+
+Default:
+
+python src/compare_strategies.py
+runs GBPJPY 1h, spread 1.5, HTF 4h, ATR 14/50, exclusive orders ON.
+
+Override example:
+
+python src/compare_strategies.py --asset EURUSD --tf 1h --atr-long 100 --spread 1.0
+
+Pullback:
+
+python src/compare_strategies.py --strategy pullback --pullback-k 0.25
+
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
