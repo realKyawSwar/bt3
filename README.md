@@ -180,6 +180,33 @@ reports/
 - `--atr-long` sets ATR SMA length for volatility filter (default `100`)
 - `--outdir` base output folder (default `reports/`)
 
+### Run the Pullback variant
+
+Use the pullback strategy class to require a pullback into the Alligator Teeth zone before the strict fractal breakout entry.
+
+```python
+from alligator_fractal import AlligatorFractalPullback
+from bt3 import fetch_data, run_backtest
+
+data = fetch_data("GBPJPY", "1h")
+stats = run_backtest(
+    data,
+    AlligatorFractalPullback,
+    cash=10000,
+    commission=0.0002,
+    exclusive_orders=True,
+)
+print(stats)
+```
+
+Tune pullback behavior via class attributes:
+
+```python
+class PullbackTuned(AlligatorFractalPullback):
+    pullback_k_atr = 0.35
+    require_touch_teeth = False
+```
+
 ## Regression Checks
 
 Run the lightweight filter-coverage check to ensure enabling HTF bias + volatility filter reduces trades moderately:
