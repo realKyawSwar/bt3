@@ -230,9 +230,9 @@ class AlligatorFractal(Strategy):
     exit_on_sleeping = True
 
     # R-based management (optimize-friendly)
-    enable_be = True
-    be_at_r = 0.5
-    be_buffer_r = 0.0
+    enable_be = False
+    be_at_r = 1.0
+    be_buffer_r = 0.1
 
     # Entry cooldown after a trade closes (bars)
     cooldown_bars = 3
@@ -302,6 +302,7 @@ class AlligatorFractal(Strategy):
         self._trade_entry_price = None
         self._trade_initial_sl = None
         self._trade_r0 = None
+        self._be_done = False
         self._cooldown_until_i = None
 
         # Fractal cache
@@ -323,6 +324,7 @@ class AlligatorFractal(Strategy):
         self._trade_entry_price = None
         self._trade_initial_sl = None
         self._trade_r0 = None
+        self._be_done = False
 
     def _set_cooldown(self, i: int) -> None:
         if int(self.cooldown_bars) > 0:
@@ -423,8 +425,13 @@ class AlligatorFractal(Strategy):
             if self.enable_tp and self._next_tp is not None:
                 self.position.tp = self._next_tp
             # Capture per-trade entry data (frozen R0)
-            entry_price = getattr(self.position, "entry_price", None)
-            if entry_price is None or not np.isfinite(float(entry_price)):
+            entry_price = np.nan
+            if hasattr(self, "trades") and len(self.trades) > 0:
+                trade = self.trades[-1]
+                entry_price = float(getattr(trade, "entry_price", np.nan))
+            if not np.isfinite(entry_price):
+                entry_price = float(getattr(self.position, "entry_price", np.nan))
+            if not np.isfinite(entry_price):
                 entry_price = float(self.data.Close[-1])
             self._trade_entry_price = float(entry_price)
             self._trade_initial_sl = float(self._next_sl) if self._next_sl is not None else None
@@ -434,12 +441,13 @@ class AlligatorFractal(Strategy):
                 self._trade_r0 = r0 if r0 > eps else None
             else:
                 self._trade_r0 = None
+            self._be_done = False
             self._arm_brackets = False
             self._next_sl = None
             self._next_tp = None
 
     def _maybe_apply_break_even(self, current_price: float) -> None:
-        if not self.enable_be or not self.position:
+        if not self.enable_be or not self.position or self._be_done:
             return
         if self._trade_r0 is None or self._trade_entry_price is None:
             return
@@ -459,6 +467,7 @@ class AlligatorFractal(Strategy):
                 target = max(float(cur), target)
             if target < current_price - eps:
                 self.position.sl = float(target)
+                self._be_done = True
             return
 
         if current_price > entry - be_at * r0:
@@ -469,6 +478,7 @@ class AlligatorFractal(Strategy):
             target = min(float(cur), target)
         if target > current_price + eps:
             self.position.sl = float(target)
+            self._be_done = True
 
     def next(self):
         i = len(self.data.Close) - 1
@@ -631,6 +641,7 @@ class AlligatorFractalTrailing(AlligatorFractal):
 
     # Turn off strict "structure loss" exit so trailing logic can do the work
     exit_on_structure_loss = False
+    enable_be = True
 
     def _trail_fractal_sl(self, current_price: float) -> float | None:
         """
