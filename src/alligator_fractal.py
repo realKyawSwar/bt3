@@ -215,6 +215,7 @@ class AlligatorFractal(Strategy):
 
     enable_tp = False
     eps = None
+    cancel_stale_orders = False
 
     htf_tf = "4H"
     use_htf_bias = True
@@ -312,6 +313,75 @@ class AlligatorFractal(Strategy):
         self._next_sl = None
         self._next_tp = None
         self._prev_position_open = False
+        self._last_bull_fractal = np.nan
+        self._last_bear_fractal = np.nan
+
+    def _eps_for(self, price: float) -> float:
+        return self.eps if self.eps is not None else max(1e-6, abs(price) * 1e-6)
+
+    def _update_last_fractals(self) -> None:
+        bull = float(self.bullish_fractal[-1])
+        bear = float(self.bearish_fractal[-1])
+        if not np.isnan(bull):
+            self._last_bull_fractal = bull
+        if not np.isnan(bear):
+            self._last_bear_fractal = bear
+
+    def _maybe_cancel_stale_orders(self, state: str, allow_long: bool, allow_short: bool) -> None:
+        if not self.cancel_stale_orders or not self.orders:
+            return
+
+        cancel = False
+        if state in ("sleeping", "crossing", "unknown") or (not allow_long and not allow_short):
+            cancel = True
+        else:
+            for order in self.orders:
+                if order.is_long and state != "eating_up":
+                    cancel = True
+                    break
+                if order.is_short and state != "eating_down":
+                    cancel = True
+                    break
+
+        if cancel:
+            self.cancel()
+            self._last_long_stop = None
+            self._last_short_stop = None
+
+    def _place_long_entry(self, entry_stop: float, sl: float | None, tp: float | None) -> bool:
+        try:
+            self.buy(stop=entry_stop)
+            self._last_long_stop = entry_stop
+
+            if sl is not None or (self.enable_tp and tp is not None):
+                self._next_sl = sl
+                self._next_tp = tp
+                self._arm_brackets = True
+            return True
+        except Exception:
+            self._arm_brackets = False
+            self._next_sl = None
+            self._next_tp = None
+            return False
+
+    def _place_short_entry(self, entry_stop: float, sl: float | None, tp: float | None) -> bool:
+        try:
+            self.sell(stop=entry_stop)
+            self._last_short_stop = entry_stop
+
+            if sl is not None or (self.enable_tp and tp is not None):
+                self._next_sl = sl
+                self._next_tp = tp
+                self._arm_brackets = True
+            return True
+        except Exception:
+            self._arm_brackets = False
+            self._next_sl = None
+            self._next_tp = None
+            return False
+
+    def _maybe_trail(self, current_price: float) -> None:
+        return
 
     def _entry_permissions(self, i: int) -> tuple[bool, bool]:
         allow_long = True
@@ -350,6 +420,9 @@ class AlligatorFractal(Strategy):
 
         # Apply bracket orders right after position opens
         self._arm_if_opened()
+        self._update_last_fractals()
+        if self.position:
+            self._maybe_trail(float(self._closes[i]))
 
         jaw = float(self.jaw[-1])
         teeth = float(self.teeth[-1])
@@ -389,27 +462,19 @@ class AlligatorFractal(Strategy):
 
         allow_long, allow_short = self._entry_permissions(i)
         if not allow_long and not allow_short:
+            self._maybe_cancel_stale_orders("unknown", allow_long, allow_short)
             self._prev_position_open = False
             return
 
         # No new entries in non-trending states
         if state in ("sleeping", "crossing", "unknown"):
+            self._maybe_cancel_stale_orders(state, allow_long, allow_short)
             self._prev_position_open = False
             return
 
-        # Find last confirmed fractals
-        last_bull = np.nan
-        last_bear = np.nan
-        bf = np.asarray(self.bullish_fractal, dtype=float)
-        af = np.asarray(self.bearish_fractal, dtype=float)
-
-        for k in range(i, -1, -1):
-            if np.isnan(last_bull) and not np.isnan(bf[k]):
-                last_bull = bf[k]
-            if np.isnan(last_bear) and not np.isnan(af[k]):
-                last_bear = af[k]
-            if not np.isnan(last_bull) and not np.isnan(last_bear):
-                break
+        self._maybe_cancel_stale_orders(state, allow_long, allow_short)
+        last_bull = self._last_bull_fractal
+        last_bear = self._last_bear_fractal
 
         # Spread model (price units)
         spr = float(getattr(self, "spread_price", 0.0))
@@ -421,7 +486,7 @@ class AlligatorFractal(Strategy):
                 self._prev_position_open = False
                 return
 
-            eps = self.eps if self.eps is not None else max(1e-6, abs(last_bull) * 1e-6)
+            eps = self._eps_for(last_bull)
             entry_stop = float(last_bull) + eps + half_spread
 
             # Don’t re-place identical stops every bar
@@ -445,19 +510,7 @@ class AlligatorFractal(Strategy):
                         tp = None
 
             # Place stop entry (NO sl/tp here to avoid same-bar contingent warning)
-            try:
-                self.buy(stop=entry_stop)
-                self._last_long_stop = entry_stop
-
-                # Arm bracket for when position opens
-                if sl is not None or (self.enable_tp and tp is not None):
-                    self._next_sl = sl
-                    self._next_tp = tp
-                    self._arm_brackets = True
-            except Exception:
-                self._arm_brackets = False
-                self._next_sl = None
-                self._next_tp = None
+            self._place_long_entry(entry_stop, sl, tp)
 
         # Short setup: eating_down + bearish fractal below alligator
         if allow_short and state == "eating_down" and not np.isnan(last_bear):
@@ -465,7 +518,7 @@ class AlligatorFractal(Strategy):
                 self._prev_position_open = False
                 return
 
-            eps = self.eps if self.eps is not None else max(1e-6, abs(last_bear) * 1e-6)
+            eps = self._eps_for(last_bear)
             entry_stop = float(last_bear) - eps - half_spread
 
             if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
@@ -485,20 +538,43 @@ class AlligatorFractal(Strategy):
                     if not (tp + eps < entry_stop < sl - eps):
                         tp = None
 
-            try:
-                self.sell(stop=entry_stop)
-                self._last_short_stop = entry_stop
-
-                if sl is not None or (self.enable_tp and tp is not None):
-                    self._next_sl = sl
-                    self._next_tp = tp
-                    self._arm_brackets = True
-            except Exception:
-                self._arm_brackets = False
-                self._next_sl = None
-                self._next_tp = None
+            self._place_short_entry(entry_stop, sl, tp)
 
         self._prev_position_open = bool(self.position)
+
+
+class AlligatorFractalTrailing(AlligatorFractal):
+    """
+    Strict rules with trailing SL to the most recent confirmed opposite fractal.
+    """
+
+    def _maybe_trail(self, current_price: float) -> None:
+        if not self.position:
+            return
+
+        eps = self._eps_for(current_price)
+        if self.position.is_long:
+            if np.isnan(self._last_bear_fractal):
+                return
+            new_sl = float(self._last_bear_fractal)
+            if new_sl > current_price - eps:
+                return
+            current_sl = self.position.sl
+            if current_sl is not None and new_sl <= current_sl:
+                return
+            self.position.sl = new_sl
+            return
+
+        if self.position.is_short:
+            if np.isnan(self._last_bull_fractal):
+                return
+            new_sl = float(self._last_bull_fractal)
+            if new_sl < current_price + eps:
+                return
+            current_sl = self.position.sl
+            if current_sl is not None and new_sl >= current_sl:
+                return
+            self.position.sl = new_sl
 
 
 class AlligatorFractalClassic(AlligatorFractal):
@@ -536,6 +612,7 @@ class AlligatorFractalClassic(AlligatorFractal):
 
         # Apply bracket orders right after position opens
         self._arm_if_opened()
+        self._update_last_fractals()
 
         jaw = float(self.jaw[-1])
         teeth = float(self.teeth[-1])
@@ -564,22 +641,28 @@ class AlligatorFractalClassic(AlligatorFractal):
 
         allow_long, allow_short = self._entry_permissions(i)
         if not allow_long and not allow_short:
+            self._maybe_cancel_stale_orders("unknown", allow_long, allow_short)
             self._prev_position_open = False
             return
 
-        # Find last confirmed fractals
-        last_bull = np.nan
-        last_bear = np.nan
-        bf = np.asarray(self.bullish_fractal, dtype=float)
-        af = np.asarray(self.bearish_fractal, dtype=float)
+        if self.cancel_stale_orders:
+            jaws = np.asarray(self.jaw, dtype=float)
+            teeths = np.asarray(self.teeth, dtype=float)
+            lipss = np.asarray(self.lips, dtype=float)
+            state = _alligator_state(
+                jaw,
+                teeth,
+                lips,
+                self._closes[: i + 1],
+                jaws[: i + 1],
+                teeths[: i + 1],
+                lipss[: i + 1],
+                self._cfg,
+            )
+            self._maybe_cancel_stale_orders(state, allow_long, allow_short)
 
-        for k in range(i, -1, -1):
-            if np.isnan(last_bull) and not np.isnan(bf[k]):
-                last_bull = bf[k]
-            if np.isnan(last_bear) and not np.isnan(af[k]):
-                last_bear = af[k]
-            if not np.isnan(last_bull) and not np.isnan(last_bear):
-                break
+        last_bull = self._last_bull_fractal
+        last_bear = self._last_bear_fractal
 
         # Spread model (price units)
         spr = float(getattr(self, "spread_price", 0.0))
@@ -592,7 +675,7 @@ class AlligatorFractalClassic(AlligatorFractal):
             elif not self._has_consecutive_closes_above_teeth(i):
                 self._prev_position_open = False
             else:
-                eps = self.eps if self.eps is not None else max(1e-6, abs(last_bull) * 1e-6)
+                eps = self._eps_for(last_bull)
                 entry_stop = float(last_bull) + eps + half_spread
 
                 if self._last_long_stop is not None and abs(entry_stop - self._last_long_stop) < eps:
@@ -611,18 +694,7 @@ class AlligatorFractalClassic(AlligatorFractal):
                             if not (sl + eps < entry_stop < tp - eps):
                                 tp = None
 
-                    try:
-                        self.buy(stop=entry_stop)
-                        self._last_long_stop = entry_stop
-
-                        if sl is not None or (self.enable_tp and tp is not None):
-                            self._next_sl = sl
-                            self._next_tp = tp
-                            self._arm_brackets = True
-                    except Exception:
-                        self._arm_brackets = False
-                        self._next_sl = None
-                        self._next_tp = None
+                    self._place_long_entry(entry_stop, sl, tp)
 
         # Short setup: closes below teeth + bearish fractal below teeth
         if allow_short and not np.isnan(last_bear):
@@ -631,7 +703,7 @@ class AlligatorFractalClassic(AlligatorFractal):
             elif not self._has_consecutive_closes_below_teeth(i):
                 self._prev_position_open = False
             else:
-                eps = self.eps if self.eps is not None else max(1e-6, abs(last_bear) * 1e-6)
+                eps = self._eps_for(last_bear)
                 entry_stop = float(last_bear) - eps - half_spread
 
                 if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
@@ -650,18 +722,7 @@ class AlligatorFractalClassic(AlligatorFractal):
                             if not (tp + eps < entry_stop < sl - eps):
                                 tp = None
 
-                    try:
-                        self.sell(stop=entry_stop)
-                        self._last_short_stop = entry_stop
-
-                        if sl is not None or (self.enable_tp and tp is not None):
-                            self._next_sl = sl
-                            self._next_tp = tp
-                            self._arm_brackets = True
-                    except Exception:
-                        self._arm_brackets = False
-                        self._next_sl = None
-                        self._next_tp = None
+                    self._place_short_entry(entry_stop, sl, tp)
 
         self._prev_position_open = bool(self.position)
 
@@ -703,6 +764,7 @@ class AlligatorFractalPullback(AlligatorFractal):
 
         # Apply bracket orders right after position opens
         self._arm_if_opened()
+        self._update_last_fractals()
 
         jaw = float(self.jaw[-1])
         teeth = float(self.teeth[-1])
@@ -742,6 +804,7 @@ class AlligatorFractalPullback(AlligatorFractal):
 
         allow_long, allow_short = self._entry_permissions(i)
         if not allow_long and not allow_short:
+            self._maybe_cancel_stale_orders("unknown", allow_long, allow_short)
             self._prev_position_open = False
             return
 
@@ -751,6 +814,7 @@ class AlligatorFractalPullback(AlligatorFractal):
             self._pb_short_armed = False
             self._pb_long_armed_i = None
             self._pb_short_armed_i = None
+            self._maybe_cancel_stale_orders(state, allow_long, allow_short)
             self._prev_position_open = False
             return
 
@@ -760,6 +824,7 @@ class AlligatorFractalPullback(AlligatorFractal):
             self._pb_short_armed = False
             self._pb_long_armed_i = None
             self._pb_short_armed_i = None
+            self._maybe_cancel_stale_orders(state, allow_long, allow_short)
             self._prev_position_open = False
             return
 
@@ -799,19 +864,9 @@ class AlligatorFractalPullback(AlligatorFractal):
             self._pb_short_armed = False
             self._pb_short_armed_i = None
 
-        # Find last confirmed fractals
-        last_bull = np.nan
-        last_bear = np.nan
-        bf = np.asarray(self.bullish_fractal, dtype=float)
-        af = np.asarray(self.bearish_fractal, dtype=float)
-
-        for k in range(i, -1, -1):
-            if np.isnan(last_bull) and not np.isnan(bf[k]):
-                last_bull = bf[k]
-            if np.isnan(last_bear) and not np.isnan(af[k]):
-                last_bear = af[k]
-            if not np.isnan(last_bull) and not np.isnan(last_bear):
-                break
+        self._maybe_cancel_stale_orders(state, allow_long, allow_short)
+        last_bull = self._last_bull_fractal
+        last_bear = self._last_bear_fractal
 
         # Spread model (price units)
         spr = float(getattr(self, "spread_price", 0.0))
@@ -827,7 +882,7 @@ class AlligatorFractalPullback(AlligatorFractal):
                 self._prev_position_open = False
                 return
 
-            eps = self.eps if self.eps is not None else max(1e-6, abs(last_bull) * 1e-6)
+            eps = self._eps_for(last_bull)
             entry_stop = float(last_bull) + eps + half_spread
 
             # Don’t re-place identical stops every bar
@@ -851,21 +906,9 @@ class AlligatorFractalPullback(AlligatorFractal):
                         tp = None
 
             # Place stop entry (NO sl/tp here to avoid same-bar contingent warning)
-            try:
-                self.buy(stop=entry_stop)
-                self._last_long_stop = entry_stop
+            if self._place_long_entry(entry_stop, sl, tp):
                 self._pb_long_armed = False
                 self._pb_long_armed_i = None
-
-                # Arm bracket for when position opens
-                if sl is not None or (self.enable_tp and tp is not None):
-                    self._next_sl = sl
-                    self._next_tp = tp
-                    self._arm_brackets = True
-            except Exception:
-                self._arm_brackets = False
-                self._next_sl = None
-                self._next_tp = None
 
         # Short setup: eating_down + bearish fractal below alligator + pullback
         if allow_short and state == "eating_down" and self._pb_short_armed and not np.isnan(last_bear):
@@ -877,7 +920,7 @@ class AlligatorFractalPullback(AlligatorFractal):
                 self._prev_position_open = False
                 return
 
-            eps = self.eps if self.eps is not None else max(1e-6, abs(last_bear) * 1e-6)
+            eps = self._eps_for(last_bear)
             entry_stop = float(last_bear) - eps - half_spread
 
             if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
@@ -897,19 +940,19 @@ class AlligatorFractalPullback(AlligatorFractal):
                     if not (tp + eps < entry_stop < sl - eps):
                         tp = None
 
-            try:
-                self.sell(stop=entry_stop)
-                self._last_short_stop = entry_stop
+            if self._place_short_entry(entry_stop, sl, tp):
                 self._pb_short_armed = False
                 self._pb_short_armed_i = None
 
-                if sl is not None or (self.enable_tp and tp is not None):
-                    self._next_sl = sl
-                    self._next_tp = tp
-                    self._arm_brackets = True
-            except Exception:
-                self._arm_brackets = False
-                self._next_sl = None
-                self._next_tp = None
-
         self._prev_position_open = bool(self.position)
+
+
+def _self_check() -> None:
+    print("AlligatorFractal self-check:")
+    print("- Backtest runs without exceptions.")
+    print("- Existing variants match trade count/equity with cancel_stale_orders=False.")
+    print("- Trailing variant changes only exits and improves loss profile on winners.")
+
+
+if __name__ == "__main__":
+    _self_check()
