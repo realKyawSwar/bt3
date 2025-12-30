@@ -25,7 +25,7 @@ from reporting import export_equity_curve_csv, export_trades_csv
 OPT_DEFAULTS = dict(
     currency="GBPJPY",
     timeframe="1h",
-    spread_pips=1.5,
+    spread_pips=3.5,
     cash=10000.0,
     commission=0.0,
     exclusive_orders=True,
@@ -767,6 +767,7 @@ if __name__ == "__main__":
 
     # --- run ---
     if args.strategy is None:
+        print(f'spread_pips={spread_pips}')
         run_comparison(
             data,
             cash=cash,
