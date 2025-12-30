@@ -437,15 +437,18 @@ class AlligatorFractal(Strategy):
         """Apply SL/TP only after stop order becomes a trade."""
         if self._arm_brackets and self.position and not self._prev_position_open:
             # Capture per-trade entry data (frozen R0)
-            mid_entry = float(getattr(self.position, "entry_price", np.nan))
-            if not np.isfinite(mid_entry):
-                mid_entry = float(self.data.Close[-1])
-            self._trade_entry_price = mid_entry
+            engine_entry = float(getattr(self.position, "entry_price", np.nan))
+            self._trade_entry_price = engine_entry if np.isfinite(engine_entry) else None
 
             raw_sl = self._next_sl
             raw_tp = self._next_tp
-            adjusted_sl = raw_sl
-            adjusted_tp = raw_tp
+            is_long = bool(self.position.is_long)
+            adjusted_sl = (
+                self._exit_level_to_engine_level(raw_sl, is_long) if raw_sl is not None else None
+            )
+            adjusted_tp = (
+                self._exit_level_to_engine_level(raw_tp, is_long) if raw_tp is not None else None
+            )
 
             if adjusted_sl is not None:
                 self.position.sl = adjusted_sl
