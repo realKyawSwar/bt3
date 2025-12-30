@@ -427,7 +427,7 @@ class AlligatorFractal(Strategy):
             self._cfg,
         )
 
-        # Exits (NOW RESPECT FLAGS)
+        # Exits: close on sleeping or structure loss (configurable)
         if self.position:
             self._last_long_stop = None
             self._last_short_stop = None
@@ -769,25 +769,26 @@ class AlligatorFractalPullback(AlligatorFractal):
 
         state = _alligator_state(jaw, teeth, lips, self._closes[: i + 1], jaws[: i + 1], teeths[: i + 1], lipss[: i + 1], self._cfg)
 
-        # Exits: close on sleeping or structure loss
+        # Exits: close on sleeping or structure loss (configurable)
         if self.position:
             self._last_long_stop = None
             self._last_short_stop = None
 
-            if state == "sleeping":
+            if self.exit_on_sleeping and state == "sleeping":
                 self.position.close()
                 self._prev_position_open = bool(self.position)
                 return
 
-            if self.position.is_long and not (lips > teeth > jaw):
-                self.position.close()
-                self._prev_position_open = bool(self.position)
-                return
+            if self.exit_on_structure_loss:
+                if self.position.is_long and not (lips > teeth > jaw):
+                    self.position.close()
+                    self._prev_position_open = bool(self.position)
+                    return
 
-            if self.position.is_short and not (lips < teeth < jaw):
-                self.position.close()
-                self._prev_position_open = bool(self.position)
-                return
+                if self.position.is_short and not (lips < teeth < jaw):
+                    self.position.close()
+                    self._prev_position_open = bool(self.position)
+                    return
 
             self._prev_position_open = True
             return
