@@ -229,6 +229,14 @@ class AlligatorFractal(Strategy):
     exit_on_structure_loss = True
     exit_on_sleeping = True
 
+    # R-based management (optimize-friendly)
+    enable_be = True
+    be_at_r = 0.5
+    be_buffer_r = 0.0
+
+    # Entry cooldown after a trade closes (bars)
+    cooldown_bars = 3
+
     def init(self):
         # Cache OHLC arrays once
         self._closes = np.asarray(self.data.Close, dtype=float)
@@ -290,6 +298,12 @@ class AlligatorFractal(Strategy):
         self._next_tp = None
         self._prev_position_open = False
 
+        # Per-trade frozen entry info (R0) + cooldown
+        self._trade_entry_price = None
+        self._trade_initial_sl = None
+        self._trade_r0 = None
+        self._cooldown_until_i = None
+
         # Fractal cache
         self._last_bull_fractal = np.nan
         self._last_bear_fractal = np.nan
@@ -304,6 +318,24 @@ class AlligatorFractal(Strategy):
             self._last_bull_fractal = bull
         if not np.isnan(bear):
             self._last_bear_fractal = bear
+
+    def _reset_trade_meta(self) -> None:
+        self._trade_entry_price = None
+        self._trade_initial_sl = None
+        self._trade_r0 = None
+
+    def _set_cooldown(self, i: int) -> None:
+        if int(self.cooldown_bars) > 0:
+            self._cooldown_until_i = i + int(self.cooldown_bars)
+        else:
+            self._cooldown_until_i = None
+
+    def _cooldown_active(self, i: int) -> bool:
+        if int(self.cooldown_bars) <= 0:
+            return False
+        if self._cooldown_until_i is None:
+            return False
+        return i <= int(self._cooldown_until_i)
 
     def _maybe_cancel_stale_orders(self, state: str, allow_long: bool, allow_short: bool) -> None:
         if not self.cancel_stale_orders or not self.orders:
@@ -390,18 +422,71 @@ class AlligatorFractal(Strategy):
                 self.position.sl = self._next_sl
             if self.enable_tp and self._next_tp is not None:
                 self.position.tp = self._next_tp
+            # Capture per-trade entry data (frozen R0)
+            entry_price = getattr(self.position, "entry_price", None)
+            if entry_price is None or not np.isfinite(float(entry_price)):
+                entry_price = float(self.data.Close[-1])
+            self._trade_entry_price = float(entry_price)
+            self._trade_initial_sl = float(self._next_sl) if self._next_sl is not None else None
+            if self._trade_entry_price is not None and self._trade_initial_sl is not None:
+                r0 = abs(self._trade_entry_price - self._trade_initial_sl)
+                eps = self._eps_for(self._trade_entry_price)
+                self._trade_r0 = r0 if r0 > eps else None
+            else:
+                self._trade_r0 = None
             self._arm_brackets = False
             self._next_sl = None
             self._next_tp = None
 
+    def _maybe_apply_break_even(self, current_price: float) -> None:
+        if not self.enable_be or not self.position:
+            return
+        if self._trade_r0 is None or self._trade_entry_price is None:
+            return
+
+        r0 = float(self._trade_r0)
+        entry = float(self._trade_entry_price)
+        eps = self._eps_for(current_price)
+        be_at = float(self.be_at_r)
+        be_buf = float(self.be_buffer_r) * r0
+
+        if self.position.is_long:
+            if current_price < entry + be_at * r0:
+                return
+            target = entry + be_buf
+            cur = self.position.sl
+            if cur is not None:
+                target = max(float(cur), target)
+            if target < current_price - eps:
+                self.position.sl = float(target)
+            return
+
+        if current_price > entry - be_at * r0:
+            return
+        target = entry - be_buf
+        cur = self.position.sl
+        if cur is not None:
+            target = min(float(cur), target)
+        if target > current_price + eps:
+            self.position.sl = float(target)
+
     def next(self):
         i = len(self.data.Close) - 1
+        if self._prev_position_open and not self.position:
+            self._set_cooldown(i)
+            self._reset_trade_meta()
+        elif not self.position:
+            self._reset_trade_meta()
 
         # Apply bracket orders right after position opens
         self._arm_if_opened()
 
         # Update fractal caches FIRST (so trailing can use latest confirmed)
         self._update_last_fractals()
+
+        # Apply BE logic BEFORE any trailing
+        if self.position:
+            self._maybe_apply_break_even(float(self._closes[i]))
 
         # Trail SL if applicable (trailing variant overrides _maybe_trail)
         if self.position:
@@ -434,17 +519,23 @@ class AlligatorFractal(Strategy):
 
             if self.exit_on_sleeping and state == "sleeping":
                 self.position.close()
+                self._set_cooldown(i)
+                self._reset_trade_meta()
                 self._prev_position_open = bool(self.position)
                 return
 
             if self.exit_on_structure_loss:
                 if self.position.is_long and not (lips > teeth > jaw):
                     self.position.close()
+                    self._set_cooldown(i)
+                    self._reset_trade_meta()
                     self._prev_position_open = bool(self.position)
                     return
 
                 if self.position.is_short and not (lips < teeth < jaw):
                     self.position.close()
+                    self._set_cooldown(i)
+                    self._reset_trade_meta()
                     self._prev_position_open = bool(self.position)
                     return
 
@@ -463,6 +554,9 @@ class AlligatorFractal(Strategy):
             return
 
         self._maybe_cancel_stale_orders(state, allow_long, allow_short)
+        if self._cooldown_active(i):
+            self._prev_position_open = False
+            return
         last_bull = self._last_bull_fractal
         last_bear = self._last_bear_fractal
 
@@ -532,97 +626,11 @@ class AlligatorFractalTrailing(AlligatorFractal):
     """
     Strict entries, but exits are managed by:
       - Opposite fractal trailing SL
-      - 1R break-even (optional)
-      - 2R profit-lock (optional)
-      - Optional time-stop for stagnant trades
+      - Base-class break-even logic (optional)
     """
 
     # Turn off strict "structure loss" exit so trailing logic can do the work
     exit_on_structure_loss = False
-
-    # --- R-based management ---
-    enable_break_even = True
-    break_even_at_r = 0.5
-    break_even_buffer_r = 0.0
-
-    enable_profit_lock = True
-    profit_lock_at_r = 1.2
-    profit_lock_to_r = 0.3
-
-
-    # --- Optional time stop ---
-    enable_time_stop = True
-    max_hold_bars = 240        # ~10 days H1
-    time_stop_min_r = 0.2
-
-
-    def init(self):
-        super().init()
-        self._trade_open_i = None
-        self._entry_price = np.nan
-        self._initial_risk = np.nan
-
-    def _current_entry_price(self) -> float:
-        # backtesting.py may expose entry price; fall back to close
-        ep = getattr(self.position, "entry_price", None)
-        if ep is None:
-            ep = float(self.data.Close[-1])
-        return float(ep)
-
-    def _compute_initial_risk(self) -> float:
-        sl = self.position.sl
-        if sl is None:
-            return np.nan
-        entry = self._entry_price
-        if self.position.is_long:
-            return float(entry - float(sl))
-        return float(float(sl) - entry)
-
-    def _profit_r(self, current_price: float) -> float:
-        if not np.isfinite(self._initial_risk) or self._initial_risk <= 0:
-            return 0.0
-        if self.position.is_long:
-            return float((current_price - self._entry_price) / self._initial_risk)
-        return float((self._entry_price - current_price) / self._initial_risk)
-
-    def _ensure_trade_meta(self, i: int) -> None:
-        """
-        Capture entry_price + initial risk the moment position becomes open and SL exists.
-        """
-        if not self.position:
-            self._trade_open_i = None
-            self._entry_price = np.nan
-            self._initial_risk = np.nan
-            return
-
-        # already captured
-        if self._trade_open_i is not None and np.isfinite(self._initial_risk) and self._initial_risk > 0:
-            return
-
-        # need SL first (your brackets are armed after open)
-        if self.position.sl is None:
-            return
-
-        self._trade_open_i = i
-        self._entry_price = self._current_entry_price()
-        self._initial_risk = self._compute_initial_risk()
-
-        # guard: if SL is weird (<=0 risk), disable R logic safely
-        eps = self._eps_for(self._entry_price)
-        if not np.isfinite(self._initial_risk) or self._initial_risk < eps:
-            self._initial_risk = np.nan
-
-    def _maybe_time_stop(self, i: int, current_price: float) -> None:
-        if not self.enable_time_stop or not self.position:
-            return
-        if self._trade_open_i is None:
-            return
-        if i - self._trade_open_i < int(self.max_hold_bars):
-            return
-
-        pr = self._profit_r(current_price)
-        if pr < float(self.time_stop_min_r):
-            self.position.close()
 
     def _trail_fractal_sl(self, current_price: float) -> float | None:
         """
@@ -655,98 +663,12 @@ class AlligatorFractalTrailing(AlligatorFractal):
 
         return None
 
-    def _trail_r_rules_sl(self, current_price: float) -> float | None:
-        """
-        Candidate SL from BE/profit-lock rules.
-        """
-        if not np.isfinite(self._initial_risk) or self._initial_risk <= 0:
-            return None
-
-        pr = self._profit_r(current_price)
-        eps = self._eps_for(current_price)
-
-        candidates = []
-
-        # 1R break-even
-        if self.enable_break_even and pr >= float(self.break_even_at_r):
-            buf = float(self.break_even_buffer_r) * float(self._initial_risk)
-            if self.position.is_long:
-                candidates.append(self._entry_price + buf)
-            else:
-                candidates.append(self._entry_price - buf)
-
-        # 2R profit lock
-        if self.enable_profit_lock and pr >= float(self.profit_lock_at_r):
-            lock = float(self.profit_lock_to_r) * float(self._initial_risk)
-            if self.position.is_long:
-                candidates.append(self._entry_price + lock)
-            else:
-                candidates.append(self._entry_price - lock)
-
-        if not candidates:
-            return None
-
-        # pick the tightest SL in the right direction
-        if self.position.is_long:
-            target = max(candidates)
-            # keep SL safely below current price
-            if target > current_price - eps:
-                return None
-            cur = self.position.sl
-            if cur is not None and target <= float(cur):
-                return None
-            return target
-
-        target = min(candidates)
-        if target < current_price + eps:
-            return None
-        cur = self.position.sl
-        if cur is not None and target >= float(cur):
-            return None
-        return target
-
-    def _apply_best_trailing_sl(self, current_price: float) -> None:
+    def _maybe_trail(self, current_price: float) -> None:
         if not self.position:
             return
-
-        fractal_sl = self._trail_fractal_sl(current_price)
-        r_sl = self._trail_r_rules_sl(current_price)
-
-        best = None
-        if fractal_sl is None:
-            best = r_sl
-        elif r_sl is None:
-            best = fractal_sl
-        else:
-            # choose the more protective SL
-            best = max(fractal_sl, r_sl) if self.position.is_long else min(fractal_sl, r_sl)
-
-        if best is not None:
-            self.position.sl = float(best)
-
-    def next(self):
-        # Run strict entry logic (and any base exits that remain enabled)
-        super().next()
-
-        if not self.position:
-            return
-
-        i = len(self.data.Close) - 1
-        current_price = float(self.data.Close[-1])
-
-        # Update fractal memory (base already does, but safe)
-        self._update_last_fractals()
-
-        # Capture entry/risk once SL exists
-        self._ensure_trade_meta(i)
-
-        # Optional time stop first (can close position)
-        self._maybe_time_stop(i, current_price)
-        if not self.position:
-            return
-
-        # Apply trailing (opposite fractal + R-based locks)
-        self._apply_best_trailing_sl(current_price)
+        new_sl = self._trail_fractal_sl(current_price)
+        if new_sl is not None:
+            self.position.sl = float(new_sl)
 
 
 class AlligatorFractalClassic(AlligatorFractal):
@@ -783,9 +705,16 @@ class AlligatorFractalClassic(AlligatorFractal):
 
     def next(self):
         i = len(self.data.Close) - 1
+        if self._prev_position_open and not self.position:
+            self._set_cooldown(i)
+            self._reset_trade_meta()
+        elif not self.position:
+            self._reset_trade_meta()
 
         self._arm_if_opened()
         self._update_last_fractals()
+        if self.position:
+            self._maybe_apply_break_even(float(self._closes[i]))
 
         jaw = float(self.jaw[-1])
         teeth = float(self.teeth[-1])
@@ -801,11 +730,15 @@ class AlligatorFractalClassic(AlligatorFractal):
 
             if self.position.is_long and (lips < teeth or teeth < jaw):
                 self.position.close()
+                self._set_cooldown(i)
+                self._reset_trade_meta()
                 self._prev_position_open = bool(self.position)
                 return
 
             if self.position.is_short and (lips > teeth or teeth > jaw):
                 self.position.close()
+                self._set_cooldown(i)
+                self._reset_trade_meta()
                 self._prev_position_open = bool(self.position)
                 return
 
@@ -831,6 +764,10 @@ class AlligatorFractalClassic(AlligatorFractal):
                 self._cfg,
             )
             self._maybe_cancel_stale_orders(state, allow_long, allow_short)
+
+        if self._cooldown_active(i):
+            self._prev_position_open = False
+            return
 
         last_bull = self._last_bull_fractal
         last_bear = self._last_bear_fractal
@@ -927,10 +864,17 @@ class AlligatorFractalPullback(AlligatorFractal):
 
     def next(self):
         i = len(self.data.Close) - 1
+        if self._prev_position_open and not self.position:
+            self._set_cooldown(i)
+            self._reset_trade_meta()
+        elif not self.position:
+            self._reset_trade_meta()
 
         # Apply bracket orders right after position opens
         self._arm_if_opened()
         self._update_last_fractals()
+        if self.position:
+            self._maybe_apply_break_even(float(self._closes[i]))
 
         jaw = float(self.jaw[-1])
         teeth = float(self.teeth[-1])
@@ -952,17 +896,23 @@ class AlligatorFractalPullback(AlligatorFractal):
 
             if self.exit_on_sleeping and state == "sleeping":
                 self.position.close()
+                self._set_cooldown(i)
+                self._reset_trade_meta()
                 self._prev_position_open = bool(self.position)
                 return
 
             if self.exit_on_structure_loss:
                 if self.position.is_long and not (lips > teeth > jaw):
                     self.position.close()
+                    self._set_cooldown(i)
+                    self._reset_trade_meta()
                     self._prev_position_open = bool(self.position)
                     return
 
                 if self.position.is_short and not (lips < teeth < jaw):
                     self.position.close()
+                    self._set_cooldown(i)
+                    self._reset_trade_meta()
                     self._prev_position_open = bool(self.position)
                     return
 
@@ -1032,6 +982,9 @@ class AlligatorFractalPullback(AlligatorFractal):
             self._pb_short_armed_i = None
 
         self._maybe_cancel_stale_orders(state, allow_long, allow_short)
+        if self._cooldown_active(i):
+            self._prev_position_open = False
+            return
         last_bull = self._last_bull_fractal
         last_bear = self._last_bear_fractal
 
