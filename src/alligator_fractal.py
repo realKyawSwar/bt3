@@ -200,351 +200,6 @@ def _alligator_state(
         return "eating_down"
     return "crossing"
 
-
-class AlligatorFractal(Strategy):
-    # Tunables (optimize-friendly)
-    jaw_period = 13
-    jaw_shift = 8
-    teeth_period = 8
-    teeth_shift = 5
-    lips_period = 5
-    lips_shift = 3
-    min_spread_factor = 0.0005
-    spread_lookback = 5
-    tp_rr = 2.0
-
-    enable_tp = False
-    eps = None
-    cancel_stale_orders = False
-
-    htf_tf = "4H"
-    use_htf_bias = True
-    use_vol_filter = True
-    atr_period = 14
-    atr_long = 100
-
-    # Spread model (price units). bt3.run_backtest can set this.
-    spread_price = 0.0
-
-    # Optional position sizing (backtesting.py uses `size` if defined)
-    # size = 0.1
-    exit_on_structure_loss = True
-    exit_on_sleeping = True
-
-    def init(self):
-        # Cache OHLC arrays once
-        self._closes = np.asarray(self.data.Close, dtype=float)
-        self._highs = np.asarray(self.data.High, dtype=float)
-        self._lows = np.asarray(self.data.Low, dtype=float)
-
-        # Cache params once
-        self._cfg = AlligatorParams(
-            jaw_period=self.jaw_period,
-            jaw_shift=self.jaw_shift,
-            teeth_period=self.teeth_period,
-            teeth_shift=self.teeth_shift,
-            lips_period=self.lips_period,
-            lips_shift=self.lips_shift,
-            min_spread_factor=self.min_spread_factor,
-            spread_lookback=self.spread_lookback,
-            tp_rr=self.tp_rr,
-        )
-
-        index = pd.Index(self.data.index)
-        volumes = getattr(self.data, "Volume", np.zeros(len(self.data)))
-        df = pd.DataFrame(
-            {
-                "Open": pd.Series(self.data.Open, index=index, dtype=float),
-                "High": pd.Series(self._highs, index=index, dtype=float),
-                "Low": pd.Series(self._lows, index=index, dtype=float),
-                "Close": pd.Series(self._closes, index=index, dtype=float),
-                "Volume": pd.Series(volumes, index=index, dtype=float),
-            },
-            index=index,
-        )
-
-        alligator = compute_alligator_ohlc(df, self._cfg)
-        fractals = compute_fractals_ohlc(df)
-
-        # Register indicators
-        self.jaw = self.I(lambda x=alligator["jaw"].to_numpy(): x)
-        self.teeth = self.I(lambda x=alligator["teeth"].to_numpy(): x)
-        self.lips = self.I(lambda x=alligator["lips"].to_numpy(): x)
-        self.bullish_fractal = self.I(lambda x=fractals["bullish_fractal_confirmed"].to_numpy(): x)
-        self.bearish_fractal = self.I(lambda x=fractals["bearish_fractal_confirmed"].to_numpy(): x)
-
-        self._htf_bias = None
-        if self.use_htf_bias:
-            htf_bias = compute_htf_bias(df, self.htf_tf, self._cfg)
-            self._htf_bias = htf_bias.to_numpy(dtype=object)
-
-        self._vol_ok = None
-        if self.use_vol_filter:
-            atr = compute_atr_ohlc(df, self.atr_period)
-            atr_sma = atr.rolling(self.atr_long, min_periods=self.atr_long).mean()
-            self._vol_ok = (atr > 0.9 * atr_sma).fillna(False).to_numpy()
-
-        bias_series = (
-            pd.Series(self._htf_bias, index=df.index, dtype=object)
-            if self._htf_bias is not None
-            else pd.Series("neutral", index=df.index, dtype=object)
-        )
-        bias_counts = bias_series.value_counts(normalize=True)
-        bias_dist = {
-            "bullish": float(bias_counts.get("bullish", 0.0)),
-            "bearish": float(bias_counts.get("bearish", 0.0)),
-            "neutral": float(bias_counts.get("neutral", 0.0)),
-        }
-
-        vol_ok_series = (
-            pd.Series(self._vol_ok, index=df.index, dtype=bool)
-            if self._vol_ok is not None
-            else pd.Series(True, index=df.index, dtype=bool)
-        )
-        both_ok = (bias_series != "neutral") & vol_ok_series
-        self._gate_debug = {
-            "bias_dist": bias_dist,
-            "vol_ok": float(vol_ok_series.mean()),
-            "both_ok": float(both_ok.mean()),
-        }
-
-        # Internal state for stop-order realism & bracket arming
-        self._last_long_stop = None
-        self._last_short_stop = None
-        self._arm_brackets = False
-        self._next_sl = None
-        self._next_tp = None
-        self._prev_position_open = False
-        self._last_bull_fractal = np.nan
-        self._last_bear_fractal = np.nan
-
-    def _eps_for(self, price: float) -> float:
-        return self.eps if self.eps is not None else max(1e-6, abs(price) * 1e-6)
-
-    def _update_last_fractals(self) -> None:
-        bull = float(self.bullish_fractal[-1])
-        bear = float(self.bearish_fractal[-1])
-        if not np.isnan(bull):
-            self._last_bull_fractal = bull
-        if not np.isnan(bear):
-            self._last_bear_fractal = bear
-
-    def _maybe_cancel_stale_orders(self, state: str, allow_long: bool, allow_short: bool) -> None:
-        if not self.cancel_stale_orders or not self.orders:
-            return
-
-        cancel = False
-        if state in ("sleeping", "crossing", "unknown") or (not allow_long and not allow_short):
-            cancel = True
-        else:
-            for order in self.orders:
-                if order.is_long and state != "eating_up":
-                    cancel = True
-                    break
-                if order.is_short and state != "eating_down":
-                    cancel = True
-                    break
-
-        if cancel:
-            self.cancel()
-            self._last_long_stop = None
-            self._last_short_stop = None
-
-    def _place_long_entry(self, entry_stop: float, sl: float | None, tp: float | None) -> bool:
-        try:
-            self.buy(stop=entry_stop)
-            self._last_long_stop = entry_stop
-
-            if sl is not None or (self.enable_tp and tp is not None):
-                self._next_sl = sl
-                self._next_tp = tp
-                self._arm_brackets = True
-            return True
-        except Exception:
-            self._arm_brackets = False
-            self._next_sl = None
-            self._next_tp = None
-            return False
-
-    def _place_short_entry(self, entry_stop: float, sl: float | None, tp: float | None) -> bool:
-        try:
-            self.sell(stop=entry_stop)
-            self._last_short_stop = entry_stop
-
-            if sl is not None or (self.enable_tp and tp is not None):
-                self._next_sl = sl
-                self._next_tp = tp
-                self._arm_brackets = True
-            return True
-        except Exception:
-            self._arm_brackets = False
-            self._next_sl = None
-            self._next_tp = None
-            return False
-
-    def _maybe_trail(self, current_price: float) -> None:
-        return
-
-    def _entry_permissions(self, i: int) -> tuple[bool, bool]:
-        allow_long = True
-        allow_short = True
-
-        if self.use_htf_bias and self._htf_bias is not None:
-            bias = self._htf_bias[i]
-            if bias == "bullish":
-                allow_short = False
-            elif bias == "bearish":
-                allow_long = False
-            else:
-                allow_long = False
-                allow_short = False
-
-        if self.use_vol_filter and self._vol_ok is not None:
-            if not bool(self._vol_ok[i]):
-                allow_long = False
-                allow_short = False
-
-        return allow_long, allow_short
-
-    def _arm_if_opened(self):
-        """Apply SL/TP only after the stop order has turned into a trade (avoid same-bar ambiguity warning)."""
-        if self._arm_brackets and self.position and not self._prev_position_open:
-            if self._next_sl is not None:
-                self.position.sl = self._next_sl
-            if self.enable_tp and self._next_tp is not None:
-                self.position.tp = self._next_tp
-            self._arm_brackets = False
-            self._next_sl = None
-            self._next_tp = None
-
-    def next(self):
-        i = len(self.data.Close) - 1
-
-        # Apply bracket orders right after position opens
-        self._arm_if_opened()
-        self._update_last_fractals()
-        if self.position:
-            self._maybe_trail(float(self._closes[i]))
-
-        jaw = float(self.jaw[-1])
-        teeth = float(self.teeth[-1])
-        lips = float(self.lips[-1])
-        if np.isnan(jaw) or np.isnan(teeth) or np.isnan(lips):
-            self._prev_position_open = bool(self.position)
-            return
-
-        jaws = np.asarray(self.jaw, dtype=float)
-        teeths = np.asarray(self.teeth, dtype=float)
-        lipss = np.asarray(self.lips, dtype=float)
-
-        state = _alligator_state(jaw, teeth, lips, self._closes[: i + 1], jaws[: i + 1], teeths[: i + 1], lipss[: i + 1], self._cfg)
-
-        # Exits: close on sleeping or structure loss
-        if self.position:
-            self._last_long_stop = None
-            self._last_short_stop = None
-
-            if state == "sleeping":
-                self.position.close()
-                self._prev_position_open = bool(self.position)
-                return
-
-            if self.position.is_long and not (lips > teeth > jaw):
-                self.position.close()
-                self._prev_position_open = bool(self.position)
-                return
-
-            if self.position.is_short and not (lips < teeth < jaw):
-                self.position.close()
-                self._prev_position_open = bool(self.position)
-                return
-
-            self._prev_position_open = True
-            return
-
-        allow_long, allow_short = self._entry_permissions(i)
-        if not allow_long and not allow_short:
-            self._maybe_cancel_stale_orders("unknown", allow_long, allow_short)
-            self._prev_position_open = False
-            return
-
-        # No new entries in non-trending states
-        if state in ("sleeping", "crossing", "unknown"):
-            self._maybe_cancel_stale_orders(state, allow_long, allow_short)
-            self._prev_position_open = False
-            return
-
-        self._maybe_cancel_stale_orders(state, allow_long, allow_short)
-        last_bull = self._last_bull_fractal
-        last_bear = self._last_bear_fractal
-
-        # Spread model (price units)
-        spr = float(getattr(self, "spread_price", 0.0))
-        half_spread = spr / 2.0
-
-        # Long setup: eating_up + bullish fractal above alligator
-        if allow_long and state == "eating_up" and not np.isnan(last_bull):
-            if last_bull <= max(jaw, teeth, lips):
-                self._prev_position_open = False
-                return
-
-            eps = self._eps_for(last_bull)
-            entry_stop = float(last_bull) + eps + half_spread
-
-            # Don’t re-place identical stops every bar
-            if self._last_long_stop is not None and abs(entry_stop - self._last_long_stop) < eps:
-                self._prev_position_open = False
-                return
-
-            sl = None
-            tp = None
-            if not np.isnan(last_bear):
-                sl = min(float(last_bear), entry_stop - eps)
-                # Ensure SL < entry
-                if sl >= entry_stop:
-                    sl = entry_stop - eps
-                risk = max(entry_stop - sl, eps)
-
-                if self.enable_tp:
-                    tp = entry_stop + self._cfg.tp_rr * risk
-                    # Ensure ordering
-                    if not (sl + eps < entry_stop < tp - eps):
-                        tp = None
-
-            # Place stop entry (NO sl/tp here to avoid same-bar contingent warning)
-            self._place_long_entry(entry_stop, sl, tp)
-
-        # Short setup: eating_down + bearish fractal below alligator
-        if allow_short and state == "eating_down" and not np.isnan(last_bear):
-            if last_bear >= min(jaw, teeth, lips):
-                self._prev_position_open = False
-                return
-
-            eps = self._eps_for(last_bear)
-            entry_stop = float(last_bear) - eps - half_spread
-
-            if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
-                self._prev_position_open = False
-                return
-
-            sl = None
-            tp = None
-            if not np.isnan(last_bull):
-                sl = max(float(last_bull), entry_stop + eps)
-                if entry_stop >= sl:
-                    sl = entry_stop + eps
-                risk = max(sl - entry_stop, eps)
-
-                if self.enable_tp:
-                    tp = entry_stop - self._cfg.tp_rr * risk
-                    if not (tp + eps < entry_stop < sl - eps):
-                        tp = None
-
-            self._place_short_entry(entry_stop, sl, tp)
-
-        self._prev_position_open = bool(self.position)
-
-
 class AlligatorFractal(Strategy):
     # Tunables (optimize-friendly)
     jaw_period = 13
@@ -1058,6 +713,226 @@ class AlligatorFractalClassic(AlligatorFractal):
                                 tp = None
 
                     self._place_short_entry(entry_stop, sl, tp)
+
+        self._prev_position_open = bool(self.position)
+
+
+class AlligatorFractalPullback(AlligatorFractal):
+    """
+    Trend + Pullback variant (Structure-First):
+    - Requires pullback into Teeth zone before allowing the strict fractal breakout entry.
+    - Uses existing HTF bias + vol filter gating via _entry_permissions().
+    - Keeps Strict exits/trailing/brackets unchanged.
+    """
+
+    pullback_k_atr = 0.5
+    require_touch_teeth = False
+    pullback_max_bars = 20
+
+    def init(self):
+        super().init()
+
+        index = pd.Index(self.data.index)
+        df = pd.DataFrame(
+            {
+                "Open": pd.Series(self.data.Open, index=index, dtype=float),
+                "High": pd.Series(self._highs, index=index, dtype=float),
+                "Low": pd.Series(self._lows, index=index, dtype=float),
+                "Close": pd.Series(self._closes, index=index, dtype=float),
+            },
+            index=index,
+        )
+        atr = compute_atr_ohlc(df, self.atr_period)
+        self._atr = atr.to_numpy(dtype=float)
+        self._pb_long_armed = False
+        self._pb_short_armed = False
+        self._pb_long_armed_i = None
+        self._pb_short_armed_i = None
+
+    def next(self):
+        i = len(self.data.Close) - 1
+
+        # Apply bracket orders right after position opens
+        self._arm_if_opened()
+        self._update_last_fractals()
+
+        jaw = float(self.jaw[-1])
+        teeth = float(self.teeth[-1])
+        lips = float(self.lips[-1])
+        if np.isnan(jaw) or np.isnan(teeth) or np.isnan(lips):
+            self._prev_position_open = bool(self.position)
+            return
+
+        jaws = np.asarray(self.jaw, dtype=float)
+        teeths = np.asarray(self.teeth, dtype=float)
+        lipss = np.asarray(self.lips, dtype=float)
+
+        state = _alligator_state(jaw, teeth, lips, self._closes[: i + 1], jaws[: i + 1], teeths[: i + 1], lipss[: i + 1], self._cfg)
+
+        # Exits: close on sleeping or structure loss
+        if self.position:
+            self._last_long_stop = None
+            self._last_short_stop = None
+
+            if state == "sleeping":
+                self.position.close()
+                self._prev_position_open = bool(self.position)
+                return
+
+            if self.position.is_long and not (lips > teeth > jaw):
+                self.position.close()
+                self._prev_position_open = bool(self.position)
+                return
+
+            if self.position.is_short and not (lips < teeth < jaw):
+                self.position.close()
+                self._prev_position_open = bool(self.position)
+                return
+
+            self._prev_position_open = True
+            return
+
+        allow_long, allow_short = self._entry_permissions(i)
+        if not allow_long and not allow_short:
+            self._maybe_cancel_stale_orders("unknown", allow_long, allow_short)
+            self._prev_position_open = False
+            return
+
+        # No new entries in non-trending states
+        if state in ("sleeping", "crossing", "unknown"):
+            self._pb_long_armed = False
+            self._pb_short_armed = False
+            self._pb_long_armed_i = None
+            self._pb_short_armed_i = None
+            self._maybe_cancel_stale_orders(state, allow_long, allow_short)
+            self._prev_position_open = False
+            return
+
+        atr_now = self._atr[i] if i < len(self._atr) else np.nan
+        if np.isnan(atr_now):
+            self._pb_long_armed = False
+            self._pb_short_armed = False
+            self._pb_long_armed_i = None
+            self._pb_short_armed_i = None
+            self._maybe_cancel_stale_orders(state, allow_long, allow_short)
+            self._prev_position_open = False
+            return
+
+        if not allow_long or state != "eating_up":
+            self._pb_long_armed = False
+            self._pb_long_armed_i = None
+        if not allow_short or state != "eating_down":
+            self._pb_short_armed = False
+            self._pb_short_armed_i = None
+
+        if self.require_touch_teeth:
+            long_pullback = self._lows[i] <= teeth
+            short_pullback = self._highs[i] >= teeth
+        else:
+            long_pullback = self._lows[i] <= teeth + self.pullback_k_atr * atr_now
+            short_pullback = self._highs[i] >= teeth - self.pullback_k_atr * atr_now
+
+        if allow_long and state == "eating_up" and long_pullback:
+            self._pb_long_armed = True
+            self._pb_long_armed_i = i
+        if allow_short and state == "eating_down" and short_pullback:
+            self._pb_short_armed = True
+            self._pb_short_armed_i = i
+
+        if (
+            self._pb_long_armed
+            and self._pb_long_armed_i is not None
+            and i - self._pb_long_armed_i >= self.pullback_max_bars
+        ):
+            self._pb_long_armed = False
+            self._pb_long_armed_i = None
+        if (
+            self._pb_short_armed
+            and self._pb_short_armed_i is not None
+            and i - self._pb_short_armed_i >= self.pullback_max_bars
+        ):
+            self._pb_short_armed = False
+            self._pb_short_armed_i = None
+
+        self._maybe_cancel_stale_orders(state, allow_long, allow_short)
+        last_bull = self._last_bull_fractal
+        last_bear = self._last_bear_fractal
+
+        # Spread model (price units)
+        spr = float(getattr(self, "spread_price", 0.0))
+        half_spread = spr / 2.0
+
+        # Long setup: eating_up + bullish fractal above alligator + pullback
+        if allow_long and state == "eating_up" and self._pb_long_armed and not np.isnan(last_bull):
+            if self._closes[i] <= teeth:
+                self._prev_position_open = False
+                return
+
+            if last_bull <= max(jaw, teeth, lips):
+                self._prev_position_open = False
+                return
+
+            eps = self._eps_for(last_bull)
+            entry_stop = float(last_bull) + eps + half_spread
+
+            # Don’t re-place identical stops every bar
+            if self._last_long_stop is not None and abs(entry_stop - self._last_long_stop) < eps:
+                self._prev_position_open = False
+                return
+
+            sl = None
+            tp = None
+            if not np.isnan(last_bear):
+                sl = min(float(last_bear), entry_stop - eps)
+                # Ensure SL < entry
+                if sl >= entry_stop:
+                    sl = entry_stop - eps
+                risk = max(entry_stop - sl, eps)
+
+                if self.enable_tp:
+                    tp = entry_stop + self._cfg.tp_rr * risk
+                    # Ensure ordering
+                    if not (sl + eps < entry_stop < tp - eps):
+                        tp = None
+
+            # Place stop entry (NO sl/tp here to avoid same-bar contingent warning)
+            if self._place_long_entry(entry_stop, sl, tp):
+                self._pb_long_armed = False
+                self._pb_long_armed_i = None
+
+        # Short setup: eating_down + bearish fractal below alligator + pullback
+        if allow_short and state == "eating_down" and self._pb_short_armed and not np.isnan(last_bear):
+            if self._closes[i] >= teeth:
+                self._prev_position_open = False
+                return
+
+            if last_bear >= min(jaw, teeth, lips):
+                self._prev_position_open = False
+                return
+
+            eps = self._eps_for(last_bear)
+            entry_stop = float(last_bear) - eps - half_spread
+
+            if self._last_short_stop is not None and abs(entry_stop - self._last_short_stop) < eps:
+                self._prev_position_open = False
+                return
+
+            sl = None
+            tp = None
+            if not np.isnan(last_bull):
+                sl = max(float(last_bull), entry_stop + eps)
+                if entry_stop >= sl:
+                    sl = entry_stop + eps
+                risk = max(sl - entry_stop, eps)
+
+                if self.enable_tp:
+                    tp = entry_stop - self._cfg.tp_rr * risk
+                    if not (tp + eps < entry_stop < sl - eps):
+                        tp = None
+
+            if self._place_short_entry(entry_stop, sl, tp):
+                self._pb_short_armed = False
+                self._pb_short_armed_i = None
 
         self._prev_position_open = bool(self.position)
 
