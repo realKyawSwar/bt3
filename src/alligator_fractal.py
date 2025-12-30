@@ -305,6 +305,12 @@ class AlligatorFractal(Strategy):
         self._be_done = False
         self._cooldown_until_i = None
 
+        # Diagnostics
+        self._diag_trades_opened = 0
+        self._diag_be_moves = 0
+        self._diag_r0_total = 0.0
+        self._diag_r0_count = 0
+
         # Fractal cache
         self._last_bull_fractal = np.nan
         self._last_bear_fractal = np.nan
@@ -420,10 +426,6 @@ class AlligatorFractal(Strategy):
     def _arm_if_opened(self):
         """Apply SL/TP only after stop order becomes a trade."""
         if self._arm_brackets and self.position and not self._prev_position_open:
-            if self._next_sl is not None:
-                self.position.sl = self._next_sl
-            if self.enable_tp and self._next_tp is not None:
-                self.position.tp = self._next_tp
             # Capture per-trade entry data (frozen R0)
             entry_price = np.nan
             if hasattr(self, "trades") and len(self.trades) > 0:
@@ -434,13 +436,41 @@ class AlligatorFractal(Strategy):
             if not np.isfinite(entry_price):
                 entry_price = float(self.data.Close[-1])
             self._trade_entry_price = float(entry_price)
-            self._trade_initial_sl = float(self._next_sl) if self._next_sl is not None else None
+
+            spr = float(getattr(self, "spread_price", 0.0))
+            half_spread = spr / 2.0
+            raw_sl = self._next_sl
+            raw_tp = self._next_tp
+            adjusted_sl = None
+            adjusted_tp = None
+            if self.position.is_long:
+                if raw_sl is not None:
+                    adjusted_sl = float(raw_sl) - half_spread
+                if self.enable_tp and raw_tp is not None:
+                    adjusted_tp = float(raw_tp) - half_spread
+            else:
+                if raw_sl is not None:
+                    adjusted_sl = float(raw_sl) + half_spread
+                if self.enable_tp and raw_tp is not None:
+                    adjusted_tp = float(raw_tp) + half_spread
+
+            if adjusted_sl is not None:
+                self.position.sl = adjusted_sl
+            if self.enable_tp and adjusted_tp is not None:
+                self.position.tp = adjusted_tp
+
+            self._trade_initial_sl = adjusted_sl
             if self._trade_entry_price is not None and self._trade_initial_sl is not None:
                 r0 = abs(self._trade_entry_price - self._trade_initial_sl)
                 eps = self._eps_for(self._trade_entry_price)
                 self._trade_r0 = r0 if r0 > eps else None
             else:
                 self._trade_r0 = None
+
+            self._diag_trades_opened += 1
+            if self._trade_r0 is not None:
+                self._diag_r0_total += float(self._trade_r0)
+                self._diag_r0_count += 1
             self._be_done = False
             self._arm_brackets = False
             self._next_sl = None
@@ -468,6 +498,7 @@ class AlligatorFractal(Strategy):
             if target < current_price - eps:
                 self.position.sl = float(target)
                 self._be_done = True
+                self._diag_be_moves += 1
             return
 
         if current_price > entry - be_at * r0:
@@ -479,6 +510,18 @@ class AlligatorFractal(Strategy):
         if target > current_price + eps:
             self.position.sl = float(target)
             self._be_done = True
+            self._diag_be_moves += 1
+
+    def stop(self):
+        avg_r0 = None
+        if self._diag_r0_count > 0:
+            avg_r0 = self._diag_r0_total / self._diag_r0_count
+        print(
+            "AlligatorFractal diagnostics: "
+            f"trades_opened={self._diag_trades_opened} "
+            f"be_moves={self._diag_be_moves} "
+            f"avg_r0={avg_r0}"
+        )
 
     def next(self):
         i = len(self.data.Close) - 1
@@ -691,6 +734,7 @@ class AlligatorFractalClassic(AlligatorFractal):
     """
     exit_on_sleeping = False
     exit_on_structure_loss = False  # classic uses its own exit logic below
+    enable_be = False
 
     consecutive_teeth_lookback = 5
 
@@ -852,6 +896,7 @@ class AlligatorFractalPullback(AlligatorFractal):
     pullback_k_atr = 0.5
     require_touch_teeth = False
     pullback_max_bars = 20
+    enable_be = False
 
     def init(self):
         super().init()
