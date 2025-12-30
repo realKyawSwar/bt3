@@ -548,20 +548,31 @@ class AlligatorFractalTrailing(AlligatorFractal):
     Strict rules with trailing SL to the most recent confirmed opposite fractal.
     """
 
+    def _eps_for(self, price: float) -> float:
+        # Use strategy eps if provided, else scale by price (same convention as entries)
+        if getattr(self, "eps", None) is not None:
+            return float(self.eps)
+        return max(1e-6, abs(float(price)) * 1e-6)
+
     def _maybe_trail(self, current_price: float) -> None:
         if not self.position:
             return
 
         eps = self._eps_for(current_price)
+
         if self.position.is_long:
             if np.isnan(self._last_bear_fractal):
                 return
             new_sl = float(self._last_bear_fractal)
+
+            # keep SL safely below current price
             if new_sl > current_price - eps:
                 return
+
             current_sl = self.position.sl
             if current_sl is not None and new_sl <= current_sl:
                 return
+
             self.position.sl = new_sl
             return
 
@@ -569,12 +580,25 @@ class AlligatorFractalTrailing(AlligatorFractal):
             if np.isnan(self._last_bull_fractal):
                 return
             new_sl = float(self._last_bull_fractal)
+
+            # keep SL safely above current price
             if new_sl < current_price + eps:
                 return
+
             current_sl = self.position.sl
             if current_sl is not None and new_sl >= current_sl:
                 return
+
             self.position.sl = new_sl
+
+    def next(self):
+        # Run original strict logic (entries/exits/brackets)
+        super().next()
+
+        # If still in position, trail using most recent confirmed opposite fractal
+        if self.position:
+            current_price = float(self.data.Close[-1])
+            self._maybe_trail(current_price)
 
 
 class AlligatorFractalClassic(AlligatorFractal):

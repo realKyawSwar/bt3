@@ -228,7 +228,7 @@ def run_backtest(
         # Inject spread model into strategy class (as attribute)
         setattr(strategy, "spread_price", spread_price)
 
-    bt = Backtest(data, strategy, cash=cash, commission=commission, **kwargs)
+    bt = Backtest(data, strategy, cash=cash, commission=commission, finalize_trades=True, **kwargs)
     params = strategy_params or {}
     stats = bt.run(**params)
     return stats
