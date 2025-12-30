@@ -310,6 +310,7 @@ class AlligatorFractal(Strategy):
         self._diag_be_moves = 0
         self._diag_r0_total = 0.0
         self._diag_r0_count = 0
+        self._be_moves = 0
 
         # Fractal cache
         self._last_bull_fractal = np.nan
@@ -365,6 +366,21 @@ class AlligatorFractal(Strategy):
             self.cancel()
             self._last_long_stop = None
             self._last_short_stop = None
+
+    def _half_spread(self) -> float:
+        return float(getattr(self, "spread_price", 0.0)) / 2.0
+
+    def _filled_entry_price(self, mid_entry: float, is_long: bool) -> float:
+        half_spread = self._half_spread()
+        if is_long:
+            return float(mid_entry) + half_spread
+        return float(mid_entry) - half_spread
+
+    def _exit_level_to_engine_level(self, level_mid: float, is_long: bool) -> float:
+        half_spread = self._half_spread()
+        if is_long:
+            return float(level_mid) - half_spread
+        return float(level_mid) + half_spread
 
     def _place_long_entry(self, entry_stop: float, sl: float | None, tp: float | None) -> bool:
         try:
@@ -426,33 +442,21 @@ class AlligatorFractal(Strategy):
     def _arm_if_opened(self):
         """Apply SL/TP only after stop order becomes a trade."""
         if self._arm_brackets and self.position and not self._prev_position_open:
+            is_long = self.position.is_long
             # Capture per-trade entry data (frozen R0)
-            entry_price = np.nan
-            if hasattr(self, "trades") and len(self.trades) > 0:
-                trade = self.trades[-1]
-                entry_price = float(getattr(trade, "entry_price", np.nan))
-            if not np.isfinite(entry_price):
-                entry_price = float(getattr(self.position, "entry_price", np.nan))
-            if not np.isfinite(entry_price):
-                entry_price = float(self.data.Close[-1])
-            self._trade_entry_price = float(entry_price)
+            mid_entry = float(getattr(self.position, "entry_price", np.nan))
+            if not np.isfinite(mid_entry):
+                mid_entry = float(self.data.Close[-1])
+            self._trade_entry_price = self._filled_entry_price(mid_entry, is_long)
 
-            spr = float(getattr(self, "spread_price", 0.0))
-            half_spread = spr / 2.0
             raw_sl = self._next_sl
             raw_tp = self._next_tp
             adjusted_sl = None
             adjusted_tp = None
-            if self.position.is_long:
-                if raw_sl is not None:
-                    adjusted_sl = float(raw_sl) - half_spread
-                if self.enable_tp and raw_tp is not None:
-                    adjusted_tp = float(raw_tp) - half_spread
-            else:
-                if raw_sl is not None:
-                    adjusted_sl = float(raw_sl) + half_spread
-                if self.enable_tp and raw_tp is not None:
-                    adjusted_tp = float(raw_tp) + half_spread
+            if raw_sl is not None:
+                adjusted_sl = self._exit_level_to_engine_level(raw_sl, is_long)
+            if self.enable_tp and raw_tp is not None:
+                adjusted_tp = self._exit_level_to_engine_level(raw_tp, is_long)
 
             if adjusted_sl is not None:
                 self.position.sl = adjusted_sl
@@ -499,6 +503,7 @@ class AlligatorFractal(Strategy):
                 self.position.sl = float(target)
                 self._be_done = True
                 self._diag_be_moves += 1
+                self._be_moves += 1
             return
 
         if current_price > entry - be_at * r0:
@@ -511,6 +516,7 @@ class AlligatorFractal(Strategy):
             self.position.sl = float(target)
             self._be_done = True
             self._diag_be_moves += 1
+            self._be_moves += 1
 
     def stop(self):
         avg_r0 = None
@@ -520,6 +526,7 @@ class AlligatorFractal(Strategy):
             "AlligatorFractal diagnostics: "
             f"trades_opened={self._diag_trades_opened} "
             f"be_moves={self._diag_be_moves} "
+            f"be_moves_debug={self._be_moves} "
             f"avg_r0={avg_r0}"
         )
 
@@ -1128,6 +1135,7 @@ def _self_check() -> None:
     print("- Backtest runs without exceptions.")
     print("- Existing variants match trade count/equity with cancel_stale_orders=False.")
     print("- Trailing variant changes only exits and improves loss profile on winners.")
+    print("- Break-even moves (be_moves_debug) should be reasonable.")
 
 
 if __name__ == "__main__":
