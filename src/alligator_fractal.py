@@ -370,12 +370,6 @@ class AlligatorFractal(Strategy):
     def _half_spread(self) -> float:
         return float(getattr(self, "spread_price", 0.0)) / 2.0
 
-    def _filled_entry_price(self, mid_entry: float, is_long: bool) -> float:
-        half_spread = self._half_spread()
-        if is_long:
-            return float(mid_entry) + half_spread
-        return float(mid_entry) - half_spread
-
     def _exit_level_to_engine_level(self, level_mid: float, is_long: bool) -> float:
         half_spread = self._half_spread()
         if is_long:
@@ -442,21 +436,16 @@ class AlligatorFractal(Strategy):
     def _arm_if_opened(self):
         """Apply SL/TP only after stop order becomes a trade."""
         if self._arm_brackets and self.position and not self._prev_position_open:
-            is_long = self.position.is_long
             # Capture per-trade entry data (frozen R0)
             mid_entry = float(getattr(self.position, "entry_price", np.nan))
             if not np.isfinite(mid_entry):
                 mid_entry = float(self.data.Close[-1])
-            self._trade_entry_price = self._filled_entry_price(mid_entry, is_long)
+            self._trade_entry_price = mid_entry
 
             raw_sl = self._next_sl
             raw_tp = self._next_tp
-            adjusted_sl = None
-            adjusted_tp = None
-            if raw_sl is not None:
-                adjusted_sl = self._exit_level_to_engine_level(raw_sl, is_long)
-            if self.enable_tp and raw_tp is not None:
-                adjusted_tp = self._exit_level_to_engine_level(raw_tp, is_long)
+            adjusted_sl = raw_sl
+            adjusted_tp = raw_tp
 
             if adjusted_sl is not None:
                 self.position.sl = adjusted_sl
@@ -524,6 +513,7 @@ class AlligatorFractal(Strategy):
             avg_r0 = self._diag_r0_total / self._diag_r0_count
         print(
             "AlligatorFractal diagnostics: "
+            f"spread_price={self.spread_price} "
             f"trades_opened={self._diag_trades_opened} "
             f"be_moves={self._diag_be_moves} "
             f"be_moves_debug={self._be_moves} "
@@ -703,7 +693,7 @@ class AlligatorFractalTrailing(AlligatorFractal):
         if self.position.is_long:
             if np.isnan(self._last_bear_fractal):
                 return None
-            new_sl = float(self._last_bear_fractal)
+            new_sl = self._exit_level_to_engine_level(float(self._last_bear_fractal), True)
             if new_sl > current_price - eps:
                 return None
             cur = self.position.sl
@@ -714,7 +704,7 @@ class AlligatorFractalTrailing(AlligatorFractal):
         if self.position.is_short:
             if np.isnan(self._last_bull_fractal):
                 return None
-            new_sl = float(self._last_bull_fractal)
+            new_sl = self._exit_level_to_engine_level(float(self._last_bull_fractal), False)
             if new_sl < current_price + eps:
                 return None
             cur = self.position.sl
