@@ -11,6 +11,7 @@ from alligator_fractal import (
     AlligatorFractal,
     AlligatorFractalClassic,
     AlligatorFractalPullback,
+    AlligatorFractalTrailing,
     AlligatorParams,
     compute_atr_ohlc,
     compute_htf_bias,
@@ -32,6 +33,7 @@ OPT_DEFAULTS = dict(
     atr_period=14,
     atr_long=50,         # <-- optimized value from your latest run
     eps=None,
+    cancel_stale_orders=False,
     outdir=Path("reports/gbpjpy_h1_opt"),
     pullback_k_atr=0.5,  # optional: only applies to pullback strategy
     require_touch_teeth=False,
@@ -289,6 +291,7 @@ def run_comparison(
     exclusive_orders: bool = False,
     export: bool = True,
     print_table: bool = True,
+    cancel_stale_orders: bool = False,
 ) -> dict:
     print(_data_fingerprint(data))
     strict_df = data.copy()
@@ -314,6 +317,7 @@ def run_comparison(
         "htf_tf": htf_tf,
         "atr_period": atr_period,
         "atr_long": atr_long,
+        "cancel_stale_orders": cancel_stale_orders,
     }
     if eps is not None:
         strategy_params["eps"] = eps
@@ -431,6 +435,7 @@ def run_single(
     print_table: bool = True,
     pullback_k_atr: Optional[float] = None,
     require_touch_teeth: bool = False,
+    cancel_stale_orders: bool = False,
 ) -> dict:
     print(_data_fingerprint(data))
 
@@ -451,6 +456,7 @@ def run_single(
         "strict": AlligatorFractal,
         "classic": AlligatorFractalClassic,
         "pullback": AlligatorFractalPullback,
+        "trailing": AlligatorFractalTrailing,
     }
     if strategy_name not in strategy_map:
         raise ValueError(f"Unsupported strategy: {strategy_name}")
@@ -461,6 +467,7 @@ def run_single(
         "htf_tf": htf_tf,
         "atr_period": atr_period,
         "atr_long": atr_long,
+        "cancel_stale_orders": cancel_stale_orders,
     }
     if eps is not None:
         strategy_params["eps"] = eps
@@ -505,7 +512,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compare or run Alligator+Fractal strategies.")
 
     # mode
-    parser.add_argument("--strategy", choices=["strict", "classic", "pullback"], default=None,
+    parser.add_argument("--strategy", choices=["strict", "classic", "pullback", "trailing"], default=None,
                         help="If omitted, runs comparison (strict vs classic vs pullback).")
 
     # data selection
@@ -521,6 +528,7 @@ if __name__ == "__main__":
     parser.add_argument("--spread", type=float, default=None)
     parser.add_argument("--exclusive_orders", action="store_true", default=None)
     parser.add_argument("--eps", type=float, default=None)
+    parser.add_argument("--cancel-stale-orders", action="store_true", default=None)
 
     # filters
     parser.add_argument("--no-htf-bias", action="store_true", default=False)
@@ -559,6 +567,11 @@ if __name__ == "__main__":
     atr_long = args.atr_long if args.atr_long is not None else OPT_DEFAULTS["atr_long"]
 
     eps = args.eps if args.eps is not None else OPT_DEFAULTS["eps"]
+    cancel_stale_orders = (
+        bool(args.cancel_stale_orders)
+        if args.cancel_stale_orders is not None
+        else OPT_DEFAULTS["cancel_stale_orders"]
+    )
 
     outdir = Path(args.outdir) if args.outdir else OPT_DEFAULTS["outdir"]
 
@@ -600,6 +613,7 @@ if __name__ == "__main__":
             pullback_k_atr=pullback_k_atr,
             require_touch_teeth=require_touch_teeth,
             exclusive_orders=exclusive_orders,
+            cancel_stale_orders=cancel_stale_orders,
             export=True,
             print_table=True,
         )
@@ -619,6 +633,7 @@ if __name__ == "__main__":
             atr_period=atr_period,
             atr_long=atr_long,
             exclusive_orders=exclusive_orders,
+            cancel_stale_orders=cancel_stale_orders,
             export=True,
             print_table=True,
             pullback_k_atr=pullback_k_atr,
