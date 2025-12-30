@@ -216,12 +216,6 @@ Use the interactive runner to select strict/classic/pullback strategies (plus yo
 python src/custom_alligator.py --asset GBPJPY --tf 1h --spread 1.5 --exclusive_orders
 ```
 
-Run the trailing-stop variant or opt into stale-order cancellation:
-
-```bash
-python src/custom_alligator.py --strategy trailing --asset GBPJPY --tf 1h --cancel-stale-orders
-```
-
 You can also point it to local data:
 
 ```bash
