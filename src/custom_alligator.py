@@ -767,7 +767,7 @@ if __name__ == "__main__":
 
     # --- run ---
     if args.strategy is None:
-        print(f'spread_pips={spread_pips}')
+        print(f"spread_pips={spread_pips} pip_size={ps} spread_price={spread_price}")
         run_comparison(
             data,
             cash=cash,
