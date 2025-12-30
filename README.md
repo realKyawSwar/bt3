@@ -102,6 +102,7 @@ Implements Bill Williams' Alligator (SMMA of median price with forward shifts) a
 - ✅ **Performance Optimized**: Caches parameters and numpy arrays in `init()` to avoid repeated creation in `next()`
 - ✅ **Smart Order Management**: Prevents duplicate pending orders by tracking last submitted stop levels
 - ✅ **Bracket Orders**: Automatic stop-loss using opposite fractal, optional take-profit at customizable risk:reward ratio
+- ✅ **R-Based Management**: Optional break-even move based on frozen entry risk (`R0`) plus post-exit cooldown to reduce churn
 - ✅ **Structure-Based Exits**: Closes positions when Alligator structure is lost (lips > teeth > jaw for longs)
 
 **Entry Logic:**
@@ -130,6 +131,13 @@ print(stats)
 class AlligatorTP(AlligatorFractal):
     enable_tp = True  # Enable take profit
     tp_rr = 2.0       # 2:1 risk/reward ratio
+
+# Example: adjust break-even + cooldown behavior
+class AlligatorBE(AlligatorFractal):
+    enable_be = True
+    be_at_r = 0.5
+    be_buffer_r = 0.0
+    cooldown_bars = 3
 
 stats = run_backtest(data, AlligatorTP, cash=10000, commission=0.0002)
 ```
