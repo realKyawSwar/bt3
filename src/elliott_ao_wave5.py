@@ -468,6 +468,7 @@ class ElliottAOWave5Strategy(Strategy):
     def init(self):
         raw_df = self.data.df
         cleaned_df = _sanitize_ohlcv(raw_df)
+        mw = int(self.max_windows) if self.max_windows is not None else 2000
         signals = wave5_signals(
             cleaned_df,
             pivot_len=int(self.pivot_len),
@@ -482,7 +483,7 @@ class ElliottAOWave5Strategy(Strategy):
             ema_filter=bool(self.ema_filter),
             ema_atr_k=float(self.ema_atr_k),
             trigger_mode=str(self.trigger_mode),
-            max_windows=int(self.max_windows) if self.max_windows is not None else None,
+            max_windows=mw,
         )
         signals = signals.reindex(raw_df.index)
         self._signal = signals["signal"].fillna(0).astype(int).to_numpy()
