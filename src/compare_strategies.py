@@ -337,6 +337,7 @@ def main() -> None:
         default="bos",
         help="Wave5: trigger mode.",
     )
+    parser.add_argument("--wave5-bos-atr-k", type=float, default=0.2, help="Wave5: BOS ATR buffer.")
 
     args = parser.parse_args()
 
@@ -366,6 +367,7 @@ def main() -> None:
             "ema_filter": not args.wave5_no_ema_filter,
             "ema_atr_k": args.wave5_ema_atr_k,
             "trigger_mode": args.wave5_trigger_mode,
+            "bos_atr_k": args.wave5_bos_atr_k,
             "max_windows": args.wave5_max_windows,
         }
         params = resolve_wave5_params(args.asset, overrides)
@@ -384,6 +386,7 @@ def main() -> None:
             ema_filter=params["ema_filter"],
             ema_atr_k=params["ema_atr_k"],
             trigger_mode=params["trigger_mode"],
+            bos_atr_k=params["bos_atr_k"],
             debug=args.wave5_debug,
             max_windows=args.wave5_max_windows
         )

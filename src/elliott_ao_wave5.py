@@ -16,6 +16,7 @@ WAVE5_DEFAULT_PARAMS = {
     "ema_filter": True,
     "ema_atr_k": 0.5,
     "trigger_mode": "bos",
+    "bos_atr_k": 0.2,
 }
 
 WAVE5_SYMBOL_PRESETS = {
@@ -186,6 +187,7 @@ def wave5_signals(
     ema_filter: bool = True,
     ema_atr_k: float = 0.5,
     trigger_mode: str = "bos",
+    bos_atr_k: float = 0.2,
     debug: bool = False,
     debug_top_n: int = 20
 ) -> pd.DataFrame:
@@ -295,7 +297,8 @@ def wave5_signals(
                 if not np.isfinite(atr_val):
                     continue
                 if trigger_mode == "bos":
-                    if out["Close"].iloc[i] >= L4[1]:
+                    bos_level = L4[1] - bos_atr_k * atr_val
+                    if out["Close"].iloc[i] >= bos_level:
                         continue
                     debug_info["bos_pass"] += 1
                     if not ema_filter_ok(i, -1):
@@ -385,7 +388,8 @@ def wave5_signals(
             if not np.isfinite(atr_val):
                 continue
             if trigger_mode == "bos":
-                if out["Close"].iloc[i] <= H4[1]:
+                bos_level = H4[1] + bos_atr_k * atr_val
+                if out["Close"].iloc[i] <= bos_level:
                     continue
                 debug_info["bos_pass"] += 1
                 if not ema_filter_ok(i, 1):
@@ -463,6 +467,7 @@ class ElliottAOWave5Strategy(Strategy):
     ema_filter = True
     ema_atr_k = 0.5
     trigger_mode = "bos"
+    bos_atr_k = 0.2
     max_windows = None
 
     def init(self):
@@ -483,6 +488,7 @@ class ElliottAOWave5Strategy(Strategy):
             ema_filter=bool(self.ema_filter),
             ema_atr_k=float(self.ema_atr_k),
             trigger_mode=str(self.trigger_mode),
+            bos_atr_k=float(self.bos_atr_k),
             max_windows=mw,
         )
         signals = signals.reindex(raw_df.index)
