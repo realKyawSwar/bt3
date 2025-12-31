@@ -12,6 +12,10 @@ WAVE5_DEFAULT_PARAMS = {
     "imp_mode": "w1",
     "overlap_mode": "soft",
     "trigger_bars": 20,
+    "ema_len": 200,
+    "ema_filter": True,
+    "ema_atr_k": 0.5,
+    "trigger_mode": "bos",
 }
 
 WAVE5_SYMBOL_PRESETS = {
@@ -178,6 +182,10 @@ def wave5_signals(
     imp_mode: str = "w1",
     overlap_mode: str = "soft",
     trigger_bars: int = 20,
+    ema_len: int = 200,
+    ema_filter: bool = True,
+    ema_atr_k: float = 0.5,
+    trigger_mode: str = "bos",
     debug: bool = False,
     debug_top_n: int = 20
 ) -> pd.DataFrame:
@@ -189,6 +197,7 @@ def wave5_signals(
     out = _sanitize_ohlcv(df)
     out["AO"] = awesome_oscillator(out)
     out["ATR"] = atr(out, 14)
+    out["EMA"] = out["Close"].ewm(span=ema_len, adjust=False, min_periods=ema_len).mean()
     out["signal"] = 0
     out["sl"] = np.nan
     out["tp"] = np.nan
@@ -203,6 +212,8 @@ def wave5_signals(
         "zone_pass": 0,
         "div_pass": 0,
         "trigger_pass": 0,
+        "ema_pass": 0,
+        "bos_pass": 0,
         "signals_emitted_short": 0,
         "signals_emitted_long": 0,
         "fail_wave2": 0,
@@ -216,6 +227,18 @@ def wave5_signals(
     # Helper to fetch AO at pivot idx
     def ao_at(idx): 
         return out["AO"].iloc[idx]
+
+    def ema_filter_ok(idx: int, direction: int) -> bool:
+        if not ema_filter:
+            return True
+        ema_val = out["EMA"].iloc[idx]
+        atr_val = out["ATR"].iloc[idx]
+        if not (np.isfinite(ema_val) and np.isfinite(atr_val)):
+            return False
+        close_val = out["Close"].iloc[idx]
+        if direction < 0:
+            return close_val > ema_val + ema_atr_k * atr_val
+        return close_val < ema_val - ema_atr_k * atr_val
 
     # Scan recent impulse windows
     for k in range(max(0, len(swings) - max_windows), len(swings) - 5):
@@ -271,7 +294,32 @@ def wave5_signals(
                 atr_val = out["ATR"].iloc[i]
                 if not np.isfinite(atr_val):
                     continue
+                if trigger_mode == "bos":
+                    if out["Close"].iloc[i] >= L4[1]:
+                        continue
+                    debug_info["bos_pass"] += 1
+                    if not ema_filter_ok(i, -1):
+                        continue
+                    debug_info["ema_pass"] += 1
+                    entry = out["Close"].iloc[i]
+                    sl = H5[1] + stop_pad_atr * atr_val
+                    r = sl - entry
+                    if not (r > 0 and np.isfinite(r)):
+                        break
+                    tp = entry - tp_r * r
+
+                    out.at[out.index[i], "signal"] = -1
+                    out.at[out.index[i], "entry_price"] = entry
+                    out.at[out.index[i], "sl"] = sl
+                    out.at[out.index[i], "tp"] = tp
+                    found = True
+                    debug_info["trigger_pass"] += 1
+                    debug_info["signals_emitted_short"] += 1
+                    break
                 if is_bear_engulf(out, i) or is_bear_pin(out, i):
+                    if not ema_filter_ok(i, -1):
+                        continue
+                    debug_info["ema_pass"] += 1
                     entry = out["Close"].iloc[i]
                     sl = out["High"].iloc[i] + stop_pad_atr * atr_val
                     r = sl - entry
@@ -336,7 +384,32 @@ def wave5_signals(
             atr_val = out["ATR"].iloc[i]
             if not np.isfinite(atr_val):
                 continue
+            if trigger_mode == "bos":
+                if out["Close"].iloc[i] <= H4[1]:
+                    continue
+                debug_info["bos_pass"] += 1
+                if not ema_filter_ok(i, 1):
+                    continue
+                debug_info["ema_pass"] += 1
+                entry = out["Close"].iloc[i]
+                sl = L5[1] - stop_pad_atr * atr_val
+                r = entry - sl
+                if not (r > 0 and np.isfinite(r)):
+                    break
+                tp = entry + tp_r * r
+
+                out.at[out.index[i], "signal"] = 1
+                out.at[out.index[i], "entry_price"] = entry
+                out.at[out.index[i], "sl"] = sl
+                out.at[out.index[i], "tp"] = tp
+                found = True
+                debug_info["trigger_pass"] += 1
+                debug_info["signals_emitted_long"] += 1
+                break
             if is_bull_engulf(out, i) or is_bull_pin(out, i):
+                if not ema_filter_ok(i, 1):
+                    continue
+                debug_info["ema_pass"] += 1
                 entry = out["Close"].iloc[i]
                 sl = out["Low"].iloc[i] - stop_pad_atr * atr_val
                 r = entry - sl
@@ -386,6 +459,10 @@ class ElliottAOWave5Strategy(Strategy):
     imp_mode = "w1"
     overlap_mode = "soft"
     trigger_bars = 20
+    ema_len = 200
+    ema_filter = True
+    ema_atr_k = 0.5
+    trigger_mode = "bos"
     max_windows = None
 
     def init(self):
@@ -401,6 +478,10 @@ class ElliottAOWave5Strategy(Strategy):
             imp_mode=str(self.imp_mode),
             overlap_mode=str(self.overlap_mode),
             trigger_bars=int(self.trigger_bars),
+            ema_len=int(self.ema_len),
+            ema_filter=bool(self.ema_filter),
+            ema_atr_k=float(self.ema_atr_k),
+            trigger_mode=str(self.trigger_mode),
             max_windows=int(self.max_windows) if self.max_windows is not None else None,
         )
         signals = signals.reindex(raw_df.index)
