@@ -1,3 +1,4 @@
+#elliott_ao_wave5.py
 import numpy as np
 import pandas as pd
 from backtesting import Strategy
@@ -188,8 +189,12 @@ def wave5_signals(
 
         # Trigger candle AFTER H5 pivot (we can require i > H5.idx)
         # Since pivots confirm late, simplest: search next N bars after H5 index
-        start_i = H5[0] + 1
+        confirm_i = H5[0] + pivot_len
+        start_i = confirm_i + 1
+        if start_i >= len(out) - 1:
+            continue
         end_i = min(len(out) - 1, start_i + 10)
+
 
         for i in range(start_i, end_i + 1):
             if i < 1:
