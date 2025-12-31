@@ -321,6 +321,12 @@ def main() -> None:
     parser.add_argument("--stop-pad-atr", type=float, default=None, help="Wave5: stop padding in ATR units.")
     parser.add_argument("--tp-r", type=float, default=None, help="Wave5: take-profit R multiple.")
     parser.add_argument("--min-swing-atr", type=float, default=None, help="Wave5: minimum swing size in ATR.")
+    parser.add_argument("--wave5-debug", action="store_true", default=False, help="Wave5: enable debug counters.")
+    parser.add_argument("--wave5-imp-mode", choices=["w1", "w3", "w13"], default="w1", help="Wave5: impulse size mode.")
+    parser.add_argument("--wave5-overlap-mode", choices=["strict", "soft"], default="soft", help="Wave5: overlap rule mode.")
+    parser.add_argument("--wave5-tol", type=float, default=None, help="Wave5: fib zone tolerance override.")
+    parser.add_argument("--wave5-min-swing-atr", type=float, default=None, help="Wave5: minimum swing ATR override.")
+    parser.add_argument("--wave5-trigger-bars", type=int, default=20, help="Wave5: trigger bars to scan.")
 
     args = parser.parse_args()
 
@@ -339,12 +345,28 @@ def main() -> None:
     if args.mode == "wave5":
         overrides = {
             "pivot_len": args.pivot_len,
-            "tol": args.tol,
+            "tol": args.wave5_tol if args.wave5_tol is not None else args.tol,
             "stop_pad_atr": args.stop_pad_atr,
             "tp_r": args.tp_r,
-            "min_swing_atr": args.min_swing_atr,
+            "min_swing_atr": args.wave5_min_swing_atr if args.wave5_min_swing_atr is not None else args.min_swing_atr,
+            "imp_mode": args.wave5_imp_mode,
+            "overlap_mode": args.wave5_overlap_mode,
+            "trigger_bars": args.wave5_trigger_bars,
         }
         params = resolve_wave5_params(args.asset, overrides)
+        from elliott_ao_wave5 import wave5_signals
+        _ = wave5_signals(
+            df,
+            pivot_len=params["pivot_len"],
+            tol=params["tol"],
+            stop_pad_atr=params["stop_pad_atr"],
+            tp_r=params["tp_r"],
+            min_swing_atr=params["min_swing_atr"],
+            imp_mode=params["imp_mode"],
+            overlap_mode=params["overlap_mode"],
+            trigger_bars=params["trigger_bars"],
+            debug=args.wave5_debug,
+        )
         stats = run_backtest(
             data=df,
             strategy=ElliottAOWave5Strategy,
