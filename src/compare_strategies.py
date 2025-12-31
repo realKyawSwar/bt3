@@ -327,6 +327,7 @@ def main() -> None:
     parser.add_argument("--wave5-tol", type=float, default=None, help="Wave5: fib zone tolerance override.")
     parser.add_argument("--wave5-min-swing-atr", type=float, default=None, help="Wave5: minimum swing ATR override.")
     parser.add_argument("--wave5-trigger-bars", type=int, default=20, help="Wave5: trigger bars to scan.")
+    parser.add_argument("--wave5-max-windows", type=int, default=2000, help="Wave5: maximum windows to scan.")
 
     args = parser.parse_args()
 
@@ -352,6 +353,7 @@ def main() -> None:
             "imp_mode": args.wave5_imp_mode,
             "overlap_mode": args.wave5_overlap_mode,
             "trigger_bars": args.wave5_trigger_bars,
+            "max_windows": args.wave5_max_windows,
         }
         params = resolve_wave5_params(args.asset, overrides)
         from elliott_ao_wave5 import wave5_signals
@@ -366,6 +368,7 @@ def main() -> None:
             overlap_mode=params["overlap_mode"],
             trigger_bars=params["trigger_bars"],
             debug=args.wave5_debug,
+            max_windows=args.wave5_max_windows
         )
         stats = run_backtest(
             data=df,

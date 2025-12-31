@@ -174,7 +174,7 @@ def wave5_signals(
     stop_pad_atr: float = 0.10,
     tp_r: float = 2.0,
     min_swing_atr: float = 0.0,
-    max_windows: int = 60,
+    max_windows: int = 2000,
     imp_mode: str = "w1",
     overlap_mode: str = "soft",
     trigger_bars: int = 20,
