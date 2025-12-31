@@ -9,6 +9,9 @@ WAVE5_DEFAULT_PARAMS = {
     "stop_pad_atr": 0.10,
     "tp_r": 2.0,
     "min_swing_atr": 0.6,
+    "imp_mode": "w1",
+    "overlap_mode": "soft",
+    "trigger_bars": 20,
 }
 
 WAVE5_SYMBOL_PRESETS = {
@@ -125,6 +128,45 @@ def is_bear_pin(df: pd.DataFrame, i: int) -> bool:
     rng = h - l
     return (rng > 0) and (upper >= 2 * max(body, 1e-9)) and (upper >= 0.6 * rng)
 
+def is_bull_engulf(df: pd.DataFrame, i: int) -> bool:
+    o, c = df["Open"].iloc[i], df["Close"].iloc[i]
+    o1, c1 = df["Open"].iloc[i-1], df["Close"].iloc[i-1]
+    return (c > o) and (c >= o1) and (o <= c1)
+
+def is_bull_pin(df: pd.DataFrame, i: int) -> bool:
+    h, l, o, c = df["High"].iloc[i], df["Low"].iloc[i], df["Open"].iloc[i], df["Close"].iloc[i]
+    lower = min(o, c) - l
+    body = abs(c - o)
+    rng = h - l
+    return (rng > 0) and (lower >= 2 * max(body, 1e-9)) and (lower >= 0.6 * rng)
+
+def _impulse_size(
+    mode: str,
+    L0: tuple,
+    H1: tuple,
+    L2: tuple,
+    H3: tuple,
+    H0: tuple,
+    L1: tuple,
+    H2: tuple,
+    L3: tuple,
+) -> float:
+    if mode == "w1":
+        return abs(H1[1] - L0[1]) if L0 else abs(L1[1] - H0[1])
+    if mode == "w3":
+        return abs(H3[1] - L2[1]) if L2 else abs(L3[1] - H2[1])
+    return abs(H3[1] - L0[1]) if L0 else abs(L3[1] - H0[1])
+
+def _overlap_ok_up(mode: str, L4: tuple, H1: tuple, atr_val: float) -> bool:
+    if mode == "strict":
+        return L4[1] > H1[1]
+    return L4[1] > H1[1] - 0.2 * atr_val
+
+def _overlap_ok_down(mode: str, H4: tuple, L1: tuple, atr_val: float) -> bool:
+    if mode == "strict":
+        return H4[1] < L1[1]
+    return H4[1] < L1[1] + 0.2 * atr_val
+
 def wave5_signals(
     df: pd.DataFrame,
     pivot_len: int = 3,
@@ -132,7 +174,12 @@ def wave5_signals(
     stop_pad_atr: float = 0.10,
     tp_r: float = 2.0,
     min_swing_atr: float = 0.0,
-    max_windows: int = 60
+    max_windows: int = 60,
+    imp_mode: str = "w1",
+    overlap_mode: str = "soft",
+    trigger_bars: int = 20,
+    debug: bool = False,
+    debug_top_n: int = 20
 ) -> pd.DataFrame:
     """
     Output columns:
@@ -148,73 +195,184 @@ def wave5_signals(
     out["entry_price"] = np.nan
 
     swings = build_swings(out, pivot_len=pivot_len, min_swing_atr=min_swing_atr)
+    debug_info = {
+        "swings_count": len(swings),
+        "windows_checked": 0,
+        "type_match": 0,
+        "elliott_pass": 0,
+        "zone_pass": 0,
+        "div_pass": 0,
+        "trigger_pass": 0,
+        "signals_emitted_short": 0,
+        "signals_emitted_long": 0,
+        "fail_wave2": 0,
+        "fail_wave3": 0,
+        "fail_overlap": 0,
+        "fail_zone": 0,
+        "fail_div": 0,
+        "fail_trigger": 0,
+    }
 
     # Helper to fetch AO at pivot idx
     def ao_at(idx): 
         return out["AO"].iloc[idx]
 
     # Scan recent impulse windows
-    # We'll attempt SHORT setups (end of UP impulse) first; add LONG similarly after.
     for k in range(max(0, len(swings) - max_windows), len(swings) - 5):
+        debug_info["windows_checked"] += 1
         window = swings[k:k+6]
         types = "".join([w[2] for w in window])
+        if types not in {"LHLHLH", "HLHLHL"}:
+            continue
+        debug_info["type_match"] += 1
 
-        # Up impulse candidate: L H L H L H
-        if types != "LHLHLH":
+        if types == "LHLHLH":
+            L0, H1, L2, H3, L4, H5 = window
+            if not (L2[1] > L0[1]):
+                debug_info["fail_wave2"] += 1
+                continue
+            if not (H3[1] > H1[1]):
+                debug_info["fail_wave3"] += 1
+                continue
+            atr_val = out["ATR"].iloc[L4[0]]
+            atr_val = float(atr_val) if np.isfinite(atr_val) else 0.0
+            if not _overlap_ok_up(overlap_mode, L4, H1, atr_val):
+                debug_info["fail_overlap"] += 1
+                continue
+            debug_info["elliott_pass"] += 1
+
+            imp = _impulse_size(imp_mode, L0, H1, L2, H3, None, None, None, None)
+            if imp <= 0:
+                debug_info["fail_zone"] += 1
+                continue
+            t1 = L4[1] + 1.272 * imp
+            zone_ok = (H5[1] >= (t1 - tol * imp))
+            if not zone_ok:
+                debug_info["fail_zone"] += 1
+                continue
+            debug_info["zone_pass"] += 1
+
+            if not (H5[1] > H3[1] and ao_at(H5[0]) < ao_at(H3[0])):
+                debug_info["fail_div"] += 1
+                continue
+            debug_info["div_pass"] += 1
+
+            confirm_i = H5[0] + pivot_len
+            start_i = confirm_i + 1
+            if start_i >= len(out) - 1:
+                debug_info["fail_trigger"] += 1
+                continue
+            end_i = min(len(out) - 1, start_i + trigger_bars)
+
+            found = False
+            for i in range(start_i, end_i + 1):
+                if i < 1:
+                    continue
+                atr_val = out["ATR"].iloc[i]
+                if not np.isfinite(atr_val):
+                    continue
+                if is_bear_engulf(out, i) or is_bear_pin(out, i):
+                    entry = out["Close"].iloc[i]
+                    sl = out["High"].iloc[i] + stop_pad_atr * atr_val
+                    r = sl - entry
+                    if not (r > 0 and np.isfinite(r)):
+                        break
+                    tp = entry - tp_r * r
+
+                    out.at[out.index[i], "signal"] = -1
+                    out.at[out.index[i], "entry_price"] = entry
+                    out.at[out.index[i], "sl"] = sl
+                    out.at[out.index[i], "tp"] = tp
+                    found = True
+                    debug_info["trigger_pass"] += 1
+                    debug_info["signals_emitted_short"] += 1
+                    break
+
+            if not found:
+                debug_info["fail_trigger"] += 1
             continue
 
-        L0, H1, L2, H3, L4, H5 = window
+        H0, L1, H2, L3, H4, L5 = window
+        if not (H2[1] < H0[1]):
+            debug_info["fail_wave2"] += 1
+            continue
+        if not (L3[1] < L1[1]):
+            debug_info["fail_wave3"] += 1
+            continue
+        atr_val = out["ATR"].iloc[H4[0]]
+        atr_val = float(atr_val) if np.isfinite(atr_val) else 0.0
+        if not _overlap_ok_down(overlap_mode, H4, L1, atr_val):
+            debug_info["fail_overlap"] += 1
+            continue
+        debug_info["elliott_pass"] += 1
 
-        # Elliott hard rules (strict)
-        if not (L2[1] > L0[1]):  # wave2 not 100%
-            continue
-        if not (H3[1] > H1[1]):  # wave3 beyond wave1
-            continue
-        if not (L4[1] > H1[1]):  # wave4 no overlap
-            continue
-
-        # Wave5 fib extension zone
-        imp = H3[1] - L0[1]
+        imp = _impulse_size(imp_mode, None, None, None, None, H0, L1, H2, L3)
         if imp <= 0:
+            debug_info["fail_zone"] += 1
             continue
-        t1 = L4[1] + 1.272 * imp
-        # t2 = L4[1] + 1.618 * imp  # optional second target
-        zone_ok = (H5[1] >= (t1 - tol * imp))
+        t1 = H4[1] - 1.272 * imp
+        zone_ok = (L5[1] <= (t1 + tol * imp))
         if not zone_ok:
+            debug_info["fail_zone"] += 1
             continue
+        debug_info["zone_pass"] += 1
 
-        # AO divergence: price HH but AO LH
-        if not (H5[1] > H3[1] and ao_at(H5[0]) < ao_at(H3[0])):
+        if not (L5[1] < L3[1] and ao_at(L5[0]) > ao_at(L3[0])):
+            debug_info["fail_div"] += 1
             continue
+        debug_info["div_pass"] += 1
 
-        # Trigger candle AFTER H5 pivot (we can require i > H5.idx)
-        # Since pivots confirm late, simplest: search next N bars after H5 index
-        confirm_i = H5[0] + pivot_len
+        confirm_i = L5[0] + pivot_len
         start_i = confirm_i + 1
         if start_i >= len(out) - 1:
+            debug_info["fail_trigger"] += 1
             continue
-        end_i = min(len(out) - 1, start_i + 10)
+        end_i = min(len(out) - 1, start_i + trigger_bars)
 
-
+        found = False
         for i in range(start_i, end_i + 1):
             if i < 1:
                 continue
             atr_val = out["ATR"].iloc[i]
             if not np.isfinite(atr_val):
                 continue
-            if is_bear_engulf(out, i) or is_bear_pin(out, i):
+            if is_bull_engulf(out, i) or is_bull_pin(out, i):
                 entry = out["Close"].iloc[i]
-                sl = out["High"].iloc[i] + stop_pad_atr * atr_val
-                r = sl - entry
+                sl = out["Low"].iloc[i] - stop_pad_atr * atr_val
+                r = entry - sl
                 if not (r > 0 and np.isfinite(r)):
                     break
-                tp = entry - tp_r * r
+                tp = entry + tp_r * r
 
-                out.at[out.index[i], "signal"] = -1
+                out.at[out.index[i], "signal"] = 1
                 out.at[out.index[i], "entry_price"] = entry
                 out.at[out.index[i], "sl"] = sl
                 out.at[out.index[i], "tp"] = tp
-                break  # one signal per impulse
+                found = True
+                debug_info["trigger_pass"] += 1
+                debug_info["signals_emitted_long"] += 1
+                break
+
+        if not found:
+            debug_info["fail_trigger"] += 1
+
+    out.attrs["wave5_debug"] = debug_info
+    if debug:
+        print("Wave5 debug counters:")
+        for key, value in debug_info.items():
+            print(f"  {key}: {value}")
+        signal_idx = out.index[out["signal"] != 0]
+        if len(signal_idx) == 0:
+            print("Wave5 signals: none")
+        else:
+            sample_first = list(signal_idx[:3])
+            sample_last = list(signal_idx[-3:])
+            if len(signal_idx) > debug_top_n:
+                print(f"Wave5 signals (showing first/last 3 of {len(signal_idx)}):")
+            else:
+                print(f"Wave5 signals ({len(signal_idx)} total):")
+            print(f"  first: {sample_first}")
+            print(f"  last:  {sample_last}")
 
     return out
 
@@ -225,6 +383,9 @@ class ElliottAOWave5Strategy(Strategy):
     stop_pad_atr = 0.10
     tp_r = 2.0
     min_swing_atr = 0.6
+    imp_mode = "w1"
+    overlap_mode = "soft"
+    trigger_bars = 20
 
     def init(self):
         raw_df = self.data.df
@@ -236,6 +397,9 @@ class ElliottAOWave5Strategy(Strategy):
             stop_pad_atr=float(self.stop_pad_atr),
             tp_r=float(self.tp_r),
             min_swing_atr=float(self.min_swing_atr),
+            imp_mode=str(self.imp_mode),
+            overlap_mode=str(self.overlap_mode),
+            trigger_bars=int(self.trigger_bars),
         )
         signals = signals.reindex(raw_df.index)
         self._signal = signals["signal"].fillna(0).astype(int).to_numpy()
