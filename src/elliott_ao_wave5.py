@@ -386,6 +386,7 @@ class ElliottAOWave5Strategy(Strategy):
     imp_mode = "w1"
     overlap_mode = "soft"
     trigger_bars = 20
+    max_windows = None
 
     def init(self):
         raw_df = self.data.df
@@ -400,6 +401,7 @@ class ElliottAOWave5Strategy(Strategy):
             imp_mode=str(self.imp_mode),
             overlap_mode=str(self.overlap_mode),
             trigger_bars=int(self.trigger_bars),
+            max_windows=int(self.max_windows) if self.max_windows is not None else None,
         )
         signals = signals.reindex(raw_df.index)
         self._signal = signals["signal"].fillna(0).astype(int).to_numpy()

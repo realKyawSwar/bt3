@@ -51,7 +51,8 @@ def _choose_price_divisor(symbol: str, median_close: float) -> int:
     """Choose divisor from [1,10,100,1000,10000] that puts median into plausible range."""
     lo, hi = _target_range_for_symbol(symbol)
     mid = (lo + hi) / 2.0
-    candidates = [1, 10, 100, 1000, 10000]
+    candidates = [1, 10, 100, 1000, 10000, 100000]
+
 
     best_d = 1
     best_score = float("inf")
