@@ -188,6 +188,40 @@ reports/
 - `--atr-long` sets ATR SMA length for volatility filter (default `100`)
 - `--outdir` base output folder (default `reports/`)
 
+## Elliott AO Wave5 Strategy
+
+Run the Elliott Wave + Awesome Oscillator (AO) Wave5 divergence reversal strategy either as a single run (via `compare_strategies.py`) or as a multi-symbol/timeframe batch.
+
+### Single run (compare runner)
+
+```bash
+python src/compare_strategies.py --mode wave5 --asset XAUUSD --tf 4h --start 2012-01-01 --end 2025-12-31 --cash 10000 --commission 0 --spread 20 --outdir reports/
+```
+
+### Batch run
+
+```bash
+python src/run_wave5_batch.py --symbols XAUUSD,EURUSD,GBPUSD --tfs 1h,4h --start 2012-01-01 --end 2025-12-31 --spread 20 --outdir reports/
+```
+
+### Presets and overrides
+
+Wave5 uses symbol presets by default:
+
+- **XAUUSD**: `min_swing_atr=1.0`, `tol=0.12`, `stop_pad_atr=0.15`
+- **EURUSD/GBPUSD**: `min_swing_atr=0.6`, `tol=0.10`, `stop_pad_atr=0.10`
+- All symbols: `pivot_len=3`, `tp_r=2.0`
+
+Override any preset with flags (same for single or batch):
+
+```bash
+python src/run_wave5_batch.py --symbols XAUUSD --tfs 4h --pivot-len 4 --tol 0.08 --stop-pad-atr 0.12 --tp-r 2.5 --min-swing-atr 1.2
+```
+
+### Spread and commission notes
+
+`bt3.run_backtest()` injects a spread model using `spread_pips`, and FX tests generally use `--commission 0` since spread is the primary cost.
+
 ### Run the Pullback variant
 
 Use the pullback strategy class to require a pullback into the Alligator Teeth zone before the strict fractal breakout entry.

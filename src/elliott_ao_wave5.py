@@ -1,5 +1,43 @@
 import numpy as np
 import pandas as pd
+from backtesting import Strategy
+
+WAVE5_DEFAULT_PARAMS = {
+    "pivot_len": 3,
+    "tol": 0.10,
+    "stop_pad_atr": 0.10,
+    "tp_r": 2.0,
+    "min_swing_atr": 0.6,
+}
+
+WAVE5_SYMBOL_PRESETS = {
+    "XAUUSD": {"min_swing_atr": 1.0, "tol": 0.12, "stop_pad_atr": 0.15},
+    "EURUSD": {"min_swing_atr": 0.6, "tol": 0.10, "stop_pad_atr": 0.10},
+    "GBPUSD": {"min_swing_atr": 0.6, "tol": 0.10, "stop_pad_atr": 0.10},
+}
+
+
+def resolve_wave5_params(symbol: str | None, overrides: dict | None = None) -> dict:
+    params = dict(WAVE5_DEFAULT_PARAMS)
+    if symbol:
+        params.update(WAVE5_SYMBOL_PRESETS.get(symbol.upper(), {}))
+    if overrides:
+        params.update({k: v for k, v in overrides.items() if v is not None})
+    return params
+
+
+def _sanitize_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    if "Volume" not in out.columns:
+        out["Volume"] = 0
+    for col in ["Open", "High", "Low", "Close", "Volume"]:
+        if col in out.columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+    if isinstance(out.index, pd.DatetimeIndex):
+        out = out[~out.index.duplicated(keep="first")]
+        if not out.index.is_monotonic_increasing:
+            out = out.sort_index()
+    return out
 
 def sma(x: pd.Series, n: int) -> pd.Series:
     return x.rolling(n, min_periods=n).mean()
@@ -100,7 +138,7 @@ def wave5_signals(
       signal: 1 long, -1 short, 0 none
       sl, tp, entry_price
     """
-    out = df.copy()
+    out = _sanitize_ohlcv(df)
     out["AO"] = awesome_oscillator(out)
     out["ATR"] = atr(out, 14)
     out["signal"] = 0
@@ -156,9 +194,12 @@ def wave5_signals(
         for i in range(start_i, end_i + 1):
             if i < 1:
                 continue
+            atr_val = out["ATR"].iloc[i]
+            if not np.isfinite(atr_val):
+                continue
             if is_bear_engulf(out, i) or is_bear_pin(out, i):
                 entry = out["Close"].iloc[i]
-                sl = out["High"].iloc[i] + stop_pad_atr * out["ATR"].iloc[i]
+                sl = out["High"].iloc[i] + stop_pad_atr * atr_val
                 r = sl - entry
                 if not (r > 0 and np.isfinite(r)):
                     break
@@ -171,3 +212,71 @@ def wave5_signals(
                 break  # one signal per impulse
 
     return out
+
+
+class ElliottAOWave5Strategy(Strategy):
+    pivot_len = 3
+    tol = 0.10
+    stop_pad_atr = 0.10
+    tp_r = 2.0
+    min_swing_atr = 0.6
+
+    def init(self):
+        raw_df = self.data.df
+        cleaned_df = _sanitize_ohlcv(raw_df)
+        signals = wave5_signals(
+            cleaned_df,
+            pivot_len=int(self.pivot_len),
+            tol=float(self.tol),
+            stop_pad_atr=float(self.stop_pad_atr),
+            tp_r=float(self.tp_r),
+            min_swing_atr=float(self.min_swing_atr),
+        )
+        signals = signals.reindex(raw_df.index)
+        self._signal = signals["signal"].fillna(0).astype(int).to_numpy()
+        self._sl = signals["sl"].to_numpy(dtype=float)
+        self._tp = signals["tp"].to_numpy(dtype=float)
+
+    def _half_spread(self) -> float:
+        return float(getattr(self, "spread_price", 0.0)) / 2.0
+
+    def _force_sl_first(self) -> bool:
+        if not self.position:
+            return False
+        sl = getattr(self.position, "sl", None)
+        tp = getattr(self.position, "tp", None)
+        if sl is None or tp is None:
+            return False
+        high = float(self.data.High[-1])
+        low = float(self.data.Low[-1])
+        sl = float(sl)
+        tp = float(tp)
+        if low <= sl <= high and low <= tp <= high:
+            self.position.close()
+            return True
+        return False
+
+    def next(self):
+        i = len(self.data) - 1
+        if self.position:
+            self._force_sl_first()
+            return
+        if i >= len(self._signal):
+            return
+        signal = int(self._signal[i])
+        if signal == 0:
+            return
+        sl = self._sl[i]
+        tp = self._tp[i]
+        if not np.isfinite(sl) or not np.isfinite(tp):
+            return
+
+        half_spread = self._half_spread()
+        if signal == 1:
+            sl_engine = sl - half_spread
+            tp_engine = tp - half_spread
+            self.buy(sl=sl_engine, tp=tp_engine)
+        elif signal == -1:
+            sl_engine = sl + half_spread
+            tp_engine = tp + half_spread
+            self.sell(sl=sl_engine, tp=tp_engine)
