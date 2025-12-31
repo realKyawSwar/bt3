@@ -18,6 +18,7 @@ from alligator_fractal import (
     compute_htf_bias,
 )
 from bt3 import fetch_data, run_backtest
+from elliott_ao_wave5 import ElliottAOWave5Strategy, resolve_wave5_params
 from reporting import export_equity_curve_csv, export_trades_csv
 
 
@@ -140,6 +141,20 @@ def _ensure_ohlc(df: pd.DataFrame) -> pd.DataFrame:
     if "Volume" not in df.columns:
         df["Volume"] = 0
     return df
+
+
+def _sanitize_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    if "Volume" not in out.columns:
+        out["Volume"] = 0
+    for col in ["Open", "High", "Low", "Close", "Volume"]:
+        if col in out.columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+    if isinstance(out.index, pd.DatetimeIndex):
+        out = out[~out.index.duplicated(keep="first")]
+        if not out.index.is_monotonic_increasing:
+            out = out.sort_index()
+    return out
 
 
 def _filter_range(df: pd.DataFrame, start: Optional[str], end: Optional[str]) -> pd.DataFrame:
@@ -300,6 +315,12 @@ def main() -> None:
     parser.add_argument("--outdir", default="reports/", help="Output directory for reports.")
     parser.add_argument("--pullback-k", type=float, default=None, help="Override pullback_k_atr for pullback strategy.")
     parser.add_argument("--touch-teeth", action="store_true", default=False, help="Require pullback to touch teeth.")
+    parser.add_argument("--mode", choices=["alligator", "wave5"], default="alligator")
+    parser.add_argument("--pivot-len", type=int, default=None, help="Wave5: pivot length override.")
+    parser.add_argument("--tol", type=float, default=None, help="Wave5: fib zone tolerance override.")
+    parser.add_argument("--stop-pad-atr", type=float, default=None, help="Wave5: stop padding in ATR units.")
+    parser.add_argument("--tp-r", type=float, default=None, help="Wave5: take-profit R multiple.")
+    parser.add_argument("--min-swing-atr", type=float, default=None, help="Wave5: minimum swing size in ATR.")
 
     args = parser.parse_args()
 
@@ -307,12 +328,60 @@ def main() -> None:
     df = _ensure_ohlc(df)
     df = _filter_range(df, args.start, args.end)
     df = _resample_ohlcv(df, args.tf)
+    df = _sanitize_ohlcv(df)
     df = df.dropna(subset=["Open", "High", "Low", "Close"])
 
     if df.empty:
         raise ValueError("No data available after filtering/resampling.")
 
     print(_data_fingerprint(df))
+
+    if args.mode == "wave5":
+        overrides = {
+            "pivot_len": args.pivot_len,
+            "tol": args.tol,
+            "stop_pad_atr": args.stop_pad_atr,
+            "tp_r": args.tp_r,
+            "min_swing_atr": args.min_swing_atr,
+        }
+        params = resolve_wave5_params(args.asset, overrides)
+        stats = run_backtest(
+            data=df,
+            strategy=ElliottAOWave5Strategy,
+            cash=args.cash,
+            commission=args.commission,
+            spread_pips=args.spread,
+            exclusive_orders=True,
+            strategy_params=params,
+        )
+
+        _print_stats("Elliott AO Wave5 Stats", stats)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        asset_name = args.asset if args.asset else "data"
+        tf_name = args.tf if args.tf else "custom"
+        run_dir = f"{asset_name}_{tf_name}_{timestamp}"
+
+        outdir = Path(args.outdir) / run_dir
+        outdir.mkdir(parents=True, exist_ok=True)
+
+        stats_dir = outdir / "stats"
+        trades_dir = outdir / "trades"
+        equity_dir = outdir / "equity"
+
+        stats_dir.mkdir(exist_ok=True)
+        trades_dir.mkdir(exist_ok=True)
+        equity_dir.mkdir(exist_ok=True)
+
+        (stats_dir / "wave5_stats.json").write_text(json.dumps(_stats_to_json(stats), indent=2))
+        export_trades_csv(stats, trades_dir / "wave5_trades.csv")
+        export_equity_curve_csv(stats, equity_dir / "wave5_equity.csv")
+
+        summary = _summary_table({"wave5": stats})
+        print("\nSummary")
+        print(summary.to_string(index=False))
+        print(f"\nAll reports saved to: {outdir}")
+        return
 
     gate_debug = compute_gating_debug(
         df,
