@@ -328,6 +328,15 @@ def main() -> None:
     parser.add_argument("--wave5-min-swing-atr", type=float, default=None, help="Wave5: minimum swing ATR override.")
     parser.add_argument("--wave5-trigger-bars", type=int, default=20, help="Wave5: trigger bars to scan.")
     parser.add_argument("--wave5-max-windows", type=int, default=2000, help="Wave5: maximum windows to scan.")
+    parser.add_argument("--wave5-no-ema-filter", action="store_true", default=False, help="Wave5: disable EMA filter.")
+    parser.add_argument("--wave5-ema-len", type=int, default=200, help="Wave5: EMA length.")
+    parser.add_argument("--wave5-ema-atr-k", type=float, default=0.5, help="Wave5: EMA ATR multiple.")
+    parser.add_argument(
+        "--wave5-trigger-mode",
+        choices=["candle", "bos"],
+        default="bos",
+        help="Wave5: trigger mode.",
+    )
 
     args = parser.parse_args()
 
@@ -353,6 +362,10 @@ def main() -> None:
             "imp_mode": args.wave5_imp_mode,
             "overlap_mode": args.wave5_overlap_mode,
             "trigger_bars": args.wave5_trigger_bars,
+            "ema_len": args.wave5_ema_len,
+            "ema_filter": not args.wave5_no_ema_filter,
+            "ema_atr_k": args.wave5_ema_atr_k,
+            "trigger_mode": args.wave5_trigger_mode,
             "max_windows": args.wave5_max_windows,
         }
         params = resolve_wave5_params(args.asset, overrides)
@@ -367,6 +380,10 @@ def main() -> None:
             imp_mode=params["imp_mode"],
             overlap_mode=params["overlap_mode"],
             trigger_bars=params["trigger_bars"],
+            ema_len=params["ema_len"],
+            ema_filter=params["ema_filter"],
+            ema_atr_k=params["ema_atr_k"],
+            trigger_mode=params["trigger_mode"],
             debug=args.wave5_debug,
             max_windows=args.wave5_max_windows
         )
