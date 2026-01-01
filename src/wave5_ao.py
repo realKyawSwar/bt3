@@ -39,6 +39,7 @@ class Wave5AODivergenceStrategy(Strategy):
     require_ext_touch = False  # if True, require H5/L5 extreme also tagged the zone
     sl_at_wave5_extreme = True  # If True, SL uses H5/L5 extreme instead of trigger candle
     tp_mode = "hybrid"  # "rr" (2R TP), "wave4" (Wave4 level), or "hybrid" (closer of the two)
+    zone_mode = "trigger"  # trigger|extreme|either
     
     # Upgrade 1: Wave5 AO decay exhaustion confirmation
     wave5_ao_decay = False  # Require AO decay at Wave5 extreme
@@ -102,7 +103,12 @@ class Wave5AODivergenceStrategy(Strategy):
                 'w5_ext_fail': 0,
                 'atr_regime_fail': 0,
                 'same_bar_ambiguous_fail': 0,
+                'zone_trigger_pass': 0,
+                'zone_extreme_pass': 0,
             }
+            self._debug_zone_mode = 'trigger'
+            self._debug_zone_trigger = 0
+            self._debug_zone_extreme = 0
 
     def _print_counters(self, i: int, direction: str) -> None:
         """Print debug counters before a trade entry."""
@@ -117,7 +123,10 @@ class Wave5AODivergenceStrategy(Strategy):
                   f"ao_decay_fail={self.counters['ao_decay_fail']} w5_ext_fail={self.counters['w5_ext_fail']} "
                   f"atr_regime_fail={self.counters['atr_regime_fail']} "
                   f"same_bar_ambiguous_fail={self.counters['same_bar_ambiguous_fail']} "
-                  f"entries={self.counters['entries']}")
+                  f"entries={self.counters['entries']} "
+                  f"zone_mode={self._debug_zone_mode} "
+                  f"zone_trigger={self._debug_zone_trigger} "
+                  f"zone_extreme={self._debug_zone_extreme}")
 
     # -------------------------
     # Swings
@@ -296,6 +305,31 @@ class Wave5AODivergenceStrategy(Strategy):
         body = abs(self._close[i] - self._open[i])
         return body / atr_val
 
+    def _normalize_zone_mode(self) -> str:
+        mode = str(getattr(self, "zone_mode", "trigger")).strip().lower()
+        if mode not in {"trigger", "extreme", "either"}:
+            return "trigger"
+        return mode
+
+    def _evaluate_zone(self, zone_mode: str, in_zone_trigger: bool, in_zone_extreme: bool) -> bool:
+        if self.debug:
+            if in_zone_trigger:
+                self.counters['zone_trigger_pass'] += 1
+            if in_zone_extreme:
+                self.counters['zone_extreme_pass'] += 1
+            self._debug_zone_mode = zone_mode
+            self._debug_zone_trigger = int(bool(in_zone_trigger))
+            self._debug_zone_extreme = int(bool(in_zone_extreme))
+
+        if bool(self.require_ext_touch) and not in_zone_extreme:
+            return False
+
+        if zone_mode == "trigger":
+            return in_zone_trigger
+        if zone_mode == "extreme":
+            return in_zone_extreme
+        return in_zone_trigger or in_zone_extreme
+
     # -------------------------
     # Main loop
     # -------------------------
@@ -362,10 +396,8 @@ class Wave5AODivergenceStrategy(Strategy):
         # Optional: also require the Wave5 extreme to have tagged the zone
         in_zone_extreme = any(abs(H5_p - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
 
-        if self.require_ext_touch:
-            in_zone = in_zone_trigger and in_zone_extreme
-        else:
-            in_zone = in_zone_trigger
+        zone_mode = self._normalize_zone_mode()
+        in_zone = self._evaluate_zone(zone_mode, in_zone_trigger, in_zone_extreme)
 
         if not in_zone:
             if self.debug:
@@ -578,10 +610,8 @@ class Wave5AODivergenceStrategy(Strategy):
         in_zone_trigger = any(abs(trigger_px - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
         in_zone_extreme = any(abs(L5_p - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
 
-        if self.require_ext_touch:
-            in_zone = in_zone_trigger and in_zone_extreme
-        else:
-            in_zone = in_zone_trigger
+        zone_mode = self._normalize_zone_mode()
+        in_zone = self._evaluate_zone(zone_mode, in_zone_trigger, in_zone_extreme)
 
         if not in_zone:
             if self.debug:

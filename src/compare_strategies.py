@@ -345,6 +345,15 @@ def main() -> None:
     parser.add_argument("--wave5-sl-trigger", dest="wave5_sl_extreme", action="store_false")
     parser.set_defaults(wave5_sl_extreme=True)
     parser.add_argument("--wave5-require-ext-touch", action="store_true", default=Wave5AODivergenceStrategy.require_ext_touch, help="Require Wave5 extreme to touch fib zone.")
+    parser.add_argument(
+        "--wave5-zone-mode",
+        choices=["trigger", "extreme", "either"],
+        default=Wave5AODivergenceStrategy.zone_mode,
+        help=(
+            "Fib zone test price source: trigger=entry trigger price, extreme=Wave5 extreme (H5/L5), either="
+            "pass if trigger OR extreme is inside zone"
+        ),
+    )
     
     # Upgrade 1: Wave5 AO decay exhaustion
     parser.add_argument("--wave5-ao-decay", action="store_true", default=Wave5AODivergenceStrategy.wave5_ao_decay, help="Require AO decay at Wave5 extreme.")
@@ -401,6 +410,7 @@ def main() -> None:
             # Upgrade 4: ATR expansion regime filter
             "atr_long": args.wave5_atr_long,
             "atr_expand_k": args.wave5_atr_expand_k,
+            "zone_mode": args.wave5_zone_mode,
         }
 
         # Force exclusive_orders=False when tp_split is enabled to allow placing 2 orders
