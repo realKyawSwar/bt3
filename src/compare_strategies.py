@@ -18,7 +18,6 @@ from alligator_fractal import (
     compute_htf_bias,
 )
 from bt3 import fetch_data, run_backtest
-from elliott_ao_wave5 import ElliottAOWave5Strategy, resolve_wave5_params
 from reporting import export_equity_curve_csv, export_trades_csv
 
 
@@ -315,29 +314,6 @@ def main() -> None:
     parser.add_argument("--outdir", default="reports/", help="Output directory for reports.")
     parser.add_argument("--pullback-k", type=float, default=None, help="Override pullback_k_atr for pullback strategy.")
     parser.add_argument("--touch-teeth", action="store_true", default=False, help="Require pullback to touch teeth.")
-    parser.add_argument("--mode", choices=["alligator", "wave5"], default="alligator")
-    parser.add_argument("--pivot-len", type=int, default=None, help="Wave5: pivot length override.")
-    parser.add_argument("--tol", type=float, default=None, help="Wave5: fib zone tolerance override.")
-    parser.add_argument("--stop-pad-atr", type=float, default=None, help="Wave5: stop padding in ATR units.")
-    parser.add_argument("--tp-r", type=float, default=None, help="Wave5: take-profit R multiple.")
-    parser.add_argument("--min-swing-atr", type=float, default=None, help="Wave5: minimum swing size in ATR.")
-    parser.add_argument("--wave5-debug", action="store_true", default=False, help="Wave5: enable debug counters.")
-    parser.add_argument("--wave5-imp-mode", choices=["w1", "w3", "w13"], default="w1", help="Wave5: impulse size mode.")
-    parser.add_argument("--wave5-overlap-mode", choices=["strict", "soft"], default="soft", help="Wave5: overlap rule mode.")
-    parser.add_argument("--wave5-tol", type=float, default=None, help="Wave5: fib zone tolerance override.")
-    parser.add_argument("--wave5-min-swing-atr", type=float, default=None, help="Wave5: minimum swing ATR override.")
-    parser.add_argument("--wave5-trigger-bars", type=int, default=20, help="Wave5: trigger bars to scan.")
-    parser.add_argument("--wave5-max-windows", type=int, default=2000, help="Wave5: maximum windows to scan.")
-    parser.add_argument("--wave5-no-ema-filter", action="store_true", default=False, help="Wave5: disable EMA filter.")
-    parser.add_argument("--wave5-ema-len", type=int, default=200, help="Wave5: EMA length.")
-    parser.add_argument("--wave5-ema-atr-k", type=float, default=0.5, help="Wave5: EMA ATR multiple.")
-    parser.add_argument(
-        "--wave5-trigger-mode",
-        choices=["candle", "bos"],
-        default="bos",
-        help="Wave5: trigger mode.",
-    )
-    parser.add_argument("--wave5-bos-atr-k", type=float, default=0.2, help="Wave5: BOS ATR buffer.")
 
     args = parser.parse_args()
 
@@ -352,81 +328,6 @@ def main() -> None:
         raise ValueError("No data available after filtering/resampling.")
 
     print(_data_fingerprint(df))
-
-    if args.mode == "wave5":
-        overrides = {
-            "pivot_len": args.pivot_len,
-            "tol": args.wave5_tol if args.wave5_tol is not None else args.tol,
-            "stop_pad_atr": args.stop_pad_atr,
-            "tp_r": args.tp_r,
-            "min_swing_atr": args.wave5_min_swing_atr if args.wave5_min_swing_atr is not None else args.min_swing_atr,
-            "imp_mode": args.wave5_imp_mode,
-            "overlap_mode": args.wave5_overlap_mode,
-            "trigger_bars": args.wave5_trigger_bars,
-            "ema_len": args.wave5_ema_len,
-            "ema_filter": not args.wave5_no_ema_filter,
-            "ema_atr_k": args.wave5_ema_atr_k,
-            "trigger_mode": args.wave5_trigger_mode,
-            "bos_atr_k": args.wave5_bos_atr_k,
-            "max_windows": args.wave5_max_windows,
-        }
-        params = resolve_wave5_params(args.asset, overrides)
-        from elliott_ao_wave5 import wave5_signals
-        _ = wave5_signals(
-            df,
-            pivot_len=params["pivot_len"],
-            tol=params["tol"],
-            stop_pad_atr=params["stop_pad_atr"],
-            tp_r=params["tp_r"],
-            min_swing_atr=params["min_swing_atr"],
-            imp_mode=params["imp_mode"],
-            overlap_mode=params["overlap_mode"],
-            trigger_bars=params["trigger_bars"],
-            ema_len=params["ema_len"],
-            ema_filter=params["ema_filter"],
-            ema_atr_k=params["ema_atr_k"],
-            trigger_mode=params["trigger_mode"],
-            bos_atr_k=params["bos_atr_k"],
-            debug=args.wave5_debug,
-            max_windows=args.wave5_max_windows
-        )
-        stats = run_backtest(
-            data=df,
-            strategy=ElliottAOWave5Strategy,
-            cash=args.cash,
-            commission=args.commission,
-            spread_pips=args.spread,
-            exclusive_orders=True,
-            strategy_params=params,
-        )
-
-        _print_stats("Elliott AO Wave5 Stats", stats)
-
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        asset_name = args.asset if args.asset else "data"
-        tf_name = args.tf if args.tf else "custom"
-        run_dir = f"{asset_name}_{tf_name}_{timestamp}"
-
-        outdir = Path(args.outdir) / run_dir
-        outdir.mkdir(parents=True, exist_ok=True)
-
-        stats_dir = outdir / "stats"
-        trades_dir = outdir / "trades"
-        equity_dir = outdir / "equity"
-
-        stats_dir.mkdir(exist_ok=True)
-        trades_dir.mkdir(exist_ok=True)
-        equity_dir.mkdir(exist_ok=True)
-
-        (stats_dir / "wave5_stats.json").write_text(json.dumps(_stats_to_json(stats), indent=2))
-        export_trades_csv(stats, trades_dir / "wave5_trades.csv")
-        export_equity_curve_csv(stats, equity_dir / "wave5_equity.csv")
-
-        summary = _summary_table({"wave5": stats})
-        print("\nSummary")
-        print(summary.to_string(index=False))
-        print(f"\nAll reports saved to: {outdir}")
-        return
 
     gate_debug = compute_gating_debug(
         df,
