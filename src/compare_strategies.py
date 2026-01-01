@@ -340,6 +340,9 @@ def main() -> None:
     parser.add_argument("--wave5-require-zero-cross", dest="wave5_require_zero_cross", action="store_true")
     parser.add_argument("--wave5-no-require-zero-cross", dest="wave5_require_zero_cross", action="store_false")
     parser.set_defaults(wave5_require_zero_cross=Wave5AODivergenceStrategy.require_zero_cross)
+    parser.add_argument("--wave5-sl-extreme", dest="wave5_sl_extreme", action="store_true")
+    parser.add_argument("--wave5-sl-trigger", dest="wave5_sl_extreme", action="store_false")
+    parser.set_defaults(wave5_sl_extreme=True)
 
     args = parser.parse_args()
 
@@ -369,6 +372,8 @@ def main() -> None:
             "break_buffer_atr": args.wave5_break_buffer_atr,
             "max_body_atr": args.wave5_max_body_atr,
             "asset": args.asset or df.attrs.get("symbol"),
+            "sl_at_wave5_extreme": args.wave5_sl_extreme,
+
         }
 
         wave5_stats = run_backtest(

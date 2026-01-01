@@ -37,6 +37,7 @@ class Wave5AODivergenceStrategy(Strategy):
     asset = 'UNKNOWN'              # Asset symbol for labeling/reference
     debug = False
     require_ext_touch = False  # if True, require H5/L5 extreme also tagged the zone
+    sl_at_wave5_extreme = True  # If True, SL uses H5/L5 extreme instead of trigger candle
 
     def __init__(self, broker, data, params):
         super().__init__(broker, data, params)
@@ -377,9 +378,15 @@ class Wave5AODivergenceStrategy(Strategy):
             self._print_counters(i, 'sell')
 
         buffer = float(getattr(self, 'spread_price', 0.0) or 0.0)
+
         trigger_high = self._high[i]
         trigger_low = self._low[i]
-        sl = trigger_high + buffer
+
+        if bool(getattr(self, "sl_at_wave5_extreme", True)):
+            sl = float(H5_p) + buffer   # Wave5 extreme invalidation
+        else:
+            sl = float(trigger_high) + buffer
+
 
         if self.entry_mode == 'close':
             entry = self._close[i]
@@ -481,9 +488,15 @@ class Wave5AODivergenceStrategy(Strategy):
             self._print_counters(i, 'buy')
 
         buffer = float(getattr(self, 'spread_price', 0.0) or 0.0)
+
         trigger_low = self._low[i]
         trigger_high = self._high[i]
-        sl = trigger_low - buffer
+
+        if bool(getattr(self, "sl_at_wave5_extreme", True)):
+            sl = float(L5_p) - buffer   # Wave5 extreme invalidation
+        else:
+            sl = float(trigger_low) - buffer
+
 
         if self.entry_mode == 'close':
             entry = self._close[i]
