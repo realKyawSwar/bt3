@@ -132,15 +132,22 @@ def fetch_data(symbol: str, timeframe: str) -> pd.DataFrame:
 
         # Parse datetime index
         date_cols = ["Date", "date", "timestamp", "Timestamp", "time", "Time", "datetime", "Datetime"]
+        idx_set = False
         for col in date_cols:
             if col in df.columns:
-                df[col] = pd.to_datetime(df[col], errors="coerce")
-                df = df.set_index(col)
-                break
-        if not isinstance(df.index, pd.DatetimeIndex):
+                dt = pd.to_datetime(df[col], errors="coerce")
+                if dt.notna().sum() > 0:
+                    df[col] = dt
+                    df = df.set_index(col)
+                    idx_set = True
+                    break
+        if not idx_set:
             # fall back to first column
-            df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0], errors="coerce")
-            df = df.set_index(df.columns[0])
+            first_col = df.columns[0]
+            df[first_col] = pd.to_datetime(df[first_col], errors="coerce")
+            df = df.set_index(first_col)
+
+        df = df[~df.index.isna()]
 
         # Sort & de-dup index
         df = df[~df.index.duplicated(keep="first")]
@@ -177,6 +184,9 @@ def fetch_data(symbol: str, timeframe: str) -> pd.DataFrame:
                         f"Auto-scaled prices for {symbol_upper} by /{divisor} "
                         f"(median_close {median_close:g} -> {preview:g})"
                     )
+
+        # Enforce exact OHLCV columns
+        df = df[["Open", "High", "Low", "Close", "Volume"]]
 
         # Store symbol so run_backtest can infer it if needed
         df.attrs["symbol"] = symbol_upper
