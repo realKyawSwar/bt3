@@ -48,6 +48,13 @@ def _parse_timeframe(tf: str) -> str:
     return mapping[tf_norm]
 
 
+def _fraction_0_to_1(value: str) -> float:
+    val = float(value)
+    if val <= 0 or val > 1:
+        raise argparse.ArgumentTypeError("Value must satisfy 0 < size <= 1")
+    return val
+
+
 def _load_data(data_path: Optional[str], asset: Optional[str], tf: Optional[str]) -> pd.DataFrame:
     if data_path:
         if data_path.startswith("http://") or data_path.startswith("https://"):
@@ -333,6 +340,7 @@ def main() -> None:
     parser.add_argument("--wave5-entry-mode", choices=["close", "break"], default=Wave5AODivergenceStrategy.entry_mode)
     parser.add_argument("--wave5-tp-r", type=float, default=Wave5AODivergenceStrategy.tp_r)
     parser.add_argument("--wave5-tp-mode", choices=["rr", "wave4", "hybrid"], default=Wave5AODivergenceStrategy.tp_mode, help="TP mode: rr (2R TP), wave4 (Wave4 level), or hybrid (closer of the two).")
+    parser.add_argument("--wave5-size", type=_fraction_0_to_1, default=Wave5AODivergenceStrategy.order_size, help="Wave5 position size fraction (0< size <=1). Default 0.2")
     parser.add_argument("--wave5-min-w3-atr", type=float, default=Wave5AODivergenceStrategy.min_w3_atr, help="Min wave3 length in ATR units.")
     parser.add_argument("--wave5-break-buffer-atr", type=float, default=Wave5AODivergenceStrategy.break_buffer_atr, help="Buffer distance in ATR for break stop placement.")
     parser.add_argument("--wave5-max-body-atr", type=float, default=Wave5AODivergenceStrategy.max_body_atr, help="Max candle body size in ATR units to allow break entry.")
@@ -398,6 +406,7 @@ def main() -> None:
             "entry_mode": args.wave5_entry_mode,
             "tp_r": args.wave5_tp_r,
             "tp_mode": args.wave5_tp_mode,
+            "order_size": args.wave5_size,
             "debug": args.wave5_debug,
             "min_w3_atr": args.wave5_min_w3_atr,
             "max_trigger_lag": args.wave5_trigger_lag,

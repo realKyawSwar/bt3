@@ -39,6 +39,16 @@ You can also point to your own CSV/Parquet data instead of remote fetch:
 python src/compare_strategies.py --data "path/to/data.csv" --tf 4h --start 2023-01-01 --end 2024-12-31 --cash 50000
 ```
 
+### Wave5 AO Divergence (explicit sizing)
+
+Wave5 now accepts an explicit position size to avoid margin cancellations. Example:
+
+```bash
+python src/compare_strategies.py --mode wave5 --asset XAUUSD --tf 1h --spread 30 \
+    --wave5-size 0.2 --wave5-entry-mode break --wave5-trigger-lag 24 \
+    --wave5-zone-mode either --wave5-debug
+```
+
 ## Data Source
 
 The framework fetches forex data from the ejtraderLabs historical data repository using the URL pattern:

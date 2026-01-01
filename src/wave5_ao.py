@@ -29,6 +29,7 @@ class Wave5AODivergenceStrategy(Strategy):
     trigger = ('engulfing', 'pin')
     entry_mode = 'close'          # close|break
     tp_r = 2.0
+    order_size = 0.2  # Position size fraction (0-1]
     pin_ratio = 2.0
     min_bars_between_signals = 5
     max_trigger_lag = 3            # Max bars after H5/L5 to trigger entry
@@ -36,6 +37,7 @@ class Wave5AODivergenceStrategy(Strategy):
     break_buffer_atr = 0.10        # Buffer distance in ATR for break stop placement
     max_body_atr = 1.0             # Max candle body size (in ATR) to allow break entry
     asset = 'UNKNOWN'              # Asset symbol for labeling/reference
+    spread_price = 0.0             # Spread in price terms injected by runner
     debug = False
     require_ext_touch = False  # if True, require H5/L5 extreme also tagged the zone
     sl_at_wave5_extreme = True  # If True, SL uses H5/L5 extreme instead of trigger candle
@@ -61,6 +63,10 @@ class Wave5AODivergenceStrategy(Strategy):
         super().__init__(broker, data, params)
         self.asset = params.get('asset', 'UNKNOWN')
         self.spread_price = float(params.get('spread_price', 0.0) or 0.0)
+        osize = float(params.get('order_size', getattr(self, 'order_size', 0.2)))
+        if osize <= 0 or osize > 1:
+            raise ValueError("order_size must satisfy 0 < size <= 1")
+        self.order_size = osize
 
     def init(self):
         # Numpy arrays for speed & correctness
@@ -342,6 +348,14 @@ class Wave5AODivergenceStrategy(Strategy):
             return in_zone_extreme
         return in_zone_trigger or in_zone_extreme
 
+    def _can_place_order(self) -> bool:
+        if self.position:
+            return False
+        if getattr(self, "orders", None):
+            if len(self.orders) > 0:
+                return False
+        return True
+
     # -------------------------
     # Main loop
     # -------------------------
@@ -483,6 +497,11 @@ class Wave5AODivergenceStrategy(Strategy):
         if self.debug:
             self._print_counters(i, 'sell')
 
+        if not self._can_place_order():
+            if self.debug:
+                print(f"[WAVE5 SKIP] existing position/orders prevent new entry at i={i}")
+            return
+
         buffer = float(getattr(self, 'spread_price', 0.0) or 0.0)
 
         trigger_high = self._high[i]
@@ -509,6 +528,13 @@ class Wave5AODivergenceStrategy(Strategy):
             # Apply break_buffer_atr to stop placement
             sl = trigger_high + buffer + float(self.break_buffer_atr) * atr_val
 
+        base_size = float(getattr(self, "order_size", 0.2))
+        if base_size <= 0:
+            return
+
+        if self.debug:
+            print(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
+
         # Upgrade 3: Partial TP with split orders
         # Deterministic: if tp_split is enabled, always submit two orders
         # (Wave5 runner uses exclusive_orders=False when tp_split=True)
@@ -530,8 +556,8 @@ class Wave5AODivergenceStrategy(Strategy):
             
             # Calculate position sizes
             split_ratio = float(self.tp_split_ratio)
-            size1 = split_ratio
-            size2 = 1.0 - split_ratio
+            size1 = base_size * split_ratio
+            size2 = base_size * (1.0 - split_ratio)
             
             if self.debug:
                 print(f"[SELL SPLIT] entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} tp2={tp2:.5f} sizes={size1:.2f}/{size2:.2f}")
@@ -594,9 +620,9 @@ class Wave5AODivergenceStrategy(Strategy):
                 print(f"[SELL] entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} mode={tp_mode} selected={selected_source}")
 
             if self.entry_mode == 'close':
-                self.sell(sl=sl, tp=tp)
+                self.sell(sl=sl, tp=tp, size=base_size)
             else:
-                self.sell(stop=trigger_low, sl=sl, tp=tp)
+                self.sell(stop=trigger_low, sl=sl, tp=tp, size=base_size)
 
         self.last_signal_idx = i
         if self.debug:
@@ -704,6 +730,11 @@ class Wave5AODivergenceStrategy(Strategy):
         if self.debug:
             self._print_counters(i, 'buy')
 
+        if not self._can_place_order():
+            if self.debug:
+                print(f"[WAVE5 SKIP] existing position/orders prevent new entry at i={i}")
+            return
+
         buffer = float(getattr(self, 'spread_price', 0.0) or 0.0)
 
         trigger_low = self._low[i]
@@ -730,6 +761,13 @@ class Wave5AODivergenceStrategy(Strategy):
             # Apply break_buffer_atr to stop placement
             sl = trigger_low - buffer - float(self.break_buffer_atr) * atr_val
 
+        base_size = float(getattr(self, "order_size", 0.2))
+        if base_size <= 0:
+            return
+
+        if self.debug:
+            print(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
+
         # Upgrade 3: Partial TP with split orders
         # Deterministic: if tp_split is enabled, always submit two orders
         # (Wave5 runner uses exclusive_orders=False when tp_split=True)
@@ -751,8 +789,8 @@ class Wave5AODivergenceStrategy(Strategy):
             
             # Calculate position sizes
             split_ratio = float(self.tp_split_ratio)
-            size1 = split_ratio
-            size2 = 1.0 - split_ratio
+            size1 = base_size * split_ratio
+            size2 = base_size * (1.0 - split_ratio)
             
             if self.debug:
                 print(f"[BUY SPLIT] entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} tp2={tp2:.5f} sizes={size1:.2f}/{size2:.2f}")
@@ -815,9 +853,9 @@ class Wave5AODivergenceStrategy(Strategy):
                 print(f"[BUY] entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} mode={tp_mode} selected={selected_source}")
 
             if self.entry_mode == 'close':
-                self.buy(sl=sl, tp=tp)
+                self.buy(sl=sl, tp=tp, size=base_size)
             else:
-                self.buy(stop=trigger_high, sl=sl, tp=tp)
+                self.buy(stop=trigger_high, sl=sl, tp=tp, size=base_size)
 
         self.last_signal_idx = i
         if self.debug:
