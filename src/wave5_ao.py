@@ -101,6 +101,7 @@ class Wave5AODivergenceStrategy(Strategy):
                 'ao_decay_fail': 0,
                 'w5_ext_fail': 0,
                 'atr_regime_fail': 0,
+                'same_bar_ambiguous_fail': 0,
             }
 
     def _print_counters(self, i: int, direction: str) -> None:
@@ -114,7 +115,9 @@ class Wave5AODivergenceStrategy(Strategy):
                   f"lag_fail={self.counters['lag_fail']} candle_fail={self.counters['candle_fail']} "
                   f"break_body_fail={self.counters['break_body_fail']} "
                   f"ao_decay_fail={self.counters['ao_decay_fail']} w5_ext_fail={self.counters['w5_ext_fail']} "
-                  f"atr_regime_fail={self.counters['atr_regime_fail']} entries={self.counters['entries']}")
+                  f"atr_regime_fail={self.counters['atr_regime_fail']} "
+                  f"same_bar_ambiguous_fail={self.counters['same_bar_ambiguous_fail']} "
+                  f"entries={self.counters['entries']}")
 
     # -------------------------
     # Swings
@@ -455,6 +458,8 @@ class Wave5AODivergenceStrategy(Strategy):
             sl = trigger_high + buffer + float(self.break_buffer_atr) * atr_val
 
         # Upgrade 3: Partial TP with split orders
+        # Deterministic: if tp_split is enabled, always submit two orders
+        # (Wave5 runner uses exclusive_orders=False when tp_split=True)
         if bool(self.tp_split):
             # Split orders mode: TP1 at Wave4, TP2 at 0.618 retrace
             tp1 = float(seq['L4_p'])  # Wave4
@@ -462,6 +467,14 @@ class Wave5AODivergenceStrategy(Strategy):
             tp2 = seq['L4_p'] - 0.618 * (H5_p - seq['L0_p'])
             # Clamp tp2 for SELL: tp2 should not be higher than tp1
             tp2 = min(tp2, tp1)
+            
+            # Same-bar ambiguity guard for break mode
+            if self.entry_mode == 'break':
+                # For SELL break: if current bar could hit SL or TP in same bar, skip
+                if self._high[i] >= sl or self._low[i] <= tp2:
+                    if self.debug:
+                        self.counters['same_bar_ambiguous_fail'] += 1
+                    return
             
             # Calculate position sizes
             split_ratio = float(self.tp_split_ratio)
@@ -517,6 +530,14 @@ class Wave5AODivergenceStrategy(Strategy):
                     ]
                     selected_source, tp, _ = min(candidates_with_distance, key=lambda x: x[2])
 
+            # Same-bar ambiguity guard for break mode
+            if self.entry_mode == 'break':
+                # For SELL break: if current bar could hit SL or TP in same bar, skip
+                if self._high[i] >= sl or self._low[i] <= tp:
+                    if self.debug:
+                        self.counters['same_bar_ambiguous_fail'] += 1
+                    return
+            
             if self.debug:
                 print(f"[SELL] entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} mode={tp_mode} selected={selected_source}")
 
@@ -652,6 +673,8 @@ class Wave5AODivergenceStrategy(Strategy):
             sl = trigger_low - buffer - float(self.break_buffer_atr) * atr_val
 
         # Upgrade 3: Partial TP with split orders
+        # Deterministic: if tp_split is enabled, always submit two orders
+        # (Wave5 runner uses exclusive_orders=False when tp_split=True)
         if bool(self.tp_split):
             # Split orders mode: TP1 at Wave4, TP2 at 0.618 retrace
             tp1 = float(seq['H4_p'])  # Wave4
@@ -659,6 +682,14 @@ class Wave5AODivergenceStrategy(Strategy):
             tp2 = seq['H4_p'] + 0.618 * (seq['H0_p'] - L5_p)
             # Clamp tp2 for BUY: tp2 should not be lower than tp1
             tp2 = max(tp2, tp1)
+            
+            # Same-bar ambiguity guard for break mode
+            if self.entry_mode == 'break':
+                # For BUY break: if current bar could hit SL or TP in same bar, skip
+                if self._low[i] <= sl or self._high[i] >= tp2:
+                    if self.debug:
+                        self.counters['same_bar_ambiguous_fail'] += 1
+                    return
             
             # Calculate position sizes
             split_ratio = float(self.tp_split_ratio)
@@ -714,6 +745,14 @@ class Wave5AODivergenceStrategy(Strategy):
                     ]
                     selected_source, tp, _ = min(candidates_with_distance, key=lambda x: x[2])
 
+            # Same-bar ambiguity guard for break mode
+            if self.entry_mode == 'break':
+                # For BUY break: if current bar could hit SL or TP in same bar, skip
+                if self._low[i] <= sl or self._high[i] >= tp:
+                    if self.debug:
+                        self.counters['same_bar_ambiguous_fail'] += 1
+                    return
+            
             if self.debug:
                 print(f"[BUY] entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} mode={tp_mode} selected={selected_source}")
 

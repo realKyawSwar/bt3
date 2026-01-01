@@ -344,6 +344,7 @@ def main() -> None:
     parser.add_argument("--wave5-sl-extreme", dest="wave5_sl_extreme", action="store_true")
     parser.add_argument("--wave5-sl-trigger", dest="wave5_sl_extreme", action="store_false")
     parser.set_defaults(wave5_sl_extreme=True)
+    parser.add_argument("--wave5-require-ext-touch", action="store_true", default=Wave5AODivergenceStrategy.require_ext_touch, help="Require Wave5 extreme to touch fib zone.")
     
     # Upgrade 1: Wave5 AO decay exhaustion
     parser.add_argument("--wave5-ao-decay", action="store_true", default=Wave5AODivergenceStrategy.wave5_ao_decay, help="Require AO decay at Wave5 extreme.")
@@ -389,6 +390,7 @@ def main() -> None:
             "max_body_atr": args.wave5_max_body_atr,
             "asset": args.asset or df.attrs.get("symbol"),
             "sl_at_wave5_extreme": args.wave5_sl_extreme,
+            "require_ext_touch": args.wave5_require_ext_touch,
             # Upgrade 1: Wave5 AO decay exhaustion
             "wave5_ao_decay": args.wave5_ao_decay,
             # Upgrade 2: Wave5 minimum extension
@@ -401,15 +403,24 @@ def main() -> None:
             "atr_expand_k": args.wave5_atr_expand_k,
         }
 
+        # Force exclusive_orders=False when tp_split is enabled to allow placing 2 orders
+        # This ensures deterministic behavior for split TP mode
+        wave5_exclusive = False if args.wave5_tp_split else args.exclusive_orders
+
         wave5_stats = run_backtest(
             data=df,
             strategy=STRATEGY_REGISTRY["wave5"],
             cash=args.cash,
             commission=args.commission,
             spread_pips=args.spread,
-            exclusive_orders=args.exclusive_orders,
+            exclusive_orders=wave5_exclusive,
             strategy_params=wave5_params,
         )
+
+        # Print final debug counters if debug mode is enabled
+        strat = wave5_stats._strategy
+        if getattr(strat, "debug", False) and hasattr(strat, "counters"):
+            print("FINAL COUNTERS:", strat.counters)
 
         _print_stats("Wave5 Strategy Stats", wave5_stats)
 
