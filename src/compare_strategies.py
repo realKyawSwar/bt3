@@ -20,6 +20,7 @@ from alligator_fractal import (
 from bt3 import fetch_data, run_backtest
 from reporting import export_equity_curve_csv, export_trades_csv
 from wave5_ao import Wave5AODivergenceStrategy
+from broker_debug import install_all_broker_hooks
 
 
 STRATEGY_REGISTRY = {
@@ -324,6 +325,7 @@ def main() -> None:
     parser.add_argument("--commission", type=float, default=0.0)
     parser.add_argument("--spread", type=float, default=None, help="FX spread in pips.")
     parser.add_argument("--eps", type=float, default=None, help="Optional epsilon override for stop entries.")
+    parser.add_argument("--margin", type=float, default=1.0, help="Margin requirement fraction (1.0=no leverage, 0.02=50:1).")
     parser.add_argument("--no-htf-bias", action="store_true", default=False, help="Disable H4 bias filter.")
     parser.add_argument("--no-vol-filter", action="store_true", default=False, help="Disable ATR regime filter.")
     parser.add_argument("--htf", default="4h", help="Higher timeframe for bias (e.g. 4h, 1d).")
@@ -398,6 +400,19 @@ def main() -> None:
     print(_data_fingerprint(df))
 
     if args.mode == "wave5":
+        sizing_margin = float(args.margin)
+        exec_margin = 1.0  # always run broker with margin=1.0 for stable execution
+        leverage = float("inf") if sizing_margin == 0 else 1.0 / sizing_margin
+
+        print(
+            f"[RUN CONFIG] exec_margin={exec_margin:.2f} sizing_margin={sizing_margin:.4f} "
+            f"leverage={leverage:.2f}"
+        )
+
+        # Install broker debug hooks if wave5-debug is enabled
+        if args.wave5_debug:
+            install_all_broker_hooks(debug=True)
+        
         wave5_params = {
             "swing_window": args.wave5_swing_window,
             "fib_tol_atr": args.wave5_fib_tol,
@@ -408,6 +423,8 @@ def main() -> None:
             "tp_mode": args.wave5_tp_mode,
             "order_size": args.wave5_size,
             "debug": args.wave5_debug,
+            "sizing_margin": sizing_margin,
+            "margin": exec_margin,  # compatibility only; execution margin stays 1.0
             "min_w3_atr": args.wave5_min_w3_atr,
             "max_trigger_lag": args.wave5_trigger_lag,
             "break_buffer_atr": args.wave5_break_buffer_atr,
@@ -439,6 +456,7 @@ def main() -> None:
             cash=args.cash,
             commission=args.commission,
             spread_pips=args.spread,
+            margin=exec_margin,
             exclusive_orders=wave5_exclusive,
             strategy_params=wave5_params,
         )
@@ -514,6 +532,7 @@ def main() -> None:
         cash=args.cash,
         commission=args.commission,
         spread_pips=args.spread,
+        margin=args.margin,
         exclusive_orders=args.exclusive_orders,
         strategy_params=base_params,
     )
@@ -524,6 +543,7 @@ def main() -> None:
         cash=args.cash,
         commission=args.commission,
         spread_pips=args.spread,
+        margin=args.margin,
         exclusive_orders=args.exclusive_orders,
         strategy_params=base_params,
     )
@@ -534,6 +554,7 @@ def main() -> None:
         cash=args.cash,
         commission=args.commission,
         spread_pips=args.spread,
+        margin=args.margin,
         exclusive_orders=args.exclusive_orders,
         strategy_params=pullback_params,
     )

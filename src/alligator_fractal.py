@@ -225,6 +225,9 @@ class AlligatorFractal(Strategy):
     # Spread model (price units). bt3.run_backtest can set this.
     spread_price = 0.0
 
+    # Margin support (for compatibility with Wave5 and parameter passing)
+    margin = 1.0  # Margin requirement (1.0=no leverage, 0.02=50:1)
+
     # Exit behavior flags (USED in next())
     exit_on_structure_loss = True
     exit_on_sleeping = True

@@ -223,6 +223,7 @@ def run_backtest(
     spread_pips: Optional[float] = None,
     pip_size: Optional[float] = None,
     symbol: Optional[str] = None,
+    margin: float = 1.0,
     **kwargs
 ) -> dict:
     """Run a backtest using backtesting.py.
@@ -233,7 +234,15 @@ def run_backtest(
     """
     sym = symbol or data.attrs.get("symbol")
 
-    bt = Backtest(data, strategy, cash=cash, commission=commission, finalize_trades=True, **kwargs)
+    bt = Backtest(
+        data,
+        strategy,
+        cash=cash,
+        commission=commission,
+        finalize_trades=True,
+        margin=margin,
+        **kwargs,
+    )
     params = dict(strategy_params or {})
     if spread_pips is not None:
         ps = pip_size if pip_size is not None else _default_pip_size(sym)
