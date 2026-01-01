@@ -19,6 +19,12 @@ from alligator_fractal import (
 )
 from bt3 import fetch_data, run_backtest
 from reporting import export_equity_curve_csv, export_trades_csv
+from wave5_ao import Wave5AODivergenceStrategy
+
+
+STRATEGY_REGISTRY = {
+    "wave5": Wave5AODivergenceStrategy,
+}
 
 
 def _parse_timeframe(tf: str) -> str:
@@ -296,6 +302,12 @@ def compute_gating_debug(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare strict vs classic Alligator+Fractal strategies.")
+    parser.add_argument(
+        "--mode",
+        choices=["alligator", *sorted(STRATEGY_REGISTRY)],
+        default="alligator",
+        help="Strategy mode to run (default: alligator compare).",
+    )
     parser.add_argument("--data", help="Path or URL to CSV/Parquet data.")
     parser.add_argument("--asset", help="Symbol for remote fetch via bt3.fetch_data.")
     parser.add_argument("--tf", help="Timeframe (e.g. H4, H1, 15m).")
@@ -315,6 +327,16 @@ def main() -> None:
     parser.add_argument("--pullback-k", type=float, default=None, help="Override pullback_k_atr for pullback strategy.")
     parser.add_argument("--touch-teeth", action="store_true", default=False, help="Require pullback to touch teeth.")
 
+    parser.add_argument("--wave5-swing-window", type=int, default=Wave5AODivergenceStrategy.swing_window)
+    parser.add_argument("--wave5-fib-tol", type=float, default=Wave5AODivergenceStrategy.fib_tol_atr)
+    parser.add_argument("--wave5-div-threshold", type=float, default=Wave5AODivergenceStrategy.ao_div_min)
+    parser.add_argument("--wave5-entry-mode", choices=["close", "break"], default=Wave5AODivergenceStrategy.entry_mode)
+    parser.add_argument("--wave5-tp-r", type=float, default=Wave5AODivergenceStrategy.tp_r)
+    parser.add_argument("--wave5-debug", action="store_true", default=Wave5AODivergenceStrategy.debug)
+    parser.add_argument("--wave5-require-zero-cross", dest="wave5_require_zero_cross", action="store_true")
+    parser.add_argument("--wave5-no-require-zero-cross", dest="wave5_require_zero_cross", action="store_false")
+    parser.set_defaults(wave5_require_zero_cross=Wave5AODivergenceStrategy.require_zero_cross)
+
     args = parser.parse_args()
 
     df = _load_data(args.data, args.asset, args.tf)
@@ -328,6 +350,54 @@ def main() -> None:
         raise ValueError("No data available after filtering/resampling.")
 
     print(_data_fingerprint(df))
+
+    if args.mode == "wave5":
+        wave5_params = {
+            "swing_window": args.wave5_swing_window,
+            "fib_tol_atr": args.wave5_fib_tol,
+            "ao_div_min": args.wave5_div_threshold,
+            "require_zero_cross": args.wave5_require_zero_cross,
+            "entry_mode": args.wave5_entry_mode,
+            "tp_r": args.wave5_tp_r,
+            "debug": args.wave5_debug,
+            "asset": args.asset or df.attrs.get("symbol"),
+            "spread": args.spread if args.spread is not None else 0.0,
+        }
+
+        wave5_stats = run_backtest(
+            data=df,
+            strategy=STRATEGY_REGISTRY["wave5"],
+            cash=args.cash,
+            commission=args.commission,
+            spread_pips=args.spread,
+            exclusive_orders=args.exclusive_orders,
+            strategy_params=wave5_params,
+        )
+
+        _print_stats("Wave5 Strategy Stats", wave5_stats)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        asset_name = args.asset if args.asset else "data"
+        tf_name = args.tf if args.tf else "custom"
+        run_dir = f"{asset_name}_{tf_name}_wave5_{timestamp}"
+
+        outdir = Path(args.outdir) / run_dir
+        outdir.mkdir(parents=True, exist_ok=True)
+
+        stats_dir = outdir / "stats"
+        trades_dir = outdir / "trades"
+        equity_dir = outdir / "equity"
+
+        stats_dir.mkdir(exist_ok=True)
+        trades_dir.mkdir(exist_ok=True)
+        equity_dir.mkdir(exist_ok=True)
+
+        (stats_dir / "wave5_stats.json").write_text(json.dumps(_stats_to_json(wave5_stats), indent=2))
+        export_trades_csv(wave5_stats, trades_dir / "wave5_trades.csv")
+        export_equity_curve_csv(wave5_stats, equity_dir / "wave5_equity.csv")
+
+        print(f"\nAll reports saved to: {outdir}")
+        return
 
     gate_debug = compute_gating_debug(
         df,
