@@ -447,6 +447,9 @@ def main() -> None:
             "zone_mode": args.wave5_zone_mode,
         }
 
+        if args.wave5_debug:
+            print(f"[RUN CONFIG] wave5_params={json.dumps(wave5_params)}")
+
         # Force exclusive_orders=False when tp_split is enabled to allow placing 2 orders
         # This ensures deterministic behavior for split TP mode
         wave5_exclusive = False if args.wave5_tp_split else args.exclusive_orders

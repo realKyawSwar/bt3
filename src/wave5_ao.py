@@ -107,6 +107,17 @@ class Wave5AODivergenceStrategy(Strategy):
         self._added_low = set()
         self.last_confirmed = -1
         self.last_signal_idx = -10_000
+        self.summary = {
+            "bars_seen": 0,
+            "wave_candidates": 0,
+            "zone_pass": 0,
+            "trigger_pass": 0,
+            "entry_pass": 0,
+            "order_attempts": 0,
+            "orders_placed": 0,
+            "exceptions_count": 0,
+        }
+        self._final_summary_printed = False
 
         if self.debug:
             self.counters = {
@@ -135,6 +146,10 @@ class Wave5AODivergenceStrategy(Strategy):
             self._debug_zone_trigger = 0
             self._debug_zone_extreme = 0
 
+    def _dbg(self, msg: str) -> None:
+        if self.debug:
+            print(msg)
+
     def _print_counters(self, i: int, direction: str) -> None:
         """Print debug counters before a trade entry."""
         if self.debug:
@@ -154,6 +169,41 @@ class Wave5AODivergenceStrategy(Strategy):
                   f"zone_mode={self._debug_zone_mode} "
                   f"zone_trigger={self._debug_zone_trigger} "
                   f"zone_extreme={self._debug_zone_extreme}")
+
+    def _emit_trace(self, trace: dict) -> None:
+        if not self.debug:
+            return
+        msg = (
+            f"[W5 TRACE] ts={trace.get('ts')} "
+            f"c={trace.get('close'):.5f} "
+            f"ao={trace.get('ao'):.5f} "
+            f"ao_signal={trace.get('ao_signal')} "
+            f"swing_ready={int(bool(trace.get('swing_ready', 0)))} "
+            f"type={trace.get('wave_type')} "
+            f"zone={int(bool(trace.get('zone_ok', 0)))} "
+            f"trigger={int(bool(trace.get('trigger_ok', 0)))} "
+            f"entry={int(bool(trace.get('entry_ok', 0)))} "
+            f"sl={int(bool(trace.get('sl_ok', 0)))} "
+            f"size={int(bool(trace.get('size_ok', 0)))} "
+            f"reason=\"{trace.get('reason', '')}\""
+        )
+        self._dbg(msg)
+
+    def _emit_final_summary(self) -> None:
+        if self._final_summary_printed or not self.debug:
+            return
+        self._final_summary_printed = True
+        summary = {
+            "bars_seen": self.summary.get("bars_seen", 0),
+            "wave_candidates": self.summary.get("wave_candidates", 0),
+            "zone_pass": self.summary.get("zone_pass", 0),
+            "trigger_pass": self.summary.get("trigger_pass", 0),
+            "entry_pass": self.summary.get("entry_pass", 0),
+            "order_attempts": self.summary.get("order_attempts", 0),
+            "orders_placed": self.summary.get("orders_placed", 0),
+            "exceptions_count": self.summary.get("exceptions_count", 0),
+        }
+        self._dbg(f"[W5 SUMMARY] {summary}")
 
     # -------------------------
     # Swings
@@ -363,15 +413,15 @@ class Wave5AODivergenceStrategy(Strategy):
             return in_zone_extreme
         return in_zone_trigger or in_zone_extreme
 
-    def _can_place_order(self) -> bool:
-        if self.position:
-            return False
-        if getattr(self, "orders", None):
-            if len(self.orders) > 0:
-                return False
-        return True
+    def _can_place_order(self):
+        if self.position and getattr(self.position, "size", 0) != 0:
+            return False, "already_in_position"
+        pending = len(self.orders) if getattr(self, "orders", None) else 0
+        if pending > 0:
+            return False, "pending_order_exists"
+        return True, ""
 
-    def _final_units(self, base_size_frac: float, entry_price: float, sl_price: float) -> int:
+    def _final_units(self, base_size_frac: float, entry_price: float, sl_price: float, return_details: bool = False):
         """Convert fractional size to units with sizing_margin cap and 1+ unit minimum."""
         eq = float(self.equity)
         entry_price = float(entry_price)
@@ -380,46 +430,76 @@ class Wave5AODivergenceStrategy(Strategy):
         sizing_margin = float(getattr(self, "sizing_margin", 1.0)) or 1.0
         exec_margin = float(getattr(self, "exec_margin", 1.0)) or 1.0
 
+        details = {
+            "equity": eq,
+            "entry": entry_price,
+            "sl": sl_price,
+            "size_frac": size,
+            "sizing_margin": sizing_margin,
+            "exec_margin": exec_margin,
+            "risk_cash": 0.0,
+            "risk_units": 0,
+            "max_units_cap": 0,
+            "final_units": 0,
+            "fail_reason": "",
+        }
+
         if (
             entry_price <= 0
             or not np.isfinite(entry_price)
             or not np.isfinite(sl_price)
             or not np.isfinite(size)
         ):
+            details["fail_reason"] = "sl_invalid"
             if self.debug:
-                print("[WAVE5 REJECT] reason=non_finite_inputs")
-            return 0
+                self._dbg("[WAVE5 REJECT] reason=non_finite_inputs")
+            return (0, details) if return_details else 0
 
         if size <= 0:
+            details["fail_reason"] = "size_zero"
             if self.debug:
-                print("[WAVE5 REJECT] reason=invalid_risk_fraction")
-            return 0
+                self._dbg("[WAVE5 REJECT] reason=invalid_risk_fraction")
+            return (0, details) if return_details else 0
 
         sl_dist = abs(entry_price - sl_price)
         if sl_dist <= 0 or not np.isfinite(sl_dist):
+            details["fail_reason"] = "sl_invalid"
             if self.debug:
-                print("[WAVE5 REJECT] reason=invalid_sl_distance")
-            return 0
+                self._dbg("[WAVE5 REJECT] reason=invalid_sl_distance")
+            return (0, details) if return_details else 0
 
         risk_cash = eq * min(max(size, 0.0), 1.0)
         risk_units = int(np.floor(risk_cash / sl_dist))
         max_units = int(np.floor(eq / (entry_price * sizing_margin))) if sizing_margin > 0 else 0
 
+        details.update({
+            "risk_cash": risk_cash,
+            "risk_units": risk_units,
+            "max_units_cap": max_units,
+        })
+
         if max_units <= 0:
+            details["fail_reason"] = "size_zero"
             if self.debug:
-                print("[WAVE5 REJECT] reason=insufficient_margin_cap")
-            return 0
+                self._dbg("[WAVE5 REJECT] reason=insufficient_margin_cap")
+            return (0, details) if return_details else 0
 
-        final_units = max(1, min(risk_units, max_units))
+        if risk_units >= 1 and max_units >= 1:
+            final_units = max(1, min(risk_units, max_units))
+        else:
+            details["fail_reason"] = "size_zero"
+            final_units = 0
+        details["final_units"] = final_units
 
-        if self.debug:
-            print(
-                f"[WAVE5 SIZE] equity={eq:.2f} entry={entry_price:.5f} sl={sl_price:.5f} "
+        if self.debug and final_units <= 0:
+            self._dbg(
+                "[WAVE5 SIZE] "
+                f"equity={eq:.2f} entry={entry_price:.5f} sl={sl_price:.5f} sl_dist={sl_dist:.5f} "
                 f"risk_cash={risk_cash:.2f} risk_units={risk_units} max_units_cap={max_units} "
                 f"final_units={final_units} sizing_margin={sizing_margin:.4f} exec_margin={exec_margin:.2f}"
             )
 
-        return final_units
+        return (final_units, details) if return_details else final_units
 
     # -------------------------
     # Main loop
@@ -429,18 +509,30 @@ class Wave5AODivergenceStrategy(Strategy):
         if i < 60:  # warm-up
             return
 
-        # Per-bar diagnostics (when debug enabled)
+        ts = self.data.index[-1] if hasattr(self.data, 'index') else i
+        ao_val = float(self.ao[i])
+        trace = {
+            "ts": ts,
+            "close": float(self._close[i]),
+            "ao": ao_val,
+            "ao_signal": int(np.sign(ao_val)),
+            "swing_ready": 0,
+            "wave_type": "none",
+            "zone_ok": 0,
+            "trigger_ok": 0,
+            "entry_ok": 0,
+            "sl_ok": 0,
+            "size_ok": 0,
+            "reason": "",
+        }
+        self.summary["bars_seen"] += 1
+
         if self.debug:
             num_orders = len(self.orders) if hasattr(self, 'orders') else 0
             num_trades = len(self.trades) if hasattr(self, 'trades') else 0
-            pos_size = self.position.size if hasattr(self, 'position') else 0
-            ts = self.data.index[-1] if hasattr(self.data, 'index') else i
-            print(f"[WAVE5 BAR] i={i} ts={ts} orders={num_orders} position={pos_size} trades_open={num_trades}")
-            
-            # Detect order disappearance: if we had orders last bar but none now and no trade opened
             if hasattr(self, '_prev_num_orders'):
                 if self._prev_num_orders > 0 and num_orders == 0 and num_trades == getattr(self, '_prev_num_trades', 0):
-                    print(f"[WAVE5 ALERT] order_disappeared i={i-1} -> i={i}, investigate broker logs above")
+                    self._dbg(f"[WAVE5 ALERT] order_disappeared i={i-1} -> i={i}, investigate broker logs above")
             self._prev_num_orders = num_orders
             self._prev_num_trades = num_trades
 
@@ -449,89 +541,109 @@ class Wave5AODivergenceStrategy(Strategy):
         atr_sma_val = float(self.atr_sma[i])
         if np.isfinite(atr_val) and np.isfinite(atr_sma_val) and atr_sma_val > 0:
             if atr_val > float(self.atr_expand_k) * atr_sma_val:
+                trace["reason"] = "trigger_fail"
                 if self.debug:
                     self.counters['atr_regime_fail'] += 1
+                self._emit_trace(trace)
                 return
 
         self._update_swings(i)
+        swings_ready = (len(self.swing_highs) + len(self.swing_lows)) >= 5
+        trace["swing_ready"] = int(swings_ready)
+        if not swings_ready:
+            trace["reason"] = "no_swings"
+            self._emit_trace(trace)
+            return
 
-        # Avoid repeated entries too close
         if i - self.last_signal_idx < int(self.min_bars_between_signals):
+            trace["reason"] = "trigger_fail"
+            self._emit_trace(trace)
             return
 
         up_seq = self.find_uptrend_sequence(i)
         if up_seq:
             if self.debug:
                 self.counters['type_match'] += 1
-            self._handle_sell(i, up_seq)
-
+            trace = self._handle_sell(i, up_seq, trace)
         down_seq = self.find_downtrend_sequence(i)
-        if down_seq:
+        if not up_seq and down_seq:
             if self.debug:
                 self.counters['type_match'] += 1
-            self._handle_buy(i, down_seq)
+            trace = self._handle_buy(i, down_seq, trace)
 
-    def _handle_sell(self, i: int, seq: dict):
+        if not up_seq and not down_seq:
+            trace["reason"] = "no_wave_match"
+
+        self._emit_trace(trace)
+        if i >= len(self._close) - 1:
+            self._emit_final_summary()
+
+    def _handle_sell(self, i: int, seq: dict, trace: dict):
+        trace["wave_type"] = "sell"
+        self.summary["wave_candidates"] += 1
+
         w3_len = seq['H3_p'] - seq['L2_p']
         if not np.isfinite(w3_len) or w3_len <= 0:
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
         atr_val = float(self.atr[i])
         if not np.isfinite(atr_val) or atr_val <= 0:
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
-        # Check wave3 minimum size requirement
         if w3_len < self.min_w3_atr * atr_val:
             if self.debug:
                 self.counters['w3_size_fail'] += 1
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
         ext_levels = [seq['L4_p'] + fib * w3_len for fib in self.fib_levels]
         post_start = seq['L4_idx'] + 1
         if post_start >= i:
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
         highs = self._high[post_start:i+1]
         max_pos = int(np.argmax(highs))
         H5_idx = post_start + max_pos
         H5_p = float(highs[max_pos])
-        # Zone check based on trigger candle location
         trigger_px = self._close[i] if self.entry_mode == "close" else self._low[i]
         in_zone_trigger = any(abs(trigger_px - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
-
-        # Optional: also require the Wave5 extreme to have tagged the zone
         in_zone_extreme = any(abs(H5_p - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
 
         zone_mode = self._normalize_zone_mode()
         in_zone = self._evaluate_zone(zone_mode, in_zone_trigger, in_zone_extreme)
-
+        trace["zone_ok"] = int(bool(in_zone))
+        if in_zone:
+            self.summary["zone_pass"] += 1
         if not in_zone:
             if self.debug:
                 self.counters['zone_fail'] += 1
-            return
+            trace["reason"] = "zone_fail"
+            return trace
 
         if self.debug:
             self.counters['elliott_pass'] += 1
 
-        # Wave3 not shortest among 1,3,5 (approx)
         w1_len = seq['H1_p'] - seq['L0_p']
         w5_len = H5_p - seq['L4_p']
         if w3_len < min(w1_len, w5_len):
             if self.debug:
                 self.counters['w3_short_fail'] += 1
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
-        # Upgrade 2: Enforce minimum Wave5 extension
         if w5_len < float(self.min_w5_ext) * w3_len:
             if self.debug:
                 self.counters['w5_ext_fail'] += 1
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
         ao = np.asarray(self.ao, dtype=float)
         ao_h3 = ao[seq['H3_idx']]
         ao_h5 = ao[H5_idx]
-        
-        # Upgrade 1: Wave5 AO decay exhaustion with strict/soft modes
+
         if bool(self.wave5_ao_decay):
             mode = self._get_ao_decay_mode()
             ao_decay_ok = False
@@ -540,7 +652,7 @@ class Wave5AODivergenceStrategy(Strategy):
                     ao_h5_m1 = ao[H5_idx - 1]
                     ao_h5_m2 = ao[H5_idx - 2]
                     ao_decay_ok = bool(ao_h5 < ao_h5_m1 < ao_h5_m2)
-            else:  # soft mode requires only 1-step decay
+            else:
                 if H5_idx >= 1:
                     ao_h5_m1 = ao[H5_idx - 1]
                     ao_decay_ok = bool(ao_h5 < ao_h5_m1)
@@ -548,274 +660,255 @@ class Wave5AODivergenceStrategy(Strategy):
             if not ao_decay_ok:
                 if self.debug:
                     self.counters['ao_decay_fail'] += 1
-                return
+                trace["reason"] = "trigger_fail"
+                return trace
             if self.debug:
                 self.counters['ao_decay_pass'] += 1
         if not (H5_p > seq['H3_p'] and ao_h5 < ao_h3 - self.ao_div_min):
             if self.debug:
                 self.counters['div_fail'] += 1
-            return
+            trace["reason"] = "trigger_fail"
+            return trace
         if self.debug:
             self.counters['divergence_pass'] += 1
 
         if self.require_zero_cross and not self.has_zero_cross(seq['H3_idx'], H5_idx, 'bullish'):
             if self.debug:
                 self.counters['zero_cross_fail'] += 1
-            return
+            trace["reason"] = "trigger_fail"
+            return trace
 
-        # Upgrade 5: Dynamic trigger lag calculation
         allowed_lag = int(self.max_trigger_lag)
         if i - H5_idx > allowed_lag:
             if self.debug:
                 self.counters['lag_fail'] += 1
-            return
+            trace["reason"] = "trigger_fail"
+            return trace
 
         if not self.is_reversal_candle(i, 'bearish'):
             if self.debug:
                 self.counters['candle_fail'] += 1
-            return
-        if self.debug:
-            self._print_counters(i, 'sell')
+            trace["reason"] = "trigger_fail"
+            return trace
 
-        if not self._can_place_order():
-            if self.debug:
-                print(f"[WAVE5 SKIP] existing position/orders prevent new entry at i={i}")
-            return
+        self.summary["trigger_pass"] += 1
+        trace["trigger_ok"] = 1
+
+        allowed, gate_reason = self._can_place_order()
+        if not allowed:
+            trace["reason"] = gate_reason
+            return trace
+        trace["entry_ok"] = 1
 
         buffer = float(getattr(self, 'spread_price', 0.0) or 0.0)
-
         trigger_high = self._high[i]
         trigger_low = self._low[i]
 
         if bool(getattr(self, "sl_at_wave5_extreme", True)):
-            sl = float(H5_p) + buffer   # Wave5 extreme invalidation
+            sl = float(H5_p) + buffer
         else:
             sl = float(trigger_high) + buffer
 
-        # Calculate entry and SL
         if self.entry_mode == 'close':
             entry = self._close[i]
         else:
-            # break mode: check candle body size before entering
             candle_body = self._get_candle_body_atr(i)
             if candle_body > float(self.max_body_atr):
                 if self.debug:
                     self.counters['break_body_fail'] += 1
-                return
-            
+                trace["reason"] = "entry_fail"
+                return trace
+
             atr_val = float(self.atr[i])
             entry = trigger_low
-            # Apply break_buffer_atr to stop placement
             sl = trigger_high + buffer + float(self.break_buffer_atr) * atr_val
 
+        trace["sl_ok"] = 1
         base_size = float(getattr(self, "order_size", 0.2))
         if base_size <= 0:
-            return
+            trace["reason"] = "size_zero"
+            return trace
         entry_price_for_size = float(entry)
 
         if self.debug:
-            print(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
+            self._dbg(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
 
-        # Upgrade 3: Partial TP with split orders
-        # Deterministic: if tp_split is enabled, always submit two orders
-        # (Wave5 runner uses exclusive_orders=False when tp_split=True)
+        placed_any = False
+        order_attempts = 0
+
         if bool(self.tp_split):
-            # Split orders mode: TP1 at Wave4, TP2 at 0.618 retrace
-            tp1 = float(seq['L4_p'])  # Wave4
-            # TP2 = L4 - 0.618*(H5 - L0)
+            tp1 = float(seq['L4_p'])
             tp2 = seq['L4_p'] - 0.618 * (H5_p - seq['L0_p'])
-            # Clamp tp2 for SELL: tp2 should not be higher than tp1
             tp2 = min(tp2, tp1)
-            
-            # Same-bar ambiguity guard for break mode
+
             if self.entry_mode == 'break':
-                # For SELL break: if current bar could hit SL or TP in same bar, skip
                 if self._high[i] >= sl or self._low[i] <= tp2:
                     if self.debug:
                         self.counters['same_bar_ambiguous_fail'] += 1
-                    return
-            
-            # Calculate position sizes
+                    trace["reason"] = "entry_fail"
+                    return trace
+
             split_ratio = float(self.tp_split_ratio)
             size1 = base_size * split_ratio
             size2 = base_size * (1.0 - split_ratio)
-
-            order_size1 = self._final_units(size1, entry_price_for_size, sl)
-            order_size2 = self._final_units(size2, entry_price_for_size, sl)
+            order_size1, size_dbg1 = self._final_units(size1, entry_price_for_size, sl, return_details=True)
+            order_size2, size_dbg2 = self._final_units(size2, entry_price_for_size, sl, return_details=True)
 
             if order_size1 < 1 and order_size2 < 1:
-                if self.debug:
-                    sizing_margin_local = float(getattr(self, "sizing_margin", 1.0)) or 1.0
-                    max_units = int(np.floor(float(self.equity) / (entry_price_for_size * sizing_margin_local))) if sizing_margin_local > 0 else 0
-                    print(f"[WAVE5 REJECT] side=SELL i={i} reason=insufficient_units max_units={max_units}")
-                return
-            
+                fail_reason = size_dbg1.get("fail_reason") or size_dbg2.get("fail_reason") or "size_zero"
+                trace["reason"] = fail_reason if fail_reason in {"size_zero", "sl_invalid"} else "size_zero"
+                if trace["reason"] == "sl_invalid":
+                    trace["sl_ok"] = 0
+                trace["size_ok"] = 0
+                return trace
+
             if self.debug:
-                print(f"[SELL SPLIT] entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} tp2={tp2:.5f} sizes={size1:.2f}/{size2:.2f}")
-            
-            # Place two orders with different TPs (with error handling)
-            entry_accepted = 0
+                self._dbg(f"[SELL SPLIT] entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} tp2={tp2:.5f} sizes={size1:.2f}/{size2:.2f}")
+
             if self.entry_mode == 'close':
+                self.summary["order_attempts"] += 1
+                order_attempts += 1
+                self._dbg(f"[W5 ORDER TRY] side=SELL entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1}")
                 try:
                     o1 = self.sell(sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
-                        entry_accepted += 1
-                        if self.debug:
-                            print(f"[WAVE5 ACCEPT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1:.0f}")
-                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
-                    else:
-                        if self.debug:
-                            print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason=OrderNone")
+                        placed_any = True
+                        self.summary["orders_placed"] += 1
+                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
+                    self.summary["exceptions_count"] += 1
+                    self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
+                self.summary["order_attempts"] += 1
+                order_attempts += 1
+                self._dbg(f"[W5 ORDER TRY] side=SELL entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2}")
                 try:
                     o2 = self.sell(sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
-                        entry_accepted += 1
-                        if self.debug:
-                            print(f"[WAVE5 ACCEPT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2:.0f}")
-                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
-                    else:
-                        if self.debug:
-                            print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason=OrderNone")
+                        placed_any = True
+                        self.summary["orders_placed"] += 1
+                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
+                    self.summary["exceptions_count"] += 1
+                    self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
             else:
+                self.summary["order_attempts"] += 1
+                order_attempts += 1
+                self._dbg(f"[W5 ORDER TRY] side=SELL entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1}")
                 try:
                     o1 = self.sell(stop=trigger_low, sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
-                        entry_accepted += 1
-                        if self.debug:
-                            print(f"[WAVE5 ACCEPT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1:.0f}")
-                            print(f"[WAVE5 ORDER OBJ] stop={trigger_low:.5f} limit=None size={order_size1:.0f} sl={sl:.5f} tp={tp1:.5f}")
-                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
-                    else:
-                        if self.debug:
-                            print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason=OrderNone")
+                        placed_any = True
+                        self.summary["orders_placed"] += 1
+                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
+                    self.summary["exceptions_count"] += 1
+                    self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
+                self.summary["order_attempts"] += 1
+                order_attempts += 1
+                self._dbg(f"[W5 ORDER TRY] side=SELL entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2}")
                 try:
                     o2 = self.sell(stop=trigger_low, sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
-                        entry_accepted += 1
-                        if self.debug:
-                            print(f"[WAVE5 ACCEPT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2:.0f}")
-                            print(f"[WAVE5 ORDER OBJ] stop={trigger_low:.5f} limit=None size={order_size2:.0f} sl={sl:.5f} tp={tp2:.5f}")
-                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
-                    else:
-                        if self.debug:
-                            print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason=OrderNone")
+                        placed_any = True
+                        self.summary["orders_placed"] += 1
+                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
-            
-            if entry_accepted == 0:
-                return  # No orders were placed, don't increment counter
+                    self.summary["exceptions_count"] += 1
+                    self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
+
         else:
-            # Single order mode - use existing TP logic
             tp_mode = str(getattr(self, "tp_mode", "hybrid")).lower()
-            
-            # Calculate 2R TP
             tp_2r = entry - self.tp_r * (sl - entry)
-            
-            # Determine final TP based on mode
+
             if tp_mode == "rr":
                 tp = tp_2r
-                selected_source = "2R"
             elif tp_mode == "wave4":
                 tp = float(seq["L4_p"])
-                selected_source = "Wave4"
-            else:  # hybrid
+            else:
                 tp_wave4 = float(seq["L4_p"])
-                
-                # For SELL: tp must be < entry (lower than entry)
-                # Valid candidates: tp_2r and tp_wave4 that are below entry
                 valid_candidates = []
                 if tp_2r < entry:
                     valid_candidates.append(("2R", tp_2r))
                 if tp_wave4 < entry:
                     valid_candidates.append(("Wave4", tp_wave4))
-                
                 if len(valid_candidates) == 0:
-                    # Neither is valid; fallback to tp_2r
                     tp = tp_2r
-                    selected_source = "2R (fallback)"
                 elif len(valid_candidates) == 1:
-                    # Only one is valid
-                    selected_source, tp = valid_candidates[0]
+                    _, tp = valid_candidates[0]
                 else:
-                    # Both valid; choose the one closer to entry (smaller distance)
                     candidates_with_distance = [
                         (source, tp_val, entry - tp_val) for source, tp_val in valid_candidates
                     ]
-                    selected_source, tp, _ = min(candidates_with_distance, key=lambda x: x[2])
+                    _, tp, _ = min(candidates_with_distance, key=lambda x: x[2])
 
-            # Same-bar ambiguity guard for break mode
             if self.entry_mode == 'break':
-                # For SELL break: if current bar could hit SL or TP in same bar, skip
                 if self._high[i] >= sl or self._low[i] <= tp:
                     if self.debug:
                         self.counters['same_bar_ambiguous_fail'] += 1
-                    return
-            
-            if self.debug:
-                print(f"[SELL] entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} mode={tp_mode} selected={selected_source}")
+                    trace["reason"] = "entry_fail"
+                    return trace
 
-            final_size = self._final_units(base_size, entry_price_for_size, sl)
-
+            final_size, size_dbg = self._final_units(base_size, entry_price_for_size, sl, return_details=True)
             if final_size < 1:
-                return  # Size is too small, skip the order
-            
-            order_accepted = False
+                fail_reason = size_dbg.get("fail_reason") or "size_zero"
+                trace["reason"] = fail_reason if fail_reason in {"size_zero", "sl_invalid"} else "size_zero"
+                if trace["reason"] == "sl_invalid":
+                    trace["sl_ok"] = 0
+                trace["size_ok"] = 0
+                return trace
+
+            self.summary["order_attempts"] += 1
+            order_attempts += 1
+            self._dbg(f"[W5 ORDER TRY] side=SELL entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size}")
             try:
                 if self.entry_mode == 'close':
                     order = self.sell(sl=sl, tp=tp, size=final_size)
                 else:
                     order = self.sell(stop=trigger_low, sl=sl, tp=tp, size=final_size)
-                
                 if order is not None:
-                    order_accepted = True
-                    if self.debug:
-                        print(f"[WAVE5 ACCEPT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f}")
-                        if self.entry_mode == 'break':
-                            print(f"[WAVE5 ORDER OBJ] stop={trigger_low:.5f} limit=None size={final_size:.0f} sl={sl:.5f} tp={tp:.5f}")
-                        print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
-                else:
-                    if self.debug:
-                        print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f} reason=OrderNone")
+                    placed_any = True
+                    self.summary["orders_placed"] += 1
+                    self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
             except (ValueError, AssertionError, RuntimeError) as e:
-                error_msg = str(e)
-                sizing_margin = float(getattr(self, "sizing_margin", 1.0)) or 1.0
-                print(
-                    f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f} "
-                    f"sizing_margin={sizing_margin:.4f} cash={self.equity:.2f} reason={error_msg}"
-                )
-            
-            if not order_accepted:
-                return  # Order was rejected, don't increment counter
+                self.summary["exceptions_count"] += 1
+                self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
 
-        self.last_signal_idx = i
-        if self.debug:
-            self.counters['entries'] += 1
+        if placed_any:
+            trace["size_ok"] = 1
+            trace["reason"] = trace.get("reason", "")
+            self.summary["entry_pass"] += 1
+            self.last_signal_idx = i
+            if self.debug:
+                self.counters['entries'] += 1
+        else:
+            trace["reason"] = trace.get("reason") or "entry_fail"
+        return trace
 
-    def _handle_buy(self, i: int, seq: dict):
+    def _handle_buy(self, i: int, seq: dict, trace: dict):
+        trace["wave_type"] = "buy"
+        self.summary["wave_candidates"] += 1
+
         w3_len = seq['H2_p'] - seq['L3_p']
         if not np.isfinite(w3_len) or w3_len <= 0:
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
         atr_val = float(self.atr[i])
         if not np.isfinite(atr_val) or atr_val <= 0:
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
-        # Check wave3 minimum size requirement
         if w3_len < self.min_w3_atr * atr_val:
             if self.debug:
                 self.counters['w3_size_fail'] += 1
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
         ext_levels = [seq['H4_p'] - fib * w3_len for fib in self.fib_levels]
         post_start = seq['H4_idx'] + 1
         if post_start >= i:
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
         lows = self._low[post_start:i+1]
         min_pos = int(np.argmin(lows))
@@ -827,11 +920,14 @@ class Wave5AODivergenceStrategy(Strategy):
 
         zone_mode = self._normalize_zone_mode()
         in_zone = self._evaluate_zone(zone_mode, in_zone_trigger, in_zone_extreme)
-
+        trace["zone_ok"] = int(bool(in_zone))
+        if in_zone:
+            self.summary["zone_pass"] += 1
         if not in_zone:
             if self.debug:
                 self.counters['zone_fail'] += 1
-            return
+            trace["reason"] = "zone_fail"
+            return trace
 
         if self.debug:
             self.counters['elliott_pass'] += 1
@@ -841,19 +937,19 @@ class Wave5AODivergenceStrategy(Strategy):
         if w3_len < min(w1_len, w5_len):
             if self.debug:
                 self.counters['w3_short_fail'] += 1
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
-        # Upgrade 2: Enforce minimum Wave5 extension
         if w5_len < float(self.min_w5_ext) * w3_len:
             if self.debug:
                 self.counters['w5_ext_fail'] += 1
-            return
+            trace["reason"] = "entry_fail"
+            return trace
 
         ao = np.asarray(self.ao, dtype=float)
         ao_l3 = ao[seq['L3_idx']]
         ao_l5 = ao[L5_idx]
-        
-        # Upgrade 1: Wave5 AO decay exhaustion with strict/soft modes
+
         if bool(self.wave5_ao_decay):
             mode = self._get_ao_decay_mode()
             ao_decay_ok = False
@@ -870,39 +966,45 @@ class Wave5AODivergenceStrategy(Strategy):
             if not ao_decay_ok:
                 if self.debug:
                     self.counters['ao_decay_fail'] += 1
-                return
+                trace["reason"] = "trigger_fail"
+                return trace
             if self.debug:
                 self.counters['ao_decay_pass'] += 1
         if not (L5_p < seq['L3_p'] and ao_l5 > ao_l3 + self.ao_div_min):
             if self.debug:
                 self.counters['div_fail'] += 1
-            return
+            trace["reason"] = "trigger_fail"
+            return trace
         if self.debug:
             self.counters['divergence_pass'] += 1
 
         if self.require_zero_cross and not self.has_zero_cross(seq['L3_idx'], L5_idx, 'bearish'):
             if self.debug:
                 self.counters['zero_cross_fail'] += 1
-            return
+            trace["reason"] = "trigger_fail"
+            return trace
 
-        # Upgrade 5: Dynamic trigger lag calculation
         allowed_lag = int(self.max_trigger_lag)
         if i - L5_idx > allowed_lag:
             if self.debug:
                 self.counters['lag_fail'] += 1
-            return
+            trace["reason"] = "trigger_fail"
+            return trace
 
         if not self.is_reversal_candle(i, 'bullish'):
             if self.debug:
                 self.counters['candle_fail'] += 1
-            return
-        if self.debug:
-            self._print_counters(i, 'buy')
+            trace["reason"] = "trigger_fail"
+            return trace
 
-        if not self._can_place_order():
-            if self.debug:
-                print(f"[WAVE5 SKIP] existing position/orders prevent new entry at i={i}")
-            return
+        self.summary["trigger_pass"] += 1
+        trace["trigger_ok"] = 1
+
+        allowed, gate_reason = self._can_place_order()
+        if not allowed:
+            trace["reason"] = gate_reason
+            return trace
+        trace["entry_ok"] = 1
 
         buffer = float(getattr(self, 'spread_price', 0.0) or 0.0)
 
@@ -910,210 +1012,181 @@ class Wave5AODivergenceStrategy(Strategy):
         trigger_high = self._high[i]
 
         if bool(getattr(self, "sl_at_wave5_extreme", True)):
-            sl = float(L5_p) - buffer   # Wave5 extreme invalidation
+            sl = float(L5_p) - buffer
         else:
             sl = float(trigger_low) - buffer
 
-        # Calculate entry and SL
         if self.entry_mode == 'close':
             entry = self._close[i]
         else:
-            # break mode: check candle body size before entering
             candle_body = self._get_candle_body_atr(i)
             if candle_body > float(self.max_body_atr):
                 if self.debug:
                     self.counters['break_body_fail'] += 1
-                return
-            
+                trace["reason"] = "entry_fail"
+                return trace
+
             atr_val = float(self.atr[i])
             entry = trigger_high
-            # Apply break_buffer_atr to stop placement
             sl = trigger_low - buffer - float(self.break_buffer_atr) * atr_val
 
+        trace["sl_ok"] = 1
         base_size = float(getattr(self, "order_size", 0.2))
         if base_size <= 0:
-            return
+            trace["reason"] = "size_zero"
+            return trace
         entry_price_for_size = float(entry)
 
         if self.debug:
-            print(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
+            self._dbg(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
 
-        # Upgrade 3: Partial TP with split orders
-        # Deterministic: if tp_split is enabled, always submit two orders
-        # (Wave5 runner uses exclusive_orders=False when tp_split=True)
+        placed_any = False
+        order_attempts = 0
+
         if bool(self.tp_split):
-            # Split orders mode: TP1 at Wave4, TP2 at 0.618 retrace
-            tp1 = float(seq['H4_p'])  # Wave4
-            # TP2 = H4 + 0.618*(H0 - L5)
+            tp1 = float(seq['H4_p'])
             tp2 = seq['H4_p'] + 0.618 * (seq['H0_p'] - L5_p)
-            # Clamp tp2 for BUY: tp2 should not be lower than tp1
             tp2 = max(tp2, tp1)
-            
-            # Same-bar ambiguity guard for break mode
+
             if self.entry_mode == 'break':
-                # For BUY break: if current bar could hit SL or TP in same bar, skip
                 if self._low[i] <= sl or self._high[i] >= tp2:
                     if self.debug:
                         self.counters['same_bar_ambiguous_fail'] += 1
-                    return
-            
-            # Calculate position sizes
+                    trace["reason"] = "entry_fail"
+                    return trace
+
             split_ratio = float(self.tp_split_ratio)
             size1 = base_size * split_ratio
             size2 = base_size * (1.0 - split_ratio)
-            order_size1 = self._final_units(size1, entry_price_for_size, sl)
-            order_size2 = self._final_units(size2, entry_price_for_size, sl)
+            order_size1, size_dbg1 = self._final_units(size1, entry_price_for_size, sl, return_details=True)
+            order_size2, size_dbg2 = self._final_units(size2, entry_price_for_size, sl, return_details=True)
 
             if order_size1 < 1 and order_size2 < 1:
-                if self.debug:
-                    sizing_margin_local = float(getattr(self, "sizing_margin", 1.0)) or 1.0
-                    max_units = int(np.floor(float(self.equity) / (entry_price_for_size * sizing_margin_local))) if sizing_margin_local > 0 else 0
-                    print(f"[WAVE5 REJECT] side=BUY i={i} reason=insufficient_units max_units={max_units}")
-                return
-            
+                fail_reason = size_dbg1.get("fail_reason") or size_dbg2.get("fail_reason") or "size_zero"
+                trace["reason"] = fail_reason if fail_reason in {"size_zero", "sl_invalid"} else "size_zero"
+                if trace["reason"] == "sl_invalid":
+                    trace["sl_ok"] = 0
+                trace["size_ok"] = 0
+                return trace
+
             if self.debug:
-                print(f"[BUY SPLIT] entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} tp2={tp2:.5f} sizes={size1:.2f}/{size2:.2f}")
-            
-            # Place two orders with different TPs (with error handling)
-            entry_accepted = 0
+                self._dbg(f"[BUY SPLIT] entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} tp2={tp2:.5f} sizes={size1:.2f}/{size2:.2f}")
+
             if self.entry_mode == 'close':
+                self.summary["order_attempts"] += 1
+                order_attempts += 1
+                self._dbg(f"[W5 ORDER TRY] side=BUY entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1}")
                 try:
                     o1 = self.buy(sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
-                        entry_accepted += 1
-                        if self.debug:
-                            print(f"[WAVE5 ACCEPT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1:.0f}")
-                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
-                    else:
-                        if self.debug:
-                            print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason=OrderNone")
+                        placed_any = True
+                        self.summary["orders_placed"] += 1
+                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
+                    self.summary["exceptions_count"] += 1
+                    self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
+                self.summary["order_attempts"] += 1
+                order_attempts += 1
+                self._dbg(f"[W5 ORDER TRY] side=BUY entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2}")
                 try:
                     o2 = self.buy(sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
-                        entry_accepted += 1
-                        if self.debug:
-                            print(f"[WAVE5 ACCEPT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2:.0f}")
-                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
-                    else:
-                        if self.debug:
-                            print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason=OrderNone")
+                        placed_any = True
+                        self.summary["orders_placed"] += 1
+                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
+                    self.summary["exceptions_count"] += 1
+                    self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
             else:
+                self.summary["order_attempts"] += 1
+                order_attempts += 1
+                self._dbg(f"[W5 ORDER TRY] side=BUY entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1}")
                 try:
                     o1 = self.buy(stop=trigger_high, sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
-                        entry_accepted += 1
-                        if self.debug:
-                            print(f"[WAVE5 ACCEPT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1:.0f}")
-                            print(f"[WAVE5 ORDER OBJ] stop={trigger_high:.5f} limit=None size={order_size1:.0f} sl={sl:.5f} tp={tp1:.5f}")
-                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
-                    else:
-                        if self.debug:
-                            print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason=OrderNone")
+                        placed_any = True
+                        self.summary["orders_placed"] += 1
+                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
+                    self.summary["exceptions_count"] += 1
+                    self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
+                self.summary["order_attempts"] += 1
+                order_attempts += 1
+                self._dbg(f"[W5 ORDER TRY] side=BUY entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2}")
                 try:
                     o2 = self.buy(stop=trigger_high, sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
-                        entry_accepted += 1
-                        if self.debug:
-                            print(f"[WAVE5 ACCEPT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2:.0f}")
-                            print(f"[WAVE5 ORDER OBJ] stop={trigger_high:.5f} limit=None size={order_size2:.0f} sl={sl:.5f} tp={tp2:.5f}")
-                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
-                    else:
-                        if self.debug:
-                            print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason=OrderNone")
+                        placed_any = True
+                        self.summary["orders_placed"] += 1
+                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
-            
-            if entry_accepted == 0:
-                return  # No orders were placed, don't increment counter
+                    self.summary["exceptions_count"] += 1
+                    self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
+
         else:
-            # Single order mode - use existing TP logic
             tp_mode = str(getattr(self, "tp_mode", "hybrid")).lower()
-            
-            # Calculate 2R TP
             tp_2r = entry + self.tp_r * (entry - sl)
-            
-            # Determine final TP based on mode
+
             if tp_mode == "rr":
                 tp = tp_2r
-                selected_source = "2R"
             elif tp_mode == "wave4":
                 tp = float(seq["H4_p"])
-                selected_source = "Wave4"
-            else:  # hybrid
+            else:
                 tp_wave4 = float(seq["H4_p"])
-                
-                # For BUY: tp must be > entry (higher than entry)
-                # Valid candidates: tp_2r and tp_wave4 that are above entry
                 valid_candidates = []
                 if tp_2r > entry:
                     valid_candidates.append(("2R", tp_2r))
                 if tp_wave4 > entry:
                     valid_candidates.append(("Wave4", tp_wave4))
-                
                 if len(valid_candidates) == 0:
-                    # Neither is valid; fallback to tp_2r
                     tp = tp_2r
-                    selected_source = "2R (fallback)"
                 elif len(valid_candidates) == 1:
-                    # Only one is valid
-                    selected_source, tp = valid_candidates[0]
+                    _, tp = valid_candidates[0]
                 else:
-                    # Both valid; choose the one closer to entry (smaller distance)
                     candidates_with_distance = [
                         (source, tp_val, tp_val - entry) for source, tp_val in valid_candidates
                     ]
-                    selected_source, tp, _ = min(candidates_with_distance, key=lambda x: x[2])
+                    _, tp, _ = min(candidates_with_distance, key=lambda x: x[2])
 
-            # Same-bar ambiguity guard for break mode
             if self.entry_mode == 'break':
-                # For BUY break: if current bar could hit SL or TP in same bar, skip
                 if self._low[i] <= sl or self._high[i] >= tp:
                     if self.debug:
                         self.counters['same_bar_ambiguous_fail'] += 1
-                    return
-            
-            if self.debug:
-                print(f"[BUY] entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} mode={tp_mode} selected={selected_source}")
+                    trace["reason"] = "entry_fail"
+                    return trace
 
-            final_size = self._final_units(base_size, entry_price_for_size, sl)
-
+            final_size, size_dbg = self._final_units(base_size, entry_price_for_size, sl, return_details=True)
             if final_size < 1:
-                return  # Size is too small, skip the order
-            
-            order_accepted = False
+                fail_reason = size_dbg.get("fail_reason") or "size_zero"
+                trace["reason"] = fail_reason if fail_reason in {"size_zero", "sl_invalid"} else "size_zero"
+                if trace["reason"] == "sl_invalid":
+                    trace["sl_ok"] = 0
+                trace["size_ok"] = 0
+                return trace
+
+            self.summary["order_attempts"] += 1
+            order_attempts += 1
+            self._dbg(f"[W5 ORDER TRY] side=BUY entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size}")
             try:
                 if self.entry_mode == 'close':
                     order = self.buy(sl=sl, tp=tp, size=final_size)
                 else:
                     order = self.buy(stop=trigger_high, sl=sl, tp=tp, size=final_size)
-                
                 if order is not None:
-                    order_accepted = True
-                    if self.debug:
-                        print(f"[WAVE5 ACCEPT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f}")
-                        if self.entry_mode == 'break':
-                            print(f"[WAVE5 ORDER OBJ] stop={trigger_high:.5f} limit=None size={final_size:.0f} sl={sl:.5f} tp={tp:.5f}")
-                        print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
-                else:
-                    if self.debug:
-                        print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f} reason=OrderNone")
+                    placed_any = True
+                    self.summary["orders_placed"] += 1
+                    self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
             except (ValueError, AssertionError, RuntimeError) as e:
-                error_msg = str(e)
-                sizing_margin = float(getattr(self, "sizing_margin", 1.0)) or 1.0
-                print(
-                    f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f} "
-                    f"sizing_margin={sizing_margin:.4f} cash={self.equity:.2f} reason={error_msg}"
-                )
-            
-            if not order_accepted:
-                return  # Order was rejected, don't increment counter
+                self.summary["exceptions_count"] += 1
+                self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
 
-        self.last_signal_idx = i
-        if self.debug:
-            self.counters['entries'] += 1
+        if placed_any:
+            trace["size_ok"] = 1
+            trace["reason"] = trace.get("reason", "")
+            self.summary["entry_pass"] += 1
+            self.last_signal_idx = i
+            if self.debug:
+                self.counters['entries'] += 1
+        else:
+            trace["reason"] = trace.get("reason") or "entry_fail"
+        return trace
