@@ -333,6 +333,8 @@ def main() -> None:
     parser.add_argument("--wave5-entry-mode", choices=["close", "break"], default=Wave5AODivergenceStrategy.entry_mode)
     parser.add_argument("--wave5-tp-r", type=float, default=Wave5AODivergenceStrategy.tp_r)
     parser.add_argument("--wave5-min-w3-atr", type=float, default=Wave5AODivergenceStrategy.min_w3_atr, help="Min wave3 length in ATR units.")
+    parser.add_argument("--wave5-break-buffer-atr", type=float, default=Wave5AODivergenceStrategy.break_buffer_atr, help="Buffer distance in ATR for break stop placement.")
+    parser.add_argument("--wave5-max-body-atr", type=float, default=Wave5AODivergenceStrategy.max_body_atr, help="Max candle body size in ATR units to allow break entry.")
     parser.add_argument("--wave5-debug", action="store_true", default=Wave5AODivergenceStrategy.debug)
     parser.add_argument("--wave5-trigger-lag", type=int, default=Wave5AODivergenceStrategy.max_trigger_lag, help="Max bars after H5/L5 to allow trigger.")
     parser.add_argument("--wave5-require-zero-cross", dest="wave5_require_zero_cross", action="store_true")
@@ -364,6 +366,8 @@ def main() -> None:
             "debug": args.wave5_debug,
             "min_w3_atr": args.wave5_min_w3_atr,
             "max_trigger_lag": args.wave5_trigger_lag,
+            "break_buffer_atr": args.wave5_break_buffer_atr,
+            "max_body_atr": args.wave5_max_body_atr,
             "asset": args.asset or df.attrs.get("symbol"),
         }
 

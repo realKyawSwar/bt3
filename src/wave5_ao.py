@@ -32,6 +32,8 @@ class Wave5AODivergenceStrategy(Strategy):
     min_bars_between_signals = 5
     max_trigger_lag = 3            # Max bars after H5/L5 to trigger entry
     min_w3_atr = 1.0               # Min wave3 length in ATR units
+    break_buffer_atr = 0.10        # Buffer distance in ATR for break stop placement
+    max_body_atr = 1.0             # Max candle body size (in ATR) to allow break entry
     asset = 'UNKNOWN'              # Asset symbol for labeling/reference
     debug = False
     require_ext_touch = False  # if True, require H5/L5 extreme also tagged the zone
@@ -76,6 +78,7 @@ class Wave5AODivergenceStrategy(Strategy):
                 'zero_cross_fail': 0,
                 'lag_fail': 0,
                 'candle_fail': 0,
+                'break_body_fail': 0,
                 'entries': 0,
             }
 
@@ -88,7 +91,7 @@ class Wave5AODivergenceStrategy(Strategy):
                   f"w3_short_fail={self.counters['w3_short_fail']} div_fail={self.counters['div_fail']} "
                   f"zero_cross_fail={self.counters['zero_cross_fail']} "
                   f"lag_fail={self.counters['lag_fail']} candle_fail={self.counters['candle_fail']} "
-                  f"entries={self.counters['entries']}")
+                  f"break_body_fail={self.counters['break_body_fail']} entries={self.counters['entries']}")
 
     # -------------------------
     # Swings
@@ -259,6 +262,14 @@ class Wave5AODivergenceStrategy(Strategy):
 
         return False
 
+    def _get_candle_body_atr(self, i: int) -> float:
+        """Return candle body size in ATR units."""
+        atr_val = float(self.atr[-1])
+        if atr_val <= 0:
+            return 0.0
+        body = abs(self._close[i] - self._open[i])
+        return body / atr_val
+
     # -------------------------
     # Main loop
     # -------------------------
@@ -375,7 +386,17 @@ class Wave5AODivergenceStrategy(Strategy):
             tp = entry - self.tp_r * (sl - entry)
             self.sell(sl=sl, tp=tp)
         else:
+            # break mode: check candle body size before entering
+            candle_body = self._get_candle_body_atr(i)
+            if candle_body > float(self.max_body_atr):
+                if self.debug:
+                    self.counters['break_body_fail'] += 1
+                return
+            
+            atr_val = float(self.atr[-1])
             entry = trigger_low
+            # Apply break_buffer_atr to stop placement
+            sl = trigger_high + buffer - float(self.break_buffer_atr) * atr_val
             tp = entry - self.tp_r * (sl - entry)
             self.sell(stop=entry, sl=sl, tp=tp)
 
@@ -469,7 +490,17 @@ class Wave5AODivergenceStrategy(Strategy):
             tp = entry + self.tp_r * (entry - sl)
             self.buy(sl=sl, tp=tp)
         else:
+            # break mode: check candle body size before entering
+            candle_body = self._get_candle_body_atr(i)
+            if candle_body > float(self.max_body_atr):
+                if self.debug:
+                    self.counters['break_body_fail'] += 1
+                return
+            
+            atr_val = float(self.atr[-1])
             entry = trigger_high
+            # Apply break_buffer_atr to stop placement
+            sl = trigger_low - buffer + float(self.break_buffer_atr) * atr_val
             tp = entry + self.tp_r * (entry - sl)
             self.buy(stop=entry, sl=sl, tp=tp)
 
