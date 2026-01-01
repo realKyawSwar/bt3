@@ -332,6 +332,7 @@ def main() -> None:
     parser.add_argument("--wave5-div-threshold", type=float, default=Wave5AODivergenceStrategy.ao_div_min)
     parser.add_argument("--wave5-entry-mode", choices=["close", "break"], default=Wave5AODivergenceStrategy.entry_mode)
     parser.add_argument("--wave5-tp-r", type=float, default=Wave5AODivergenceStrategy.tp_r)
+    parser.add_argument("--wave5-tp-mode", choices=["rr", "wave4", "hybrid"], default=Wave5AODivergenceStrategy.tp_mode, help="TP mode: rr (2R TP), wave4 (Wave4 level), or hybrid (closer of the two).")
     parser.add_argument("--wave5-min-w3-atr", type=float, default=Wave5AODivergenceStrategy.min_w3_atr, help="Min wave3 length in ATR units.")
     parser.add_argument("--wave5-break-buffer-atr", type=float, default=Wave5AODivergenceStrategy.break_buffer_atr, help="Buffer distance in ATR for break stop placement.")
     parser.add_argument("--wave5-max-body-atr", type=float, default=Wave5AODivergenceStrategy.max_body_atr, help="Max candle body size in ATR units to allow break entry.")
@@ -343,6 +344,20 @@ def main() -> None:
     parser.add_argument("--wave5-sl-extreme", dest="wave5_sl_extreme", action="store_true")
     parser.add_argument("--wave5-sl-trigger", dest="wave5_sl_extreme", action="store_false")
     parser.set_defaults(wave5_sl_extreme=True)
+    
+    # Upgrade 1: Wave5 AO decay exhaustion
+    parser.add_argument("--wave5-ao-decay", action="store_true", default=Wave5AODivergenceStrategy.wave5_ao_decay, help="Require AO decay at Wave5 extreme.")
+    
+    # Upgrade 2: Wave5 minimum extension
+    parser.add_argument("--wave5-min-w5-ext", type=float, default=Wave5AODivergenceStrategy.min_w5_ext, help="Minimum Wave5 extension relative to Wave3.")
+    
+    # Upgrade 3: Partial TP with split orders
+    parser.add_argument("--wave5-tp-split", action="store_true", default=Wave5AODivergenceStrategy.tp_split, help="Enable partial TP with split orders (tp1 at Wave4, tp2 at 0.618 retrace).")
+    parser.add_argument("--wave5-tp-split-ratio", type=float, default=Wave5AODivergenceStrategy.tp_split_ratio, help="Position size ratio for first order (0-1).")
+    
+    # Upgrade 4: ATR expansion regime filter
+    parser.add_argument("--wave5-atr-long", type=int, default=Wave5AODivergenceStrategy.atr_long, help="ATR long SMA period for regime filter.")
+    parser.add_argument("--wave5-atr-expand-k", type=float, default=Wave5AODivergenceStrategy.atr_expand_k, help="Skip trades when ATR > k * atr_sma.")
 
     args = parser.parse_args()
 
@@ -366,6 +381,7 @@ def main() -> None:
             "require_zero_cross": args.wave5_require_zero_cross,
             "entry_mode": args.wave5_entry_mode,
             "tp_r": args.wave5_tp_r,
+            "tp_mode": args.wave5_tp_mode,
             "debug": args.wave5_debug,
             "min_w3_atr": args.wave5_min_w3_atr,
             "max_trigger_lag": args.wave5_trigger_lag,
@@ -373,7 +389,16 @@ def main() -> None:
             "max_body_atr": args.wave5_max_body_atr,
             "asset": args.asset or df.attrs.get("symbol"),
             "sl_at_wave5_extreme": args.wave5_sl_extreme,
-
+            # Upgrade 1: Wave5 AO decay exhaustion
+            "wave5_ao_decay": args.wave5_ao_decay,
+            # Upgrade 2: Wave5 minimum extension
+            "min_w5_ext": args.wave5_min_w5_ext,
+            # Upgrade 3: Partial TP with split orders
+            "tp_split": args.wave5_tp_split,
+            "tp_split_ratio": args.wave5_tp_split_ratio,
+            # Upgrade 4: ATR expansion regime filter
+            "atr_long": args.wave5_atr_long,
+            "atr_expand_k": args.wave5_atr_expand_k,
         }
 
         wave5_stats = run_backtest(
