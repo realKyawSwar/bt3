@@ -61,6 +61,7 @@ class Wave5AODivergenceStrategy(Strategy):
     
     # Margin support for position sizing (used only for sizing clamp, not broker)
     sizing_margin = 1.0  # Margin fraction used to cap position size (1.0=no leverage, 0.02=50x)
+    exec_margin = 1.0  # Execution margin for broker logging/debug (not used for sizing)
     margin = 1.0  # Backtesting param compatibility; not used for sizing
 
     def __init__(self, broker, data, params):
@@ -76,6 +77,11 @@ class Wave5AODivergenceStrategy(Strategy):
         if sizing_margin_val <= 0:
             sizing_margin_val = 1.0
         self.sizing_margin = sizing_margin_val
+        exec_margin_val = params.get('exec_margin', getattr(self, 'exec_margin', 1.0))
+        exec_margin_val = 1.0 if exec_margin_val is None else float(exec_margin_val)
+        if exec_margin_val <= 0:
+            exec_margin_val = 1.0
+        self.exec_margin = exec_margin_val
 
     def init(self):
         # Numpy arrays for speed & correctness
@@ -365,38 +371,55 @@ class Wave5AODivergenceStrategy(Strategy):
                 return False
         return True
 
-    def _size_to_units(self, size: float, entry_price: float, sl_price: float = None, is_stop_order: bool = False) -> int:
-        """Convert fractional size to units using sizing_margin as the only clamp.
-
-        Risk-based sizing: units = floor(risk_cash / sl_dist)
-        where risk_cash = equity * size and sl_dist = abs(entry_price - sl_price).
-
-        Position cap: max_units = floor(equity / (entry_price * sizing_margin)).
-        """
+    def _final_units(self, base_size_frac: float, entry_price: float, sl_price: float) -> int:
+        """Convert fractional size to units with sizing_margin cap and 1+ unit minimum."""
         eq = float(self.equity)
         entry_price = float(entry_price)
-        size = float(size)
+        sl_price = float(sl_price)
+        size = float(base_size_frac)
         sizing_margin = float(getattr(self, "sizing_margin", 1.0)) or 1.0
+        exec_margin = float(getattr(self, "exec_margin", 1.0)) or 1.0
 
-        if entry_price <= 0 or not np.isfinite(entry_price):
+        if (
+            entry_price <= 0
+            or not np.isfinite(entry_price)
+            or not np.isfinite(sl_price)
+            or not np.isfinite(size)
+        ):
+            if self.debug:
+                print("[WAVE5 REJECT] reason=non_finite_inputs")
             return 0
 
-        if sl_price is not None:
-            sl_price = float(sl_price)
-            sl_dist = abs(entry_price - sl_price)
-            if sl_dist <= 0 or not np.isfinite(sl_dist):
-                return 0
-            risk_cash = eq * size
-            risk_units = int(np.floor(risk_cash / sl_dist))
-        else:
-            risk_units = int(np.floor((eq * size) / entry_price))
-            sl_dist = None
+        if size <= 0:
+            if self.debug:
+                print("[WAVE5 REJECT] reason=invalid_risk_fraction")
+            return 0
 
+        sl_dist = abs(entry_price - sl_price)
+        if sl_dist <= 0 or not np.isfinite(sl_dist):
+            if self.debug:
+                print("[WAVE5 REJECT] reason=invalid_sl_distance")
+            return 0
+
+        risk_cash = eq * min(max(size, 0.0), 1.0)
+        risk_units = int(np.floor(risk_cash / sl_dist))
         max_units = int(np.floor(eq / (entry_price * sizing_margin))) if sizing_margin > 0 else 0
-        if max_units <= 0 or risk_units <= 0:
+
+        if max_units <= 0:
+            if self.debug:
+                print("[WAVE5 REJECT] reason=insufficient_margin_cap")
             return 0
 
-        return min(risk_units, max_units)
+        final_units = max(1, min(risk_units, max_units))
+
+        if self.debug:
+            print(
+                f"[WAVE5 SIZE] equity={eq:.2f} entry={entry_price:.5f} sl={sl_price:.5f} "
+                f"risk_cash={risk_cash:.2f} risk_units={risk_units} max_units_cap={max_units} "
+                f"final_units={final_units} sizing_margin={sizing_margin:.4f} exec_margin={exec_margin:.2f}"
+            )
+
+        return final_units
 
     # -------------------------
     # Main loop
@@ -589,43 +612,6 @@ class Wave5AODivergenceStrategy(Strategy):
         if base_size <= 0:
             return
         entry_price_for_size = float(entry)
-        sl_dist = abs(entry_price_for_size - sl)
-        if sl_dist <= 0 or not np.isfinite(sl_dist):
-            return
-
-        def _final_units(risk_frac: float) -> int:
-            risk_frac = float(risk_frac)
-            if risk_frac <= 0:
-                return 0
-
-            equity_now = float(self.equity)
-            sizing_margin = float(getattr(self, "sizing_margin", 1.0)) or 1.0
-            entry_px = float(entry_price_for_size)
-            sl_dist_local = float(sl_dist)
-
-            risk_cash = equity_now * risk_frac
-            risk_units = int(np.floor(risk_cash / sl_dist_local)) if sl_dist_local > 0 else 0
-            max_units = int(np.floor(equity_now / (entry_px * sizing_margin))) if sizing_margin > 0 else 0
-
-            if max_units <= 0:
-                if self.debug:
-                    print(
-                        f"[WAVE5 REJECT] reason=insufficient_margin_for_min_unit equity={equity_now:.2f} "
-                        f"entry={entry_px:.5f} sizing_margin={sizing_margin:.4f}"
-                    )
-                return 0
-
-            final_units = max(1, min(risk_units, max_units))
-
-            if self.debug:
-                print(
-                    f"[WAVE5 SIZE] equity={equity_now:.2f} entry={entry_px:.5f} sl={float(sl):.5f} "
-                    f"sl_dist={sl_dist_local:.5f} risk_frac={risk_frac:.3f} risk_cash={risk_cash:.2f} "
-                    f"risk_units={risk_units} max_units={max_units} final_units={final_units} "
-                    f"exec_margin=1.0 sizing_margin={sizing_margin:.4f}"
-                )
-
-            return final_units
 
         if self.debug:
             print(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
@@ -654,8 +640,8 @@ class Wave5AODivergenceStrategy(Strategy):
             size1 = base_size * split_ratio
             size2 = base_size * (1.0 - split_ratio)
 
-            order_size1 = _final_units(size1)
-            order_size2 = _final_units(size2)
+            order_size1 = self._final_units(size1, entry_price_for_size, sl)
+            order_size2 = self._final_units(size2, entry_price_for_size, sl)
 
             if order_size1 < 1 and order_size2 < 1:
                 if self.debug:
@@ -674,47 +660,53 @@ class Wave5AODivergenceStrategy(Strategy):
                     o1 = self.sell(sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
                         entry_accepted += 1
+                        if self.debug:
+                            print(f"[WAVE5 ACCEPT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1:.0f}")
+                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
                     else:
                         if self.debug:
                             print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason=OrderNone")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    if self.debug:
-                        print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
+                    print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
                 try:
                     o2 = self.sell(sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
                         entry_accepted += 1
+                        if self.debug:
+                            print(f"[WAVE5 ACCEPT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2:.0f}")
+                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
                     else:
                         if self.debug:
                             print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason=OrderNone")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    if self.debug:
-                        print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
+                    print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
             else:
                 try:
                     o1 = self.sell(stop=trigger_low, sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
                         entry_accepted += 1
                         if self.debug:
+                            print(f"[WAVE5 ACCEPT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1:.0f}")
                             print(f"[WAVE5 ORDER OBJ] stop={trigger_low:.5f} limit=None size={order_size1:.0f} sl={sl:.5f} tp={tp1:.5f}")
+                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
                     else:
                         if self.debug:
                             print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason=OrderNone")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    if self.debug:
-                        print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
+                    print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
                 try:
                     o2 = self.sell(stop=trigger_low, sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
                         entry_accepted += 1
                         if self.debug:
+                            print(f"[WAVE5 ACCEPT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2:.0f}")
                             print(f"[WAVE5 ORDER OBJ] stop={trigger_low:.5f} limit=None size={order_size2:.0f} sl={sl:.5f} tp={tp2:.5f}")
+                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
                     else:
                         if self.debug:
                             print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason=OrderNone")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    if self.debug:
-                        print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
+                    print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
             
             if entry_accepted == 0:
                 return  # No orders were placed, don't increment counter
@@ -768,7 +760,7 @@ class Wave5AODivergenceStrategy(Strategy):
             if self.debug:
                 print(f"[SELL] entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} mode={tp_mode} selected={selected_source}")
 
-            final_size = _final_units(base_size)
+            final_size = self._final_units(base_size, entry_price_for_size, sl)
 
             if final_size < 1:
                 return  # Size is too small, skip the order
@@ -792,12 +784,11 @@ class Wave5AODivergenceStrategy(Strategy):
                         print(f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f} reason=OrderNone")
             except (ValueError, AssertionError, RuntimeError) as e:
                 error_msg = str(e)
-                if self.debug:
-                    sizing_margin = float(getattr(self, "sizing_margin", 1.0)) or 1.0
-                    print(
-                        f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f} "
-                        f"sizing_margin={sizing_margin:.4f} cash={self.equity:.2f} reason={error_msg}"
-                    )
+                sizing_margin = float(getattr(self, "sizing_margin", 1.0)) or 1.0
+                print(
+                    f"[WAVE5 REJECT] side=SELL i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f} "
+                    f"sizing_margin={sizing_margin:.4f} cash={self.equity:.2f} reason={error_msg}"
+                )
             
             if not order_accepted:
                 return  # Order was rejected, don't increment counter
@@ -943,43 +934,6 @@ class Wave5AODivergenceStrategy(Strategy):
         if base_size <= 0:
             return
         entry_price_for_size = float(entry)
-        sl_dist = abs(entry_price_for_size - sl)
-        if sl_dist <= 0 or not np.isfinite(sl_dist):
-            return
-
-        def _final_units(risk_frac: float) -> int:
-            risk_frac = float(risk_frac)
-            if risk_frac <= 0:
-                return 0
-
-            equity_now = float(self.equity)
-            sizing_margin = float(getattr(self, "sizing_margin", 1.0)) or 1.0
-            entry_px = float(entry_price_for_size)
-            sl_dist_local = float(sl_dist)
-
-            risk_cash = equity_now * risk_frac
-            risk_units = int(np.floor(risk_cash / sl_dist_local)) if sl_dist_local > 0 else 0
-            max_units = int(np.floor(equity_now / (entry_px * sizing_margin))) if sizing_margin > 0 else 0
-
-            if max_units <= 0:
-                if self.debug:
-                    print(
-                        f"[WAVE5 REJECT] reason=insufficient_margin_for_min_unit equity={equity_now:.2f} "
-                        f"entry={entry_px:.5f} sizing_margin={sizing_margin:.4f}"
-                    )
-                return 0
-
-            final_units = max(1, min(risk_units, max_units))
-
-            if self.debug:
-                print(
-                    f"[WAVE5 SIZE] equity={equity_now:.2f} entry={entry_px:.5f} sl={float(sl):.5f} "
-                    f"sl_dist={sl_dist_local:.5f} risk_frac={risk_frac:.3f} risk_cash={risk_cash:.2f} "
-                    f"risk_units={risk_units} max_units={max_units} final_units={final_units} "
-                    f"exec_margin=1.0 sizing_margin={sizing_margin:.4f}"
-                )
-
-            return final_units
 
         if self.debug:
             print(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
@@ -1007,8 +961,8 @@ class Wave5AODivergenceStrategy(Strategy):
             split_ratio = float(self.tp_split_ratio)
             size1 = base_size * split_ratio
             size2 = base_size * (1.0 - split_ratio)
-            order_size1 = _final_units(size1)
-            order_size2 = _final_units(size2)
+            order_size1 = self._final_units(size1, entry_price_for_size, sl)
+            order_size2 = self._final_units(size2, entry_price_for_size, sl)
 
             if order_size1 < 1 and order_size2 < 1:
                 if self.debug:
@@ -1027,47 +981,53 @@ class Wave5AODivergenceStrategy(Strategy):
                     o1 = self.buy(sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
                         entry_accepted += 1
+                        if self.debug:
+                            print(f"[WAVE5 ACCEPT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1:.0f}")
+                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
                     else:
                         if self.debug:
                             print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason=OrderNone")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    if self.debug:
-                        print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
+                    print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
                 try:
                     o2 = self.buy(sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
                         entry_accepted += 1
+                        if self.debug:
+                            print(f"[WAVE5 ACCEPT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2:.0f}")
+                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
                     else:
                         if self.debug:
                             print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason=OrderNone")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    if self.debug:
-                        print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
+                    print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
             else:
                 try:
                     o1 = self.buy(stop=trigger_high, sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
                         entry_accepted += 1
                         if self.debug:
+                            print(f"[WAVE5 ACCEPT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1:.0f}")
                             print(f"[WAVE5 ORDER OBJ] stop={trigger_high:.5f} limit=None size={order_size1:.0f} sl={sl:.5f} tp={tp1:.5f}")
+                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
                     else:
                         if self.debug:
                             print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason=OrderNone")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    if self.debug:
-                        print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
+                    print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} size1={order_size1:.0f} reason={str(e)}")
                 try:
                     o2 = self.buy(stop=trigger_high, sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
                         entry_accepted += 1
                         if self.debug:
+                            print(f"[WAVE5 ACCEPT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2:.0f}")
                             print(f"[WAVE5 ORDER OBJ] stop={trigger_high:.5f} limit=None size={order_size2:.0f} sl={sl:.5f} tp={tp2:.5f}")
+                            print(f"[WAVE5 ORDERS AFTER PLACE] n={len(self.orders)}")
                     else:
                         if self.debug:
                             print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason=OrderNone")
                 except (ValueError, AssertionError, RuntimeError) as e:
-                    if self.debug:
-                        print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
+                    print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp2={tp2:.5f} size2={order_size2:.0f} reason={str(e)}")
             
             if entry_accepted == 0:
                 return  # No orders were placed, don't increment counter
@@ -1121,7 +1081,7 @@ class Wave5AODivergenceStrategy(Strategy):
             if self.debug:
                 print(f"[BUY] entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} mode={tp_mode} selected={selected_source}")
 
-            final_size = _final_units(base_size)
+            final_size = self._final_units(base_size, entry_price_for_size, sl)
 
             if final_size < 1:
                 return  # Size is too small, skip the order
@@ -1145,12 +1105,11 @@ class Wave5AODivergenceStrategy(Strategy):
                         print(f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f} reason=OrderNone")
             except (ValueError, AssertionError, RuntimeError) as e:
                 error_msg = str(e)
-                if self.debug:
-                    sizing_margin = float(getattr(self, "sizing_margin", 1.0)) or 1.0
-                    print(
-                        f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f} "
-                        f"sizing_margin={sizing_margin:.4f} cash={self.equity:.2f} reason={error_msg}"
-                    )
+                sizing_margin = float(getattr(self, "sizing_margin", 1.0)) or 1.0
+                print(
+                    f"[WAVE5 REJECT] side=BUY i={i} entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size:.0f} "
+                    f"sizing_margin={sizing_margin:.4f} cash={self.equity:.2f} reason={error_msg}"
+                )
             
             if not order_accepted:
                 return  # Order was rejected, don't increment counter

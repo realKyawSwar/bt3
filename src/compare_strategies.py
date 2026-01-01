@@ -411,6 +411,7 @@ def main() -> None:
 
         # Install broker debug hooks if wave5-debug is enabled
         if args.wave5_debug:
+            print(f"[SCRIPT] {__file__}")
             install_all_broker_hooks(debug=True)
         
         wave5_params = {
@@ -424,7 +425,7 @@ def main() -> None:
             "order_size": args.wave5_size,
             "debug": args.wave5_debug,
             "sizing_margin": sizing_margin,
-            "margin": exec_margin,  # compatibility only; execution margin stays 1.0
+            "exec_margin": exec_margin,
             "min_w3_atr": args.wave5_min_w3_atr,
             "max_trigger_lag": args.wave5_trigger_lag,
             "break_buffer_atr": args.wave5_break_buffer_atr,
