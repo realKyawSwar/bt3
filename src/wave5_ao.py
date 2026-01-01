@@ -30,16 +30,15 @@ class Wave5AODivergenceStrategy(Strategy):
     tp_r = 2.0
     pin_ratio = 2.0
     min_bars_between_signals = 5
+    max_trigger_lag = 3            # Max bars after H5/L5 to trigger entry
+    min_w3_atr = 1.0               # Min wave3 length in ATR units
+    asset = 'UNKNOWN'              # Asset symbol for labeling/reference
     debug = False
+    require_ext_touch = False  # if True, require H5/L5 extreme also tagged the zone
 
     def __init__(self, broker, data, params):
         super().__init__(broker, data, params)
         self.asset = params.get('asset', 'UNKNOWN')
-        if 'XAU' in self.asset.upper():
-            self.pip_size = 0.01
-        else:
-            self.pip_size = 0.0001
-        self.spread_pips = float(params.get('spread', 0) or 0)
 
     def init(self):
         # Numpy arrays for speed & correctness
@@ -69,11 +68,27 @@ class Wave5AODivergenceStrategy(Strategy):
                 'swings_count': 0,
                 'type_match': 0,
                 'elliott_pass': 0,
-                'zone_pass': 0,
+                'zone_fail': 0,
+                'w3_size_fail': 0,
+                'w3_short_fail': 0,
                 'divergence_pass': 0,
-                'trigger_pass': 0,
+                'div_fail': 0,
+                'zero_cross_fail': 0,
+                'lag_fail': 0,
+                'candle_fail': 0,
                 'entries': 0,
             }
+
+    def _print_counters(self, i: int, direction: str) -> None:
+        """Print debug counters before a trade entry."""
+        if self.debug:
+            print(f"[{i}] {direction.upper()} setup: swings={self.counters['swings_count']} "
+                  f"type_match={self.counters['type_match']} elliott={self.counters['elliott_pass']} "
+                  f"zone_fail={self.counters['zone_fail']} w3_size_fail={self.counters['w3_size_fail']} "
+                  f"w3_short_fail={self.counters['w3_short_fail']} div_fail={self.counters['div_fail']} "
+                  f"zero_cross_fail={self.counters['zero_cross_fail']} "
+                  f"lag_fail={self.counters['lag_fail']} candle_fail={self.counters['candle_fail']} "
+                  f"entries={self.counters['entries']}")
 
     # -------------------------
     # Swings
@@ -279,6 +294,12 @@ class Wave5AODivergenceStrategy(Strategy):
         if not np.isfinite(atr_val) or atr_val <= 0:
             return
 
+        # Check wave3 minimum size requirement
+        if w3_len < self.min_w3_atr * atr_val:
+            if self.debug:
+                self.counters['w3_size_fail'] += 1
+            return
+
         ext_levels = [seq['L4_p'] + fib * w3_len for fib in self.fib_levels]
         post_start = seq['L4_idx'] + 1
         if post_start >= i:
@@ -288,36 +309,63 @@ class Wave5AODivergenceStrategy(Strategy):
         max_pos = int(np.argmax(highs))
         H5_idx = post_start + max_pos
         H5_p = float(highs[max_pos])
+        # Zone check based on trigger candle location
+        trigger_px = self._close[i] if self.entry_mode == "close" else self._high[i]
+        in_zone_trigger = any(abs(trigger_px - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
 
-        in_zone = any(abs(H5_p - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
+        # Optional: also require the Wave5 extreme to have tagged the zone
+        in_zone_extreme = any(abs(H5_p - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
+
+        if self.require_ext_touch:
+            in_zone = in_zone_trigger and in_zone_extreme
+        else:
+            in_zone = in_zone_trigger
+
         if not in_zone:
+            if self.debug:
+                self.counters['zone_fail'] += 1
             return
+
         if self.debug:
-            self.counters['zone_pass'] += 1
+            self.counters['elliott_pass'] += 1
 
         # Wave3 not shortest among 1,3,5 (approx)
         w1_len = seq['H1_p'] - seq['L0_p']
         w5_len = H5_p - seq['L4_p']
         if w3_len < min(w1_len, w5_len):
+            if self.debug:
+                self.counters['w3_short_fail'] += 1
             return
 
         ao = np.asarray(self.ao, dtype=float)
         ao_h3 = ao[seq['H3_idx']]
         ao_h5 = ao[H5_idx]
         if not (H5_p > seq['H3_p'] and ao_h5 < ao_h3 - self.ao_div_min):
+            if self.debug:
+                self.counters['div_fail'] += 1
             return
         if self.debug:
             self.counters['divergence_pass'] += 1
 
         if self.require_zero_cross and not self.has_zero_cross(seq['H3_idx'], H5_idx, 'bullish'):
+            if self.debug:
+                self.counters['zero_cross_fail'] += 1
+            return
+
+        # Check trigger lag: must occur within max_trigger_lag bars after H5
+        if i - H5_idx > int(self.max_trigger_lag):
+            if self.debug:
+                self.counters['lag_fail'] += 1
             return
 
         if not self.is_reversal_candle(i, 'bearish'):
+            if self.debug:
+                self.counters['candle_fail'] += 1
             return
         if self.debug:
-            self.counters['trigger_pass'] += 1
+            self._print_counters(i, 'sell')
 
-        buffer = self.spread_pips * self.pip_size
+        buffer = float(getattr(self, 'spread_price', 0.0) or 0.0)
         trigger_high = self._high[i]
         trigger_low = self._low[i]
         sl = trigger_high + buffer
@@ -344,6 +392,12 @@ class Wave5AODivergenceStrategy(Strategy):
         if not np.isfinite(atr_val) or atr_val <= 0:
             return
 
+        # Check wave3 minimum size requirement
+        if w3_len < self.min_w3_atr * atr_val:
+            if self.debug:
+                self.counters['w3_size_fail'] += 1
+            return
+
         ext_levels = [seq['H4_p'] - fib * w3_len for fib in self.fib_levels]
         post_start = seq['H4_idx'] + 1
         if post_start >= i:
@@ -353,35 +407,59 @@ class Wave5AODivergenceStrategy(Strategy):
         min_pos = int(np.argmin(lows))
         L5_idx = post_start + min_pos
         L5_p = float(lows[min_pos])
+        trigger_px = self._close[i] if self.entry_mode == "close" else self._low[i]
+        in_zone_trigger = any(abs(trigger_px - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
+        in_zone_extreme = any(abs(L5_p - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
 
-        in_zone = any(abs(L5_p - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
+        if self.require_ext_touch:
+            in_zone = in_zone_trigger and in_zone_extreme
+        else:
+            in_zone = in_zone_trigger
+
         if not in_zone:
+            if self.debug:
+                self.counters['zone_fail'] += 1
             return
+
         if self.debug:
-            self.counters['zone_pass'] += 1
+            self.counters['elliott_pass'] += 1
 
         w1_len = seq['H0_p'] - seq['L1_p']
         w5_len = seq['H4_p'] - L5_p
         if w3_len < min(w1_len, w5_len):
+            if self.debug:
+                self.counters['w3_short_fail'] += 1
             return
 
         ao = np.asarray(self.ao, dtype=float)
         ao_l3 = ao[seq['L3_idx']]
         ao_l5 = ao[L5_idx]
         if not (L5_p < seq['L3_p'] and ao_l5 > ao_l3 + self.ao_div_min):
+            if self.debug:
+                self.counters['div_fail'] += 1
             return
         if self.debug:
             self.counters['divergence_pass'] += 1
 
         if self.require_zero_cross and not self.has_zero_cross(seq['L3_idx'], L5_idx, 'bearish'):
+            if self.debug:
+                self.counters['zero_cross_fail'] += 1
+            return
+
+        # Check trigger lag: must occur within max_trigger_lag bars after L5
+        if i - L5_idx > int(self.max_trigger_lag):
+            if self.debug:
+                self.counters['lag_fail'] += 1
             return
 
         if not self.is_reversal_candle(i, 'bullish'):
+            if self.debug:
+                self.counters['candle_fail'] += 1
             return
         if self.debug:
-            self.counters['trigger_pass'] += 1
+            self._print_counters(i, 'buy')
 
-        buffer = self.spread_pips * self.pip_size
+        buffer = float(getattr(self, 'spread_price', 0.0) or 0.0)
         trigger_low = self._low[i]
         trigger_high = self._high[i]
         sl = trigger_low - buffer

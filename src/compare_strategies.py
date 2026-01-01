@@ -332,7 +332,9 @@ def main() -> None:
     parser.add_argument("--wave5-div-threshold", type=float, default=Wave5AODivergenceStrategy.ao_div_min)
     parser.add_argument("--wave5-entry-mode", choices=["close", "break"], default=Wave5AODivergenceStrategy.entry_mode)
     parser.add_argument("--wave5-tp-r", type=float, default=Wave5AODivergenceStrategy.tp_r)
+    parser.add_argument("--wave5-min-w3-atr", type=float, default=Wave5AODivergenceStrategy.min_w3_atr, help="Min wave3 length in ATR units.")
     parser.add_argument("--wave5-debug", action="store_true", default=Wave5AODivergenceStrategy.debug)
+    parser.add_argument("--wave5-trigger-lag", type=int, default=Wave5AODivergenceStrategy.max_trigger_lag, help="Max bars after H5/L5 to allow trigger.")
     parser.add_argument("--wave5-require-zero-cross", dest="wave5_require_zero_cross", action="store_true")
     parser.add_argument("--wave5-no-require-zero-cross", dest="wave5_require_zero_cross", action="store_false")
     parser.set_defaults(wave5_require_zero_cross=Wave5AODivergenceStrategy.require_zero_cross)
@@ -360,8 +362,9 @@ def main() -> None:
             "entry_mode": args.wave5_entry_mode,
             "tp_r": args.wave5_tp_r,
             "debug": args.wave5_debug,
+            "min_w3_atr": args.wave5_min_w3_atr,
+            "max_trigger_lag": args.wave5_trigger_lag,
             "asset": args.asset or df.attrs.get("symbol"),
-            "spread": args.spread if args.spread is not None else 0.0,
         }
 
         wave5_stats = run_backtest(
