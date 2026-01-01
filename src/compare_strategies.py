@@ -357,6 +357,12 @@ def main() -> None:
     
     # Upgrade 1: Wave5 AO decay exhaustion
     parser.add_argument("--wave5-ao-decay", action="store_true", default=Wave5AODivergenceStrategy.wave5_ao_decay, help="Require AO decay at Wave5 extreme.")
+    parser.add_argument(
+        "--wave5-ao-decay-mode",
+        choices=["strict", "soft"],
+        default="strict",
+        help="AO decay filter strictness: strict=3-step monotonic decay (current), soft=1-step decay near extreme.",
+    )
     
     # Upgrade 2: Wave5 minimum extension
     parser.add_argument("--wave5-min-w5-ext", type=float, default=Wave5AODivergenceStrategy.min_w5_ext, help="Minimum Wave5 extension relative to Wave3.")
@@ -402,6 +408,7 @@ def main() -> None:
             "require_ext_touch": args.wave5_require_ext_touch,
             # Upgrade 1: Wave5 AO decay exhaustion
             "wave5_ao_decay": args.wave5_ao_decay,
+            "ao_decay_mode": args.wave5_ao_decay_mode,
             # Upgrade 2: Wave5 minimum extension
             "min_w5_ext": args.wave5_min_w5_ext,
             # Upgrade 3: Partial TP with split orders

@@ -225,21 +225,18 @@ def run_backtest(
     symbol: Optional[str] = None,
     **kwargs
 ) -> dict:
-    """
-    Run a backtest using backtesting.py.
+    """Run a backtest using backtesting.py.
 
     If spread_pips is provided:
-      - we set strategy.spread_price = spread_pips * pip_size
+      - spread_price is injected via run(**params)
       - recommend commission=0.0 (FX is primarily spread, not % commission)
     """
-    sym = (symbol or data.attrs.get("symbol"))
-    if spread_pips is not None:
-        ps = pip_size if pip_size is not None else _default_pip_size(sym)
-        spread_price = float(spread_pips) * float(ps)
-        # Inject spread model into strategy class (as attribute)
-        setattr(strategy, "spread_price", spread_price)
+    sym = symbol or data.attrs.get("symbol")
 
     bt = Backtest(data, strategy, cash=cash, commission=commission, finalize_trades=True, **kwargs)
-    params = strategy_params or {}
+    params = dict(strategy_params or {})
+    if spread_pips is not None:
+        ps = pip_size if pip_size is not None else _default_pip_size(sym)
+        params["spread_price"] = float(spread_pips) * float(ps)
     stats = bt.run(**params)
     return stats

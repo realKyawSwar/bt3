@@ -1,3 +1,4 @@
+#wave5_ao.py
 from backtesting import Strategy
 import numpy as np
 
@@ -43,6 +44,7 @@ class Wave5AODivergenceStrategy(Strategy):
     
     # Upgrade 1: Wave5 AO decay exhaustion confirmation
     wave5_ao_decay = False  # Require AO decay at Wave5 extreme
+    ao_decay_mode = "strict"  # strict|soft
     
     # Upgrade 2: Wave5 minimum extension
     min_w5_ext = 1.272  # Minimum Wave5 extension relative to Wave3
@@ -58,6 +60,7 @@ class Wave5AODivergenceStrategy(Strategy):
     def __init__(self, broker, data, params):
         super().__init__(broker, data, params)
         self.asset = params.get('asset', 'UNKNOWN')
+        self.spread_price = float(params.get('spread_price', 0.0) or 0.0)
 
     def init(self):
         # Numpy arrays for speed & correctness
@@ -100,6 +103,7 @@ class Wave5AODivergenceStrategy(Strategy):
                 'break_body_fail': 0,
                 'entries': 0,
                 'ao_decay_fail': 0,
+                'ao_decay_pass': 0,
                 'w5_ext_fail': 0,
                 'atr_regime_fail': 0,
                 'same_bar_ambiguous_fail': 0,
@@ -120,7 +124,9 @@ class Wave5AODivergenceStrategy(Strategy):
                   f"zero_cross_fail={self.counters['zero_cross_fail']} "
                   f"lag_fail={self.counters['lag_fail']} candle_fail={self.counters['candle_fail']} "
                   f"break_body_fail={self.counters['break_body_fail']} "
-                  f"ao_decay_fail={self.counters['ao_decay_fail']} w5_ext_fail={self.counters['w5_ext_fail']} "
+                  f"ao_decay_fail={self.counters['ao_decay_fail']} ao_decay_pass={self.counters['ao_decay_pass']} "
+                  f"ao_decay_mode={self._get_ao_decay_mode()} "
+                  f"w5_ext_fail={self.counters['w5_ext_fail']} "
                   f"atr_regime_fail={self.counters['atr_regime_fail']} "
                   f"same_bar_ambiguous_fail={self.counters['same_bar_ambiguous_fail']} "
                   f"entries={self.counters['entries']} "
@@ -178,7 +184,7 @@ class Wave5AODivergenceStrategy(Strategy):
         piv.sort(key=lambda x: x[0])
         return piv[-limit:]
 
-    def find_uptrend_sequence(self):
+    def find_uptrend_sequence(self, i: int):
         piv = self._latest_pivots()
         # pattern: L H L H L (in time order)
         # scan from end
@@ -202,7 +208,7 @@ class Wave5AODivergenceStrategy(Strategy):
             if L2_p < L0_p:
                 continue
 
-            atr_val = float(self.atr[-1])
+            atr_val = float(self.atr[i])
             overlap_tol = self.overlap_tol_atr * atr_val
             if L4_p < (H1_p - overlap_tol):
                 continue
@@ -219,7 +225,7 @@ class Wave5AODivergenceStrategy(Strategy):
             }
         return None
 
-    def find_downtrend_sequence(self):
+    def find_downtrend_sequence(self, i: int):
         piv = self._latest_pivots()
         # pattern: H L H L H
         for t in range(len(piv) - 5, -1, -1):
@@ -241,7 +247,7 @@ class Wave5AODivergenceStrategy(Strategy):
             if H2_p > H0_p:
                 continue
 
-            atr_val = float(self.atr[-1])
+            atr_val = float(self.atr[i])
             overlap_tol = self.overlap_tol_atr * atr_val
             if H4_p > (L1_p + overlap_tol):
                 continue
@@ -299,7 +305,7 @@ class Wave5AODivergenceStrategy(Strategy):
 
     def _get_candle_body_atr(self, i: int) -> float:
         """Return candle body size in ATR units."""
-        atr_val = float(self.atr[-1])
+        atr_val = float(self.atr[i])
         if atr_val <= 0:
             return 0.0
         body = abs(self._close[i] - self._open[i])
@@ -309,6 +315,12 @@ class Wave5AODivergenceStrategy(Strategy):
         mode = str(getattr(self, "zone_mode", "trigger")).strip().lower()
         if mode not in {"trigger", "extreme", "either"}:
             return "trigger"
+        return mode
+
+    def _get_ao_decay_mode(self) -> str:
+        mode = str(getattr(self, "ao_decay_mode", "strict")).strip().lower()
+        if mode not in {"strict", "soft"}:
+            return "strict"
         return mode
 
     def _evaluate_zone(self, zone_mode: str, in_zone_trigger: bool, in_zone_extreme: bool) -> bool:
@@ -353,13 +365,13 @@ class Wave5AODivergenceStrategy(Strategy):
         if i - self.last_signal_idx < int(self.min_bars_between_signals):
             return
 
-        up_seq = self.find_uptrend_sequence()
+        up_seq = self.find_uptrend_sequence(i)
         if up_seq:
             if self.debug:
                 self.counters['type_match'] += 1
             self._handle_sell(i, up_seq)
 
-        down_seq = self.find_downtrend_sequence()
+        down_seq = self.find_downtrend_sequence(i)
         if down_seq:
             if self.debug:
                 self.counters['type_match'] += 1
@@ -370,7 +382,7 @@ class Wave5AODivergenceStrategy(Strategy):
         if not np.isfinite(w3_len) or w3_len <= 0:
             return
 
-        atr_val = float(self.atr[-1])
+        atr_val = float(self.atr[i])
         if not np.isfinite(atr_val) or atr_val <= 0:
             return
 
@@ -425,18 +437,26 @@ class Wave5AODivergenceStrategy(Strategy):
         ao_h3 = ao[seq['H3_idx']]
         ao_h5 = ao[H5_idx]
         
-        # Upgrade 1: Wave5 AO decay exhaustion (SELL: ao[H5] < ao[H5-1] < ao[H5-2])
+        # Upgrade 1: Wave5 AO decay exhaustion with strict/soft modes
         if bool(self.wave5_ao_decay):
-            if H5_idx < 2:
+            mode = self._get_ao_decay_mode()
+            ao_decay_ok = False
+            if mode == "strict":
+                if H5_idx >= 2:
+                    ao_h5_m1 = ao[H5_idx - 1]
+                    ao_h5_m2 = ao[H5_idx - 2]
+                    ao_decay_ok = bool(ao_h5 < ao_h5_m1 < ao_h5_m2)
+            else:  # soft mode requires only 1-step decay
+                if H5_idx >= 1:
+                    ao_h5_m1 = ao[H5_idx - 1]
+                    ao_decay_ok = bool(ao_h5 < ao_h5_m1)
+
+            if not ao_decay_ok:
                 if self.debug:
                     self.counters['ao_decay_fail'] += 1
                 return
-            ao_h5_m1 = ao[H5_idx - 1]
-            ao_h5_m2 = ao[H5_idx - 2]
-            if not (ao_h5 < ao_h5_m1 < ao_h5_m2):
-                if self.debug:
-                    self.counters['ao_decay_fail'] += 1
-                return
+            if self.debug:
+                self.counters['ao_decay_pass'] += 1
         if not (H5_p > seq['H3_p'] and ao_h5 < ao_h3 - self.ao_div_min):
             if self.debug:
                 self.counters['div_fail'] += 1
@@ -450,7 +470,7 @@ class Wave5AODivergenceStrategy(Strategy):
             return
 
         # Upgrade 5: Dynamic trigger lag calculation
-        allowed_lag = min(int(self.max_trigger_lag), max(3, int(self.swing_window) * 2))
+        allowed_lag = int(self.max_trigger_lag)
         if i - H5_idx > allowed_lag:
             if self.debug:
                 self.counters['lag_fail'] += 1
@@ -484,7 +504,7 @@ class Wave5AODivergenceStrategy(Strategy):
                     self.counters['break_body_fail'] += 1
                 return
             
-            atr_val = float(self.atr[-1])
+            atr_val = float(self.atr[i])
             entry = trigger_low
             # Apply break_buffer_atr to stop placement
             sl = trigger_high + buffer + float(self.break_buffer_atr) * atr_val
@@ -587,7 +607,7 @@ class Wave5AODivergenceStrategy(Strategy):
         if not np.isfinite(w3_len) or w3_len <= 0:
             return
 
-        atr_val = float(self.atr[-1])
+        atr_val = float(self.atr[i])
         if not np.isfinite(atr_val) or atr_val <= 0:
             return
 
@@ -638,18 +658,26 @@ class Wave5AODivergenceStrategy(Strategy):
         ao_l3 = ao[seq['L3_idx']]
         ao_l5 = ao[L5_idx]
         
-        # Upgrade 1: Wave5 AO decay exhaustion (BUY: ao[L5] > ao[L5-1] > ao[L5-2])
+        # Upgrade 1: Wave5 AO decay exhaustion with strict/soft modes
         if bool(self.wave5_ao_decay):
-            if L5_idx < 2:
+            mode = self._get_ao_decay_mode()
+            ao_decay_ok = False
+            if mode == "strict":
+                if L5_idx >= 2:
+                    ao_l5_m1 = ao[L5_idx - 1]
+                    ao_l5_m2 = ao[L5_idx - 2]
+                    ao_decay_ok = bool(ao_l5 > ao_l5_m1 > ao_l5_m2)
+            else:
+                if L5_idx >= 1:
+                    ao_l5_m1 = ao[L5_idx - 1]
+                    ao_decay_ok = bool(ao_l5 > ao_l5_m1)
+
+            if not ao_decay_ok:
                 if self.debug:
                     self.counters['ao_decay_fail'] += 1
                 return
-            ao_l5_m1 = ao[L5_idx - 1]
-            ao_l5_m2 = ao[L5_idx - 2]
-            if not (ao_l5 > ao_l5_m1 > ao_l5_m2):
-                if self.debug:
-                    self.counters['ao_decay_fail'] += 1
-                return
+            if self.debug:
+                self.counters['ao_decay_pass'] += 1
         if not (L5_p < seq['L3_p'] and ao_l5 > ao_l3 + self.ao_div_min):
             if self.debug:
                 self.counters['div_fail'] += 1
@@ -663,7 +691,7 @@ class Wave5AODivergenceStrategy(Strategy):
             return
 
         # Upgrade 5: Dynamic trigger lag calculation
-        allowed_lag = min(int(self.max_trigger_lag), max(3, int(self.swing_window) * 2))
+        allowed_lag = int(self.max_trigger_lag)
         if i - L5_idx > allowed_lag:
             if self.debug:
                 self.counters['lag_fail'] += 1
@@ -697,7 +725,7 @@ class Wave5AODivergenceStrategy(Strategy):
                     self.counters['break_body_fail'] += 1
                 return
             
-            atr_val = float(self.atr[-1])
+            atr_val = float(self.atr[i])
             entry = trigger_high
             # Apply break_buffer_atr to stop placement
             sl = trigger_low - buffer - float(self.break_buffer_atr) * atr_val
