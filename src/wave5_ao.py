@@ -356,6 +356,13 @@ class Wave5AODivergenceStrategy(Strategy):
                 return False
         return True
 
+    def _size_to_units(self, size: float, entry_price: float) -> int:
+        eq = float(self.equity)
+        if entry_price <= 0 or not np.isfinite(entry_price):
+            return 1
+        units = int(max(1, np.floor((eq * float(size)) / float(entry_price))))
+        return units
+
     # -------------------------
     # Main loop
     # -------------------------
@@ -532,6 +539,19 @@ class Wave5AODivergenceStrategy(Strategy):
         if base_size <= 0:
             return
 
+        fractional_mode = base_size < 1.0
+        entry_price_for_size = float(entry)
+
+        def _resolve_order_size(size_value: float) -> float:
+            if size_value <= 0:
+                return 0.0
+            if not fractional_mode:
+                return size_value
+            size_units = self._size_to_units(size_value, entry_price_for_size)
+            if self.debug:
+                print(f"[WAVE5 SIZE] fraction={size_value:.3f} -> units={size_units} equity={self.equity:.2f} entry={entry_price_for_size:.5f}")
+            return size_units
+
         if self.debug:
             print(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
 
@@ -558,17 +578,19 @@ class Wave5AODivergenceStrategy(Strategy):
             split_ratio = float(self.tp_split_ratio)
             size1 = base_size * split_ratio
             size2 = base_size * (1.0 - split_ratio)
+            order_size1 = _resolve_order_size(size1)
+            order_size2 = _resolve_order_size(size2)
             
             if self.debug:
                 print(f"[SELL SPLIT] entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} tp2={tp2:.5f} sizes={size1:.2f}/{size2:.2f}")
             
             # Place two orders with different TPs
             if self.entry_mode == 'close':
-                self.sell(sl=sl, tp=tp1, size=size1)
-                self.sell(sl=sl, tp=tp2, size=size2)
+                self.sell(sl=sl, tp=tp1, size=order_size1)
+                self.sell(sl=sl, tp=tp2, size=order_size2)
             else:
-                self.sell(stop=trigger_low, sl=sl, tp=tp1, size=size1)
-                self.sell(stop=trigger_low, sl=sl, tp=tp2, size=size2)
+                self.sell(stop=trigger_low, sl=sl, tp=tp1, size=order_size1)
+                self.sell(stop=trigger_low, sl=sl, tp=tp2, size=order_size2)
         else:
             # Single order mode - use existing TP logic
             tp_mode = str(getattr(self, "tp_mode", "hybrid")).lower()
@@ -619,10 +641,11 @@ class Wave5AODivergenceStrategy(Strategy):
             if self.debug:
                 print(f"[SELL] entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} mode={tp_mode} selected={selected_source}")
 
+            final_size = _resolve_order_size(base_size)
             if self.entry_mode == 'close':
-                self.sell(sl=sl, tp=tp, size=base_size)
+                self.sell(sl=sl, tp=tp, size=final_size)
             else:
-                self.sell(stop=trigger_low, sl=sl, tp=tp, size=base_size)
+                self.sell(stop=trigger_low, sl=sl, tp=tp, size=final_size)
 
         self.last_signal_idx = i
         if self.debug:
@@ -765,6 +788,19 @@ class Wave5AODivergenceStrategy(Strategy):
         if base_size <= 0:
             return
 
+        fractional_mode = base_size < 1.0
+        entry_price_for_size = float(entry)
+
+        def _resolve_order_size(size_value: float) -> float:
+            if size_value <= 0:
+                return 0.0
+            if not fractional_mode:
+                return size_value
+            size_units = self._size_to_units(size_value, entry_price_for_size)
+            if self.debug:
+                print(f"[WAVE5 SIZE] fraction={size_value:.3f} -> units={size_units} equity={self.equity:.2f} entry={entry_price_for_size:.5f}")
+            return size_units
+
         if self.debug:
             print(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
 
@@ -791,17 +827,19 @@ class Wave5AODivergenceStrategy(Strategy):
             split_ratio = float(self.tp_split_ratio)
             size1 = base_size * split_ratio
             size2 = base_size * (1.0 - split_ratio)
+            order_size1 = _resolve_order_size(size1)
+            order_size2 = _resolve_order_size(size2)
             
             if self.debug:
                 print(f"[BUY SPLIT] entry={entry:.5f} sl={sl:.5f} tp1={tp1:.5f} tp2={tp2:.5f} sizes={size1:.2f}/{size2:.2f}")
             
             # Place two orders with different TPs
             if self.entry_mode == 'close':
-                self.buy(sl=sl, tp=tp1, size=size1)
-                self.buy(sl=sl, tp=tp2, size=size2)
+                self.buy(sl=sl, tp=tp1, size=order_size1)
+                self.buy(sl=sl, tp=tp2, size=order_size2)
             else:
-                self.buy(stop=trigger_high, sl=sl, tp=tp1, size=size1)
-                self.buy(stop=trigger_high, sl=sl, tp=tp2, size=size2)
+                self.buy(stop=trigger_high, sl=sl, tp=tp1, size=order_size1)
+                self.buy(stop=trigger_high, sl=sl, tp=tp2, size=order_size2)
         else:
             # Single order mode - use existing TP logic
             tp_mode = str(getattr(self, "tp_mode", "hybrid")).lower()
@@ -852,10 +890,11 @@ class Wave5AODivergenceStrategy(Strategy):
             if self.debug:
                 print(f"[BUY] entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} mode={tp_mode} selected={selected_source}")
 
+            final_size = _resolve_order_size(base_size)
             if self.entry_mode == 'close':
-                self.buy(sl=sl, tp=tp, size=base_size)
+                self.buy(sl=sl, tp=tp, size=final_size)
             else:
-                self.buy(stop=trigger_high, sl=sl, tp=tp, size=base_size)
+                self.buy(stop=trigger_high, sl=sl, tp=tp, size=final_size)
 
         self.last_signal_idx = i
         if self.debug:
