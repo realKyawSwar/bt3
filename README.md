@@ -296,6 +296,21 @@ Pullback:
 
 python src/compare_strategies.py --strategy pullback --pullback-k 0.25
 
+## Wave5 AO Divergence Strategy
+
+Run the Wave5 AO divergence strategy via the compare CLI:
+
+python src/compare_strategies.py --mode wave5 --asset GBPUSD --tf 1h --wave5-debug --wave5-swing-window 2 --spread 5
+
+Common Wave5 flags:
+- --wave5-swing-window
+- --wave5-fib-tol
+- --wave5-div-threshold
+- --wave5-entry-mode (close|break)
+- --wave5-tp-r
+- --wave5-debug
+- --wave5-require-zero-cross / --wave5-no-require-zero-cross
+
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
