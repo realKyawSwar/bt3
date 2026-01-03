@@ -28,6 +28,15 @@ class TrackedOrderList:
         """Log an order removal with reason."""
         if not self._debug:
             return
+
+        def _record_event(event: dict) -> None:
+            try:
+                events = getattr(self._broker, "_recent_order_removals", [])
+                events.append(event)
+                # Keep a small tail to avoid unbounded growth
+                setattr(self._broker, "_recent_order_removals", events[-50:])
+            except Exception:
+                pass
         
         stack = traceback.extract_stack(limit=8)
         caller = None
@@ -38,11 +47,24 @@ class TrackedOrderList:
                 break
         
         item_info = ""
+        event = {
+            "reason": reason,
+            "order_id": id(item) if item else None,
+            "caller": caller,
+        }
         if item and hasattr(item, '__dict__'):
             attrs = vars(item)
             side = "BUY" if attrs.get('_is_long', False) else "SELL"
             size = abs(attrs.get('_size', 0))
             item_info = f" side={side} size={size}"
+            event.update({
+                "side": side,
+                "size": size,
+                "stop": attrs.get('_stop') or attrs.get('stop'),
+                "limit": attrs.get('_limit') or attrs.get('limit'),
+            })
+
+        _record_event(event)
         
         print(f"[BROKER ORDER] action=REMOVE reason={reason}{item_info} caller={caller}")
     

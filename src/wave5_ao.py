@@ -591,6 +591,150 @@ class Wave5AODivergenceStrategy(Strategy):
 
         return (final_units, details) if return_details else final_units
 
+    def _summarize_order(self, order) -> dict:
+        """Return a lightweight descriptor for an order object."""
+        if order is None:
+            return {}
+        parent = getattr(order, "parent_trade", None)
+        stop_val = getattr(order, "stop", None)
+        limit_val = getattr(order, "limit", None)
+        return {
+            "id": id(order),
+            "side": "BUY" if getattr(order, "is_long", False) else "SELL",
+            "size": abs(getattr(order, "size", 0) or 0),
+            "stop": stop_val,
+            "limit": limit_val,
+            "is_contingent": bool(getattr(order, "is_contingent", False)),
+            "parent_trade_id": id(parent) if parent else None,
+        }
+
+    def _summarize_trade(self, trade) -> dict:
+        """Return a lightweight descriptor for a trade object."""
+        if trade is None:
+            return {}
+        return {
+            "id": id(trade),
+            "size": getattr(trade, "size", 0),
+            "is_long": getattr(trade, "is_long", False),
+            "entry": getattr(trade, "entry_price", None),
+        }
+
+    @staticmethod
+    def _format_order_list(orders: list[dict]) -> str:
+        if not orders:
+            return "[]"
+        parts = []
+        for o in orders:
+            parts.append(
+                f"{o.get('side', '?')} stop={o.get('stop')} limit={o.get('limit')} size={o.get('size')}"
+            )
+        return "[" + "; ".join(parts) + "]"
+
+    @staticmethod
+    def _format_trade_list(trades: list[dict]) -> str:
+        if not trades:
+            return "[]"
+        parts = []
+        for t in trades:
+            parts.append(f"{t.get('id')} size={t.get('size')} long={int(bool(t.get('is_long')))}")
+        return "[" + "; ".join(parts) + "]"
+
+    def _build_broker_snapshot(self) -> dict:
+        """Capture pending orders, open trades, and recent removals for this bar."""
+        orders = []
+        trades = []
+        if hasattr(self, "orders"):
+            orders = [self._summarize_order(o) for o in self.orders]
+        if hasattr(self, "trades"):
+            trades = [self._summarize_trade(t) for t in self.trades]
+
+        snapshot = {
+            "orders": orders,
+            "order_ids": {o["id"] for o in orders if "id" in o},
+            "trades": trades,
+            "trade_ids": {t["id"] for t in trades if "id" in t},
+            "position_size": float(getattr(self.position, "size", 0.0)) if hasattr(self, "position") else 0.0,
+            "recent_removals": [],
+        }
+
+        recent_removals = getattr(getattr(self, "_broker", None), "_recent_order_removals", None)
+        if recent_removals:
+            snapshot["recent_removals"] = list(recent_removals)
+            try:
+                recent_removals.clear()
+            except Exception:
+                # If clearing fails, keep the copied list to avoid stale duplication
+                snapshot["recent_removals"] = list(snapshot["recent_removals"])
+
+        return snapshot
+
+    @staticmethod
+    def _classify_missing_orders(missing_orders: list[dict], prev_snapshot: dict, curr_snapshot: dict) -> dict:
+        """Classify why orders disappeared between bars."""
+        missing_ids = {o.get("id") for o in missing_orders}
+        prev_trade_ids = prev_snapshot.get("trade_ids", set())
+        curr_trade_ids = curr_snapshot.get("trade_ids", set())
+        new_trades = curr_trade_ids - prev_trade_ids
+        trades_closed = prev_trade_ids - curr_trade_ids
+        pos_prev = prev_snapshot.get("position_size", 0.0)
+        pos_curr = curr_snapshot.get("position_size", 0.0)
+        position_changed = not np.isclose(pos_prev, pos_curr)
+
+        new_orders = [
+            o for o in curr_snapshot.get("orders", [])
+            if o.get("id") not in prev_snapshot.get("order_ids", set())
+        ]
+        new_contingent = any(o.get("is_contingent") for o in new_orders)
+
+        removal_events = curr_snapshot.get("recent_removals") or []
+        matched_removal = any(
+            (evt.get("order_id") in missing_ids) or evt.get("order_id") is None
+            for evt in removal_events
+        )
+
+        parent_closed = any(
+            m.get("parent_trade_id") and m["parent_trade_id"] not in curr_trade_ids
+            for m in missing_orders
+        )
+
+        filled = bool(new_trades or trades_closed or position_changed or new_contingent)
+        canceled = bool(parent_closed or matched_removal)
+
+        if filled:
+            reason = "filled"
+        elif canceled:
+            reason = "canceled"
+        else:
+            reason = "unknown"
+
+        return {"reason": reason, "alert": not (filled or canceled)}
+
+    def _monitor_order_disappearance(self, i: int) -> None:
+        """Detect vanished pending orders and emit debug output when suspicious."""
+        prev_snapshot = getattr(self, "_prev_broker_snapshot", None)
+        curr_snapshot = self._build_broker_snapshot()
+        if prev_snapshot:
+            missing = [
+                o for o in prev_snapshot.get("orders", [])
+                if o.get("id") not in curr_snapshot.get("order_ids", set())
+            ]
+            if missing:
+                result = self._classify_missing_orders(missing, prev_snapshot, curr_snapshot)
+                if result.get("alert", False):
+                    reason = result.get("reason", "unknown")
+                    prev_pending = self._format_order_list(prev_snapshot.get("orders", []))
+                    curr_pending = self._format_order_list(curr_snapshot.get("orders", []))
+                    trades_summary = self._format_trade_list(curr_snapshot.get("trades", []))
+                    removals = curr_snapshot.get("recent_removals", [])
+                    removal_info = f" removals={removals}" if removals else ""
+                    self._dbg(
+                        "[WAVE5 ALERT] order_disappeared "
+                        f"i={i-1} -> i={i} reason={reason}{removal_info} "
+                        f"prev_pending={prev_pending} curr_pending={curr_pending} "
+                        f"trades={trades_summary} pos={curr_snapshot.get('position_size', 0.0):.4f}"
+                    )
+        self._prev_broker_snapshot = curr_snapshot
+
     # -------------------------
     # Main loop
     # -------------------------
@@ -619,13 +763,7 @@ class Wave5AODivergenceStrategy(Strategy):
         trace["use_scoring"] = int(bool(getattr(self, "use_scoring", False)))
 
         if self.debug:
-            num_orders = len(self.orders) if hasattr(self, 'orders') else 0
-            num_trades = len(self.trades) if hasattr(self, 'trades') else 0
-            if hasattr(self, '_prev_num_orders'):
-                if self._prev_num_orders > 0 and num_orders == 0 and num_trades == getattr(self, '_prev_num_trades', 0):
-                    self._dbg(f"[WAVE5 ALERT] order_disappeared i={i-1} -> i={i}, investigate broker logs above")
-            self._prev_num_orders = num_orders
-            self._prev_num_trades = num_trades
+            self._monitor_order_disappearance(i)
 
         # Upgrade 4: ATR regime filter - skip when ATR is expanding
         atr_val = float(self.atr[i])
