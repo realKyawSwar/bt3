@@ -19,11 +19,23 @@ def _atr(high: np.ndarray, low: np.ndarray, close: np.ndarray, n: int = 14) -> n
     return _sma(tr, n)
 
 
+def _percentile_rank(window: np.ndarray, x: float) -> float:
+    """Return percentile rank of x within window using mean(window <= x)."""
+    finite = window[np.isfinite(window)]
+    if finite.size < 30:
+        return 0.5
+    return float(np.mean(finite <= x))
+
+
 class Wave5AODivergenceStrategy(Strategy):
     swing_window = 2
     fib_levels = (1.272, 1.618)
     fib_tol_atr = 0.25
     overlap_tol_atr = 0.0  # NEW: allow small overlap tolerance
+    fib_tol_mode = "fixed"  # fixed|atr_pct
+    fib_tol_lookback = 500
+    fib_tol_lo = 0.35
+    fib_tol_hi = 1.25
     ao_div_min = 0.0
     require_zero_cross = True
     trigger = ('engulfing', 'pin')
@@ -58,11 +70,28 @@ class Wave5AODivergenceStrategy(Strategy):
     # Upgrade 4: ATR expansion regime filter
     atr_long = 100  # ATR long SMA period
     atr_expand_k = 1.5  # Skip trades when ATR > k * atr_sma
-    
+
     # Margin support for position sizing (used only for sizing clamp, not broker)
     sizing_margin = 1.0  # Margin fraction used to cap position size (1.0=no leverage, 0.02=50x)
     exec_margin = 1.0  # Execution margin for broker logging/debug (not used for sizing)
     margin = 1.0  # Backtesting param compatibility; not used for sizing
+
+    # Probabilistic scoring
+    use_scoring = False
+    debug_trace = True  # enable per-bar trace printing when debug=True
+    score_threshold = 0.60
+    w_zone = 1.0
+    w_div = 1.0
+    w_candle = 0.7
+    w_lag = 0.5
+    w_regime = 0.3
+    w_zero = 0.2
+    w_decay = 0.2
+    zone_k = 3.0
+    div_scale = 0.5
+    regime_r = 0.6
+    enable_size_by_score = False
+    min_size_mult = 0.5
 
     def __init__(self, broker, data, params):
         super().__init__(broker, data, params)
@@ -82,6 +111,7 @@ class Wave5AODivergenceStrategy(Strategy):
         if exec_margin_val <= 0:
             exec_margin_val = 1.0
         self.exec_margin = exec_margin_val
+        self.debug_trace = bool(params.get('debug_trace', getattr(self, 'debug_trace', True)))
 
     def init(self):
         # Numpy arrays for speed & correctness
@@ -141,6 +171,8 @@ class Wave5AODivergenceStrategy(Strategy):
                 'same_bar_ambiguous_fail': 0,
                 'zone_trigger_pass': 0,
                 'zone_extreme_pass': 0,
+                'score_fail': 0,
+                'score_pass': 0,
             }
             self._debug_zone_mode = 'trigger'
             self._debug_zone_trigger = 0
@@ -171,7 +203,7 @@ class Wave5AODivergenceStrategy(Strategy):
                   f"zone_extreme={self._debug_zone_extreme}")
 
     def _emit_trace(self, trace: dict) -> None:
-        if not self.debug:
+        if not self.debug or not getattr(self, "debug_trace", True):
             return
         msg = (
             f"[W5 TRACE] ts={trace.get('ts')} "
@@ -187,6 +219,22 @@ class Wave5AODivergenceStrategy(Strategy):
             f"size={int(bool(trace.get('size_ok', 0)))} "
             f"reason=\"{trace.get('reason', '')}\""
         )
+        if "fib_tol_eff" in trace and np.isfinite(trace.get("fib_tol_eff", np.nan)):
+            msg += f" fib_tol={trace.get('fib_tol_eff'):.4f}"
+        if "fib_pct" in trace and np.isfinite(trace.get("fib_pct", np.nan)):
+            msg += f" fib_pct={trace.get('fib_pct'):.3f}"
+        if "score" in trace and np.isfinite(trace.get("score", np.nan)):
+            msg += f" score={trace.get('score'):.3f}"
+        if "zone_score" in trace and np.isfinite(trace.get("zone_score", np.nan)):
+            msg += f" z={trace.get('zone_score'):.3f}"
+        if "div_score" in trace and np.isfinite(trace.get("div_score", np.nan)):
+            msg += f" d={trace.get('div_score'):.3f}"
+        if "lag_score" in trace and np.isfinite(trace.get("lag_score", np.nan)):
+            msg += f" lag_s={trace.get('lag_score'):.3f}"
+        if "regime_score" in trace and np.isfinite(trace.get("regime_score", np.nan)):
+            msg += f" reg_s={trace.get('regime_score'):.3f}"
+        if "candle_score" in trace and np.isfinite(trace.get("candle_score", np.nan)):
+            msg += f" cndl_s={trace.get('candle_score'):.3f}"
         self._dbg(msg)
 
     def _emit_final_summary(self) -> None:
@@ -349,30 +397,34 @@ class Wave5AODivergenceStrategy(Strategy):
         else:
             return np.any((ao[s-1:e] >= 0) & (ao[s:e+1] < 0))
 
-    def is_reversal_candle(self, i: int, direction: str) -> bool:
+    def _candle_signal(self, i: int, direction: str):
+        """Return candle reversal type and score for scoring logic."""
         if i < 1:
-            return False
+            return "none", 0.0
         o, c, h, l = self._open[i], self._close[i], self._high[i], self._low[i]
         o1, c1 = self._open[i-1], self._close[i-1]
         body = max(abs(o - c), 1e-12)
 
         if direction == 'bearish':
             if 'engulfing' in self.trigger and (c < o) and (c1 > o1) and (o > c1) and (c < o1):
-                return True
+                return "engulfing", 1.0
             if 'pin' in self.trigger:
                 upper = h - max(o, c)
                 if upper > self.pin_ratio * body and c < (o + l) / 2:
-                    return True
-
-        if direction == 'bullish':
+                    return "pin", 0.6
+        else:
             if 'engulfing' in self.trigger and (c > o) and (c1 < o1) and (o < c1) and (c > o1):
-                return True
+                return "engulfing", 1.0
             if 'pin' in self.trigger:
                 lower = min(o, c) - l
                 if lower > self.pin_ratio * body and c > (o + h) / 2:
-                    return True
+                    return "pin", 0.6
 
-        return False
+        return "none", 0.0
+
+    def is_reversal_candle(self, i: int, direction: str) -> bool:
+        _, score = self._candle_signal(i, direction)
+        return score > 0
 
     def _get_candle_body_atr(self, i: int) -> float:
         """Return candle body size in ATR units."""
@@ -381,6 +433,10 @@ class Wave5AODivergenceStrategy(Strategy):
             return 0.0
         body = abs(self._close[i] - self._open[i])
         return body / atr_val
+
+    @staticmethod
+    def _clip01(x: float) -> float:
+        return float(np.clip(x, 0.0, 1.0))
 
     def _normalize_zone_mode(self) -> str:
         mode = str(getattr(self, "zone_mode", "trigger")).strip().lower()
@@ -393,6 +449,40 @@ class Wave5AODivergenceStrategy(Strategy):
         if mode not in {"strict", "soft"}:
             return "strict"
         return mode
+
+    def _fib_tolerance(self, i: int, atr_val: float) -> tuple[float, float]:
+        mode = str(getattr(self, "fib_tol_mode", "fixed")).strip().lower()
+        if mode != "atr_pct":
+            return float(self.fib_tol_atr), 0.5
+        lookback = max(int(getattr(self, "fib_tol_lookback", 0)), 1)
+        start = max(0, i - lookback)
+        atr_window = np.asarray(self.atr, dtype=float)[start:i+1]
+        p = _percentile_rank(atr_window, atr_val)
+        lo = float(getattr(self, "fib_tol_lo", 0.35))
+        hi = float(getattr(self, "fib_tol_hi", 1.25))
+        tol = lo + p * (hi - lo)
+        return float(tol), float(p)
+
+    def _combine_scores(self, components: dict) -> float:
+        weights = {
+            "zone": float(getattr(self, "w_zone", 1.0)),
+            "div": float(getattr(self, "w_div", 1.0)),
+            "candle": float(getattr(self, "w_candle", 0.7)),
+            "lag": float(getattr(self, "w_lag", 0.5)),
+            "regime": float(getattr(self, "w_regime", 0.3)),
+            "zero": float(getattr(self, "w_zero", 0.2)),
+            "decay": float(getattr(self, "w_decay", 0.2)),
+        }
+        num = 0.0
+        den = 0.0
+        for key, w in weights.items():
+            if w <= 0:
+                continue
+            num += w * float(components.get(key, 0.0))
+            den += w
+        if den <= 0:
+            return 0.0
+        return num / den
 
     def _evaluate_zone(self, zone_mode: str, in_zone_trigger: bool, in_zone_extreme: bool) -> bool:
         if self.debug:
@@ -526,6 +616,7 @@ class Wave5AODivergenceStrategy(Strategy):
             "reason": "",
         }
         self.summary["bars_seen"] += 1
+        trace["use_scoring"] = int(bool(getattr(self, "use_scoring", False)))
 
         if self.debug:
             num_orders = len(self.orders) if hasattr(self, 'orders') else 0
@@ -539,8 +630,9 @@ class Wave5AODivergenceStrategy(Strategy):
         # Upgrade 4: ATR regime filter - skip when ATR is expanding
         atr_val = float(self.atr[i])
         atr_sma_val = float(self.atr_sma[i])
+        use_scoring = bool(getattr(self, "use_scoring", False))
         if np.isfinite(atr_val) and np.isfinite(atr_sma_val) and atr_sma_val > 0:
-            if atr_val > float(self.atr_expand_k) * atr_sma_val:
+            if not use_scoring and atr_val > float(self.atr_expand_k) * atr_sma_val:
                 trace["reason"] = "trigger_fail"
                 if self.debug:
                     self.counters['atr_regime_fail'] += 1
@@ -580,6 +672,7 @@ class Wave5AODivergenceStrategy(Strategy):
 
     def _handle_sell(self, i: int, seq: dict, trace: dict):
         trace["wave_type"] = "sell"
+        use_scoring = bool(getattr(self, "use_scoring", False))
         self.summary["wave_candidates"] += 1
 
         w3_len = seq['H3_p'] - seq['L2_p']
@@ -591,6 +684,10 @@ class Wave5AODivergenceStrategy(Strategy):
         if not np.isfinite(atr_val) or atr_val <= 0:
             trace["reason"] = "entry_fail"
             return trace
+
+        fib_tol_eff, fib_pct = self._fib_tolerance(i, atr_val)
+        trace["fib_tol_eff"] = fib_tol_eff
+        trace["fib_pct"] = fib_pct
 
         if w3_len < self.min_w3_atr * atr_val:
             if self.debug:
@@ -609,19 +706,25 @@ class Wave5AODivergenceStrategy(Strategy):
         H5_idx = post_start + max_pos
         H5_p = float(highs[max_pos])
         trigger_px = self._close[i] if self.entry_mode == "close" else self._low[i]
-        in_zone_trigger = any(abs(trigger_px - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
-        in_zone_extreme = any(abs(H5_p - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
+        zone_dist = np.inf
+        if ext_levels:
+            zone_dist = min(abs(trigger_px - ext) for ext in ext_levels) / (atr_val + 1e-12)
+        zone_score = float(np.exp(-float(self.zone_k) * zone_dist)) if np.isfinite(zone_dist) else 0.0
+        in_zone_trigger = any(abs(trigger_px - ext) <= fib_tol_eff * atr_val for ext in ext_levels)
+        in_zone_extreme = any(abs(H5_p - ext) <= fib_tol_eff * atr_val for ext in ext_levels)
 
         zone_mode = self._normalize_zone_mode()
         in_zone = self._evaluate_zone(zone_mode, in_zone_trigger, in_zone_extreme)
         trace["zone_ok"] = int(bool(in_zone))
+        trace["zone_score"] = self._clip01(zone_score)
         if in_zone:
             self.summary["zone_pass"] += 1
-        if not in_zone:
+        else:
             if self.debug:
                 self.counters['zone_fail'] += 1
-            trace["reason"] = "zone_fail"
-            return trace
+            if not use_scoring:
+                trace["reason"] = "zone_fail"
+                return trace
 
         if self.debug:
             self.counters['elliott_pass'] += 1
@@ -644,6 +747,7 @@ class Wave5AODivergenceStrategy(Strategy):
         ao_h3 = ao[seq['H3_idx']]
         ao_h5 = ao[H5_idx]
 
+        ao_decay_ok = True
         if bool(self.wave5_ao_decay):
             mode = self._get_ao_decay_mode()
             ao_decay_ok = False
@@ -660,39 +764,97 @@ class Wave5AODivergenceStrategy(Strategy):
             if not ao_decay_ok:
                 if self.debug:
                     self.counters['ao_decay_fail'] += 1
-                trace["reason"] = "trigger_fail"
-                return trace
-            if self.debug:
+                if not use_scoring:
+                    trace["reason"] = "trigger_fail"
+                    return trace
+            elif self.debug:
                 self.counters['ao_decay_pass'] += 1
-        if not (H5_p > seq['H3_p'] and ao_h5 < ao_h3 - self.ao_div_min):
+
+        div_ok = (H5_p > seq['H3_p'] and ao_h5 < ao_h3 - self.ao_div_min)
+        div_raw = (ao_h3 - ao_h5 - self.ao_div_min) / (abs(ao_h3) + 1e-12)
+        div_scale = max(float(getattr(self, "div_scale", 0.5)), 1e-12)
+        div_score = self._clip01(div_raw / div_scale)
+        if not div_ok:
             if self.debug:
                 self.counters['div_fail'] += 1
-            trace["reason"] = "trigger_fail"
-            return trace
-        if self.debug:
+            if not use_scoring:
+                trace["reason"] = "trigger_fail"
+                return trace
+        elif self.debug:
             self.counters['divergence_pass'] += 1
 
-        if self.require_zero_cross and not self.has_zero_cross(seq['H3_idx'], H5_idx, 'bullish'):
-            if self.debug:
+        zero_ok = True
+        if self.require_zero_cross:
+            zero_ok = self.has_zero_cross(seq['H3_idx'], H5_idx, 'bullish')
+            if not zero_ok and self.debug:
                 self.counters['zero_cross_fail'] += 1
-            trace["reason"] = "trigger_fail"
-            return trace
+            if not zero_ok and not use_scoring:
+                trace["reason"] = "trigger_fail"
+                return trace
 
         allowed_lag = int(self.max_trigger_lag)
-        if i - H5_idx > allowed_lag:
+        lag_val = max(0, i - H5_idx)
+        lag_ok = lag_val <= allowed_lag
+        lag_score = 1.0 - min(1.0, lag_val / max(allowed_lag, 1))
+        if not lag_ok:
             if self.debug:
                 self.counters['lag_fail'] += 1
-            trace["reason"] = "trigger_fail"
-            return trace
+            if not use_scoring:
+                trace["reason"] = "trigger_fail"
+                return trace
 
-        if not self.is_reversal_candle(i, 'bearish'):
+        candle_type, candle_score = self._candle_signal(i, 'bearish')
+        candle_ok = candle_score > 0
+        if not candle_ok:
             if self.debug:
                 self.counters['candle_fail'] += 1
-            trace["reason"] = "trigger_fail"
-            return trace
+            if not use_scoring:
+                trace["reason"] = "trigger_fail"
+                return trace
 
-        self.summary["trigger_pass"] += 1
-        trace["trigger_ok"] = 1
+        atr_sma_val = float(self.atr_sma[i])
+        regime_score = 0.5
+        if np.isfinite(atr_val) and np.isfinite(atr_sma_val) and atr_sma_val > 0:
+            ratio = atr_val / atr_sma_val
+            regime_score = self._clip01(1 - max(0.0, (ratio - 1.0) / float(getattr(self, "regime_r", 0.6))))
+            trace["regime_ratio"] = ratio
+        trace["regime_score"] = regime_score
+
+        zero_score = 1.0 if (not self.require_zero_cross or zero_ok) else 0.0
+        decay_score = 1.0 if (not self.wave5_ao_decay or ao_decay_ok) else 0.0
+        trace["div_score"] = div_score
+        trace["lag_score"] = lag_score
+        trace["candle_score"] = candle_score
+        trace["zero_score"] = zero_score
+        trace["decay_score"] = decay_score
+
+        score = 1.0
+        if use_scoring:
+            components = {
+                "zone": trace.get("zone_score", 0.0),
+                "div": div_score,
+                "candle": candle_score,
+                "lag": lag_score,
+                "regime": regime_score,
+                "zero": zero_score,
+                "decay": decay_score,
+            }
+            score = self._combine_scores(components)
+            trace["score"] = score
+            if score < float(getattr(self, "score_threshold", 0.6)):
+                trace["reason"] = "score_fail"
+                if self.debug:
+                    self.counters['score_fail'] += 1
+                return trace
+            if self.debug:
+                self.counters['score_pass'] += 1
+        else:
+            self.summary["trigger_pass"] += 1
+            trace["trigger_ok"] = 1
+
+        self.summary["trigger_pass"] += int(use_scoring)
+        if use_scoring:
+            trace["trigger_ok"] = 1
 
         allowed, gate_reason = self._can_place_order()
         if not allowed:
@@ -725,6 +887,12 @@ class Wave5AODivergenceStrategy(Strategy):
 
         trace["sl_ok"] = 1
         base_size = float(getattr(self, "order_size", 0.2))
+        if use_scoring and bool(getattr(self, "enable_size_by_score", False)):
+            score_adj = self._clip01(score)
+            min_mult = float(getattr(self, "min_size_mult", 0.5))
+            size_mult = min(1.0, max(min_mult, min_mult + (1.0 - min_mult) * score_adj))
+            base_size *= size_mult
+            trace["size_mult"] = size_mult
         if base_size <= 0:
             trace["reason"] = "size_zero"
             return trace
@@ -886,6 +1054,7 @@ class Wave5AODivergenceStrategy(Strategy):
 
     def _handle_buy(self, i: int, seq: dict, trace: dict):
         trace["wave_type"] = "buy"
+        use_scoring = bool(getattr(self, "use_scoring", False))
         self.summary["wave_candidates"] += 1
 
         w3_len = seq['H2_p'] - seq['L3_p']
@@ -897,6 +1066,10 @@ class Wave5AODivergenceStrategy(Strategy):
         if not np.isfinite(atr_val) or atr_val <= 0:
             trace["reason"] = "entry_fail"
             return trace
+
+        fib_tol_eff, fib_pct = self._fib_tolerance(i, atr_val)
+        trace["fib_tol_eff"] = fib_tol_eff
+        trace["fib_pct"] = fib_pct
 
         if w3_len < self.min_w3_atr * atr_val:
             if self.debug:
@@ -915,19 +1088,25 @@ class Wave5AODivergenceStrategy(Strategy):
         L5_idx = post_start + min_pos
         L5_p = float(lows[min_pos])
         trigger_px = self._close[i] if self.entry_mode == "close" else self._high[i]
-        in_zone_trigger = any(abs(trigger_px - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
-        in_zone_extreme = any(abs(L5_p - ext) <= self.fib_tol_atr * atr_val for ext in ext_levels)
+        zone_dist = np.inf
+        if ext_levels:
+            zone_dist = min(abs(trigger_px - ext) for ext in ext_levels) / (atr_val + 1e-12)
+        zone_score = float(np.exp(-float(self.zone_k) * zone_dist)) if np.isfinite(zone_dist) else 0.0
+        in_zone_trigger = any(abs(trigger_px - ext) <= fib_tol_eff * atr_val for ext in ext_levels)
+        in_zone_extreme = any(abs(L5_p - ext) <= fib_tol_eff * atr_val for ext in ext_levels)
 
         zone_mode = self._normalize_zone_mode()
         in_zone = self._evaluate_zone(zone_mode, in_zone_trigger, in_zone_extreme)
         trace["zone_ok"] = int(bool(in_zone))
+        trace["zone_score"] = self._clip01(zone_score)
         if in_zone:
             self.summary["zone_pass"] += 1
         if not in_zone:
             if self.debug:
                 self.counters['zone_fail'] += 1
-            trace["reason"] = "zone_fail"
-            return trace
+            if not use_scoring:
+                trace["reason"] = "zone_fail"
+                return trace
 
         if self.debug:
             self.counters['elliott_pass'] += 1
@@ -950,6 +1129,7 @@ class Wave5AODivergenceStrategy(Strategy):
         ao_l3 = ao[seq['L3_idx']]
         ao_l5 = ao[L5_idx]
 
+        ao_decay_ok = True
         if bool(self.wave5_ao_decay):
             mode = self._get_ao_decay_mode()
             ao_decay_ok = False
@@ -966,39 +1146,96 @@ class Wave5AODivergenceStrategy(Strategy):
             if not ao_decay_ok:
                 if self.debug:
                     self.counters['ao_decay_fail'] += 1
-                trace["reason"] = "trigger_fail"
-                return trace
-            if self.debug:
+                if not use_scoring:
+                    trace["reason"] = "trigger_fail"
+                    return trace
+            elif self.debug:
                 self.counters['ao_decay_pass'] += 1
-        if not (L5_p < seq['L3_p'] and ao_l5 > ao_l3 + self.ao_div_min):
+        div_ok = (L5_p < seq['L3_p'] and ao_l5 > ao_l3 + self.ao_div_min)
+        div_raw = (ao_l5 - ao_l3 - self.ao_div_min) / (abs(ao_l3) + 1e-12)
+        div_scale = max(float(getattr(self, "div_scale", 0.5)), 1e-12)
+        div_score = self._clip01(div_raw / div_scale)
+        if not div_ok:
             if self.debug:
                 self.counters['div_fail'] += 1
-            trace["reason"] = "trigger_fail"
-            return trace
-        if self.debug:
+            if not use_scoring:
+                trace["reason"] = "trigger_fail"
+                return trace
+        elif self.debug:
             self.counters['divergence_pass'] += 1
 
-        if self.require_zero_cross and not self.has_zero_cross(seq['L3_idx'], L5_idx, 'bearish'):
-            if self.debug:
+        zero_ok = True
+        if self.require_zero_cross:
+            zero_ok = self.has_zero_cross(seq['L3_idx'], L5_idx, 'bearish')
+            if not zero_ok and self.debug:
                 self.counters['zero_cross_fail'] += 1
-            trace["reason"] = "trigger_fail"
-            return trace
+            if not zero_ok and not use_scoring:
+                trace["reason"] = "trigger_fail"
+                return trace
 
         allowed_lag = int(self.max_trigger_lag)
-        if i - L5_idx > allowed_lag:
+        lag_val = max(0, i - L5_idx)
+        lag_ok = lag_val <= allowed_lag
+        lag_score = 1.0 - min(1.0, lag_val / max(allowed_lag, 1))
+        if not lag_ok:
             if self.debug:
                 self.counters['lag_fail'] += 1
-            trace["reason"] = "trigger_fail"
-            return trace
+            if not use_scoring:
+                trace["reason"] = "trigger_fail"
+                return trace
 
-        if not self.is_reversal_candle(i, 'bullish'):
+        candle_type, candle_score = self._candle_signal(i, 'bullish')
+        candle_ok = candle_score > 0
+        if not candle_ok:
             if self.debug:
                 self.counters['candle_fail'] += 1
-            trace["reason"] = "trigger_fail"
-            return trace
+            if not use_scoring:
+                trace["reason"] = "trigger_fail"
+                return trace
 
-        self.summary["trigger_pass"] += 1
-        trace["trigger_ok"] = 1
+        atr_sma_val = float(self.atr_sma[i])
+        regime_score = 0.5
+        if np.isfinite(atr_val) and np.isfinite(atr_sma_val) and atr_sma_val > 0:
+            ratio = atr_val / atr_sma_val
+            regime_score = self._clip01(1 - max(0.0, (ratio - 1.0) / float(getattr(self, "regime_r", 0.6))))
+            trace["regime_ratio"] = ratio
+        trace["regime_score"] = regime_score
+
+        zero_score = 1.0 if (not self.require_zero_cross or zero_ok) else 0.0
+        decay_score = 1.0 if (not self.wave5_ao_decay or ao_decay_ok) else 0.0
+        trace["div_score"] = div_score
+        trace["lag_score"] = lag_score
+        trace["candle_score"] = candle_score
+        trace["zero_score"] = zero_score
+        trace["decay_score"] = decay_score
+
+        score = 1.0
+        if use_scoring:
+            components = {
+                "zone": trace.get("zone_score", 0.0),
+                "div": div_score,
+                "candle": candle_score,
+                "lag": lag_score,
+                "regime": regime_score,
+                "zero": zero_score,
+                "decay": decay_score,
+            }
+            score = self._combine_scores(components)
+            trace["score"] = score
+            if score < float(getattr(self, "score_threshold", 0.6)):
+                trace["reason"] = "score_fail"
+                if self.debug:
+                    self.counters['score_fail'] += 1
+                return trace
+            if self.debug:
+                self.counters['score_pass'] += 1
+        else:
+            self.summary["trigger_pass"] += 1
+            trace["trigger_ok"] = 1
+
+        self.summary["trigger_pass"] += int(use_scoring)
+        if use_scoring:
+            trace["trigger_ok"] = 1
 
         allowed, gate_reason = self._can_place_order()
         if not allowed:
@@ -1032,6 +1269,12 @@ class Wave5AODivergenceStrategy(Strategy):
 
         trace["sl_ok"] = 1
         base_size = float(getattr(self, "order_size", 0.2))
+        if use_scoring and bool(getattr(self, "enable_size_by_score", False)):
+            score_adj = self._clip01(score)
+            min_mult = float(getattr(self, "min_size_mult", 0.5))
+            size_mult = min(1.0, max(min_mult, min_mult + (1.0 - min_mult) * score_adj))
+            base_size *= size_mult
+            trace["size_mult"] = size_mult
         if base_size <= 0:
             trace["reason"] = "size_zero"
             return trace

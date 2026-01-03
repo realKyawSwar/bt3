@@ -215,6 +215,47 @@ def _is_number(value) -> bool:
     return isinstance(value, (int, float, np.integer, np.floating)) and not pd.isna(value)
 
 
+def _extract_key_metrics(stats) -> dict:
+    return {
+        "return": _metric_value(stats, ["Return [%]", "Return %"]) or 0.0,
+        "maxdd": _metric_value(stats, ["Max. Drawdown [%]", "Max Drawdown [%]", "Max Drawdown %"]) or 0.0,
+        "pf": _metric_value(stats, ["Profit Factor"]) or 0.0,
+        "trades": _metric_value(stats, ["# Trades", "Trades"]) or 0.0,
+        "cagr": _metric_value(stats, ["CAGR [%]", "CAGR"]) or 0.0,
+        "exposure": _metric_value(stats, ["Exposure [%]", "Exposure %"]) or 0.0,
+    }
+
+
+def _objective_score(metrics: dict, objective: str, max_trades: Optional[int]) -> float:
+    trades = float(metrics.get("trades") or 0.0)
+    pf = float(metrics.get("pf") or 0.0)
+    cagr = float(metrics.get("cagr") or 0.0)
+    ret = float(metrics.get("return") or 0.0)
+    maxdd = abs(float(metrics.get("maxdd") or 0.0))
+
+    if pd.isna(trades):
+        trades = 0.0
+    if pd.isna(pf):
+        pf = 0.0
+    if pd.isna(cagr):
+        cagr = 0.0
+    if pd.isna(ret):
+        ret = 0.0
+    if pd.isna(maxdd):
+        maxdd = 0.0
+
+    if objective == "cagr_dd_pf":
+        score = cagr - 0.5 * maxdd + 0.2 * float(np.log1p(trades)) + 0.2 * pf
+    else:
+        score = ret - 0.7 * maxdd + 0.1 * float(np.log1p(trades))
+
+    if trades == 0:
+        score -= 5.0
+    if max_trades is not None and trades > max_trades:
+        score -= 0.5 * float(trades - max_trades)
+    return float(score)
+
+
 def _comparison_table(stats_a, stats_b, label_a: str = "strict", label_b: str = "classic") -> pd.DataFrame:
     metrics = [
         ("Return %", ["Return [%]", "Return %"]),
@@ -272,6 +313,88 @@ def _summary_table(stats_by_name: dict[str, dict]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _build_walk_forward_folds(index: pd.DatetimeIndex, train_days: int, test_days: int, step_days: int):
+    if not isinstance(index, pd.DatetimeIndex):
+        raise ValueError("Walk-forward requires a DatetimeIndex.")
+    idx = index.sort_values()
+    if idx.empty:
+        return []
+    folds = []
+    train_delta = pd.Timedelta(days=train_days)
+    test_delta = pd.Timedelta(days=test_days)
+    step_delta = pd.Timedelta(days=step_days)
+    current_start = idx[0]
+    end_limit = idx[-1]
+
+    while True:
+        train_start = current_start
+        train_end = train_start + train_delta
+        test_start = train_end
+        test_end = test_start + test_delta
+        if test_end > end_limit:
+            break
+        folds.append({
+            "train_start": train_start,
+            "train_end": train_end,
+            "test_start": test_start,
+            "test_end": test_end,
+        })
+        current_start = current_start + step_delta
+        if current_start >= end_limit:
+            break
+    return folds
+
+
+def _wave5_params_from_args(args, sizing_margin: float, exec_margin: float, df: pd.DataFrame) -> dict:
+    return {
+        "swing_window": args.wave5_swing_window,
+        "fib_tol_atr": args.wave5_fib_tol,
+        "fib_tol_mode": args.wave5_fib_tol_mode,
+        "fib_tol_lookback": args.wave5_fib_tol_lookback,
+        "fib_tol_lo": args.wave5_fib_tol_lo,
+        "fib_tol_hi": args.wave5_fib_tol_hi,
+        "ao_div_min": args.wave5_div_threshold,
+        "require_zero_cross": args.wave5_require_zero_cross,
+        "entry_mode": args.wave5_entry_mode,
+        "tp_r": args.wave5_tp_r,
+        "tp_mode": args.wave5_tp_mode,
+        "order_size": args.wave5_size,
+        "debug": args.wave5_debug,
+        "sizing_margin": sizing_margin,
+        "exec_margin": exec_margin,
+        "min_w3_atr": args.wave5_min_w3_atr,
+        "max_trigger_lag": args.wave5_trigger_lag,
+        "break_buffer_atr": args.wave5_break_buffer_atr,
+        "max_body_atr": args.wave5_max_body_atr,
+        "asset": args.asset or df.attrs.get("symbol"),
+        "sl_at_wave5_extreme": args.wave5_sl_extreme,
+        "require_ext_touch": args.wave5_require_ext_touch,
+        "wave5_ao_decay": args.wave5_ao_decay,
+        "ao_decay_mode": args.wave5_ao_decay_mode,
+        "min_w5_ext": args.wave5_min_w5_ext,
+        "tp_split": args.wave5_tp_split,
+        "tp_split_ratio": args.wave5_tp_split_ratio,
+        "atr_long": args.wave5_atr_long,
+        "atr_expand_k": args.wave5_atr_expand_k,
+        "zone_mode": args.wave5_zone_mode,
+        "use_scoring": args.wave5_use_scoring,
+        "score_threshold": args.wave5_score_threshold,
+        "w_zone": args.wave5_w_zone,
+        "w_div": args.wave5_w_div,
+        "w_candle": args.wave5_w_candle,
+        "w_lag": args.wave5_w_lag,
+        "w_regime": args.wave5_w_regime,
+        "w_zero": args.wave5_w_zero,
+        "w_decay": args.wave5_w_decay,
+        "zone_k": args.wave5_zone_k,
+        "div_scale": args.wave5_div_scale,
+        "regime_r": args.wave5_regime_r,
+        "enable_size_by_score": args.wave5_enable_size_by_score,
+        "min_size_mult": args.wave5_min_size_mult,
+        "debug_trace": not getattr(args, "wave5_no_trace", False),
+    }
+
+
 def compute_gating_debug(
     df: pd.DataFrame,
     use_htf_bias: bool,
@@ -309,10 +432,11 @@ def compute_gating_debug(
 
 
 def main() -> None:
+    mode_choices = ["alligator", "wave5", "wave5_wf"]
     parser = argparse.ArgumentParser(description="Compare strict vs classic Alligator+Fractal strategies.")
     parser.add_argument(
         "--mode",
-        choices=["alligator", *sorted(STRATEGY_REGISTRY)],
+        choices=mode_choices,
         default="alligator",
         help="Strategy mode to run (default: alligator compare).",
     )
@@ -338,6 +462,15 @@ def main() -> None:
 
     parser.add_argument("--wave5-swing-window", type=int, default=Wave5AODivergenceStrategy.swing_window)
     parser.add_argument("--wave5-fib-tol", type=float, default=Wave5AODivergenceStrategy.fib_tol_atr)
+    parser.add_argument(
+        "--wave5-fib-tol-mode",
+        choices=["fixed", "atr_pct"],
+        default=Wave5AODivergenceStrategy.fib_tol_mode,
+        help="Fib tolerance mode: fixed or atr_pct (adaptive).",
+    )
+    parser.add_argument("--wave5-fib-tol-lookback", type=int, default=Wave5AODivergenceStrategy.fib_tol_lookback, help="Lookback for ATR percentile when fib_tol_mode=atr_pct.")
+    parser.add_argument("--wave5-fib-tol-lo", type=float, default=Wave5AODivergenceStrategy.fib_tol_lo, help="Low multiplier for adaptive fib tolerance.")
+    parser.add_argument("--wave5-fib-tol-hi", type=float, default=Wave5AODivergenceStrategy.fib_tol_hi, help="High multiplier for adaptive fib tolerance.")
     parser.add_argument("--wave5-div-threshold", type=float, default=Wave5AODivergenceStrategy.ao_div_min)
     parser.add_argument("--wave5-entry-mode", choices=["close", "break"], default=Wave5AODivergenceStrategy.entry_mode)
     parser.add_argument("--wave5-tp-r", type=float, default=Wave5AODivergenceStrategy.tp_r)
@@ -364,6 +497,21 @@ def main() -> None:
             "pass if trigger OR extreme is inside zone"
         ),
     )
+    parser.add_argument("--wave5-use-scoring", action="store_true", default=Wave5AODivergenceStrategy.use_scoring, help="Enable probabilistic scoring instead of hard gating.")
+    parser.add_argument("--wave5-score-threshold", type=float, default=Wave5AODivergenceStrategy.score_threshold, help="Score threshold for entries when scoring mode is enabled.")
+    parser.add_argument("--wave5-w-zone", type=float, default=Wave5AODivergenceStrategy.w_zone, help="Score weight for fib zone proximity.")
+    parser.add_argument("--wave5-w-div", type=float, default=Wave5AODivergenceStrategy.w_div, help="Score weight for divergence.")
+    parser.add_argument("--wave5-w-candle", type=float, default=Wave5AODivergenceStrategy.w_candle, help="Score weight for candle trigger.")
+    parser.add_argument("--wave5-w-lag", type=float, default=Wave5AODivergenceStrategy.w_lag, help="Score weight for trigger lag.")
+    parser.add_argument("--wave5-w-regime", type=float, default=Wave5AODivergenceStrategy.w_regime, help="Score weight for ATR regime.")
+    parser.add_argument("--wave5-w-zero", type=float, default=Wave5AODivergenceStrategy.w_zero, help="Score weight for zero-cross filter.")
+    parser.add_argument("--wave5-w-decay", type=float, default=Wave5AODivergenceStrategy.w_decay, help="Score weight for AO decay component.")
+    parser.add_argument("--wave5-zone-k", type=float, default=Wave5AODivergenceStrategy.zone_k, help="Zone distance decay factor for scoring.")
+    parser.add_argument("--wave5-div-scale", type=float, default=Wave5AODivergenceStrategy.div_scale, help="Normalization scale for divergence scoring.")
+    parser.add_argument("--wave5-regime-r", type=float, default=Wave5AODivergenceStrategy.regime_r, help="Normalization scale for ATR regime scoring.")
+    parser.add_argument("--wave5-enable-size-by-score", action="store_true", default=Wave5AODivergenceStrategy.enable_size_by_score, help="Scale position size by composite score when scoring mode is on.")
+    parser.add_argument("--wave5-min-size-mult", type=float, default=Wave5AODivergenceStrategy.min_size_mult, help="Minimum size multiplier when sizing by score.")
+    parser.add_argument("--wave5-no-trace", action="store_true", default=False, help="Silence per-bar Wave5 trace/broker logs while keeping debug counters.")
     
     # Upgrade 1: Wave5 AO decay exhaustion
     parser.add_argument("--wave5-ao-decay", action="store_true", default=Wave5AODivergenceStrategy.wave5_ao_decay, help="Require AO decay at Wave5 extreme.")
@@ -384,6 +532,28 @@ def main() -> None:
     # Upgrade 4: ATR expansion regime filter
     parser.add_argument("--wave5-atr-long", type=int, default=Wave5AODivergenceStrategy.atr_long, help="ATR long SMA period for regime filter.")
     parser.add_argument("--wave5-atr-expand-k", type=float, default=Wave5AODivergenceStrategy.atr_expand_k, help="Skip trades when ATR > k * atr_sma.")
+
+    # Walk-forward tuning options
+    parser.add_argument("--wf-train-days", type=int, default=730, help="Training window length in days.")
+    parser.add_argument("--wf-test-days", type=int, default=180, help="Test window length in days.")
+    parser.add_argument("--wf-step-days", type=int, default=180, help="Forward step in days between folds.")
+    parser.add_argument("--wf-trials", type=int, default=200, help="Random search trials per fold.")
+    parser.add_argument("--wf-seed", type=int, default=42, help="Seed for reproducible random search.")
+    parser.add_argument("--wf-objective", choices=["cagr_dd_pf", "return_dd_trades"], default="cagr_dd_pf", help="Objective function for model selection.")
+    parser.add_argument("--wf-max-trades", type=int, default=None, help="Optional cap on trades for objective penalty.")
+    parser.add_argument("--opt-fib-tol-min", type=float, default=None, help="Min fib tolerance (ATR units) for random search.")
+    parser.add_argument("--opt-fib-tol-max", type=float, default=None, help="Max fib tolerance (ATR units) for random search.")
+    parser.add_argument("--opt-min-w3-atr-min", type=float, default=None, help="Min wave3 ATR length lower bound for search.")
+    parser.add_argument("--opt-min-w3-atr-max", type=float, default=None, help="Min wave3 ATR length upper bound for search.")
+    parser.add_argument("--opt-min-w5-ext-min", type=float, default=None, help="Min wave5 extension lower bound for search.")
+    parser.add_argument("--opt-min-w5-ext-max", type=float, default=None, help="Min wave5 extension upper bound for search.")
+    parser.add_argument("--opt-trigger-lag-min", type=int, default=None, help="Min trigger lag for search.")
+    parser.add_argument("--opt-trigger-lag-max", type=int, default=None, help="Max trigger lag for search.")
+    parser.add_argument("--opt-score-thr-min", type=float, default=None, help="Min score threshold when scoring is enabled.")
+    parser.add_argument("--opt-score-thr-max", type=float, default=None, help="Max score threshold when scoring is enabled.")
+    parser.add_argument("--opt-allow-atr-pct", action="store_true", default=False, help="Allow fib_tol_mode=atr_pct candidates in random search.")
+    parser.add_argument("--opt-allow-scoring", dest="opt_allow_scoring", action="store_true", default=True, help="Allow scoring candidates during random search.")
+    parser.add_argument("--opt-disable-scoring", dest="opt_allow_scoring", action="store_false", help="Disable scoring candidates during random search.")
 
     args = parser.parse_args()
 
@@ -411,41 +581,13 @@ def main() -> None:
 
         # Install broker debug hooks if wave5-debug is enabled
         if args.wave5_debug:
-            print(f"[SCRIPT] {__file__}")
-            install_all_broker_hooks(debug=True)
+            if not args.wave5_no_trace:
+                print(f"[SCRIPT] {__file__}")
+                install_all_broker_hooks(debug=True)
+            else:
+                print("[SCRIPT] wave5 debug counters enabled (trace suppressed)")
         
-        wave5_params = {
-            "swing_window": args.wave5_swing_window,
-            "fib_tol_atr": args.wave5_fib_tol,
-            "ao_div_min": args.wave5_div_threshold,
-            "require_zero_cross": args.wave5_require_zero_cross,
-            "entry_mode": args.wave5_entry_mode,
-            "tp_r": args.wave5_tp_r,
-            "tp_mode": args.wave5_tp_mode,
-            "order_size": args.wave5_size,
-            "debug": args.wave5_debug,
-            "sizing_margin": sizing_margin,
-            "exec_margin": exec_margin,
-            "min_w3_atr": args.wave5_min_w3_atr,
-            "max_trigger_lag": args.wave5_trigger_lag,
-            "break_buffer_atr": args.wave5_break_buffer_atr,
-            "max_body_atr": args.wave5_max_body_atr,
-            "asset": args.asset or df.attrs.get("symbol"),
-            "sl_at_wave5_extreme": args.wave5_sl_extreme,
-            "require_ext_touch": args.wave5_require_ext_touch,
-            # Upgrade 1: Wave5 AO decay exhaustion
-            "wave5_ao_decay": args.wave5_ao_decay,
-            "ao_decay_mode": args.wave5_ao_decay_mode,
-            # Upgrade 2: Wave5 minimum extension
-            "min_w5_ext": args.wave5_min_w5_ext,
-            # Upgrade 3: Partial TP with split orders
-            "tp_split": args.wave5_tp_split,
-            "tp_split_ratio": args.wave5_tp_split_ratio,
-            # Upgrade 4: ATR expansion regime filter
-            "atr_long": args.wave5_atr_long,
-            "atr_expand_k": args.wave5_atr_expand_k,
-            "zone_mode": args.wave5_zone_mode,
-        }
+        wave5_params = _wave5_params_from_args(args, sizing_margin, exec_margin, df)
 
         if args.wave5_debug:
             print(f"[RUN CONFIG] wave5_params={json.dumps(wave5_params)}")
@@ -493,6 +635,163 @@ def main() -> None:
         export_equity_curve_csv(wave5_stats, equity_dir / "wave5_equity.csv")
 
         print(f"\nAll reports saved to: {outdir}")
+        return
+
+    if args.mode == "wave5_wf":
+        sizing_margin = float(args.margin)
+        exec_margin = 1.0
+        leverage = float("inf") if sizing_margin == 0 else 1.0 / sizing_margin
+
+        print(
+            f"[RUN CONFIG WF] exec_margin={exec_margin:.2f} sizing_margin={sizing_margin:.4f} "
+            f"leverage={leverage:.2f} trials={args.wf_trials} objective={args.wf_objective}"
+        )
+
+        base_wave5_params = _wave5_params_from_args(args, sizing_margin, exec_margin, df)
+        wave5_exclusive = False if args.wave5_tp_split else args.exclusive_orders
+        if args.wave5_debug:
+            if not args.wave5_no_trace:
+                print(f"[SCRIPT] {__file__}")
+                install_all_broker_hooks(debug=True)
+            else:
+                print("[SCRIPT] wave5 debug counters enabled (trace suppressed)")
+
+        # Defaults for random search ranges
+        fib_tol_min = args.opt_fib_tol_min if args.opt_fib_tol_min is not None else max(0.05, args.wave5_fib_tol * 0.5)
+        fib_tol_max = args.opt_fib_tol_max if args.opt_fib_tol_max is not None else max(fib_tol_min, args.wave5_fib_tol * 1.5)
+        min_w3_min = args.opt_min_w3_atr_min if args.opt_min_w3_atr_min is not None else 0.6
+        min_w3_max = args.opt_min_w3_atr_max if args.opt_min_w3_atr_max is not None else 1.6
+        min_w5_ext_min = args.opt_min_w5_ext_min if args.opt_min_w5_ext_min is not None else 1.1
+        min_w5_ext_max = args.opt_min_w5_ext_max if args.opt_min_w5_ext_max is not None else 1.8
+        trig_lag_min = args.opt_trigger_lag_min if args.opt_trigger_lag_min is not None else 1
+        trig_lag_max = args.opt_trigger_lag_max if args.opt_trigger_lag_max is not None else max(trig_lag_min, 5)
+        score_thr_min = args.opt_score_thr_min if args.opt_score_thr_min is not None else 0.45
+        score_thr_max = args.opt_score_thr_max if args.opt_score_thr_max is not None else 0.8
+
+        folds = _build_walk_forward_folds(df.index, args.wf_train_days, args.wf_test_days, args.wf_step_days)
+        if not folds:
+            raise ValueError("No walk-forward folds generated. Check dataset length and date filters.")
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        asset_name = args.asset if args.asset else "data"
+        tf_name = args.tf if args.tf else "custom"
+        run_dir = f"{asset_name}_{tf_name}_wave5_wf_{timestamp}"
+
+        outdir = Path(args.outdir) / run_dir
+        outdir.mkdir(parents=True, exist_ok=True)
+
+        stats_dir = outdir / "stats"
+        trades_dir = outdir / "trades"
+        equity_dir = outdir / "equity"
+        stats_dir.mkdir(exist_ok=True)
+        trades_dir.mkdir(exist_ok=True)
+        equity_dir.mkdir(exist_ok=True)
+
+        summary_rows = []
+        best_params_by_fold = []
+
+        for fold_idx, fold in enumerate(folds):
+            train_df = df.loc[fold["train_start"]:fold["train_end"]].copy()
+            test_df = df.loc[fold["test_start"]:fold["test_end"]].copy()
+            train_df.attrs = dict(df.attrs)
+            test_df.attrs = dict(df.attrs)
+
+            if len(train_df) < 50 or len(test_df) < 10:
+                print(f"Skipping fold {fold_idx}: insufficient data (train={len(train_df)}, test={len(test_df)})")
+                continue
+
+            rng = np.random.RandomState(int(args.wf_seed) + fold_idx)
+            best_score = -float("inf")
+            best_params = None
+            best_train_stats = None
+
+            for trial in range(int(args.wf_trials)):
+                candidate = dict(base_wave5_params)
+                candidate["fib_tol_atr"] = float(rng.uniform(fib_tol_min, fib_tol_max))
+                candidate["min_w3_atr"] = float(rng.uniform(min_w3_min, min_w3_max))
+                candidate["min_w5_ext"] = float(rng.uniform(min_w5_ext_min, min_w5_ext_max))
+                candidate["max_trigger_lag"] = int(rng.randint(int(trig_lag_min), int(trig_lag_max) + 1))
+                candidate["fib_tol_mode"] = str(rng.choice(["fixed", "atr_pct"])) if args.opt_allow_atr_pct else base_wave5_params.get("fib_tol_mode", "fixed")
+                candidate["use_scoring"] = base_wave5_params.get("use_scoring", False)
+                if args.opt_allow_scoring:
+                    candidate["use_scoring"] = bool(rng.randint(0, 2))
+                if candidate["use_scoring"]:
+                    candidate["score_threshold"] = float(rng.uniform(score_thr_min, score_thr_max))
+                else:
+                    candidate["score_threshold"] = base_wave5_params.get("score_threshold", Wave5AODivergenceStrategy.score_threshold)
+
+                train_stats = run_backtest(
+                    data=train_df,
+                    strategy=STRATEGY_REGISTRY["wave5"],
+                    cash=args.cash,
+                    commission=args.commission,
+                    spread_pips=args.spread,
+                    margin=exec_margin,
+                    exclusive_orders=wave5_exclusive,
+                    strategy_params=candidate,
+                )
+                metrics = _extract_key_metrics(train_stats)
+                obj_score = _objective_score(metrics, args.wf_objective, args.wf_max_trades)
+
+                if obj_score > best_score:
+                    best_score = obj_score
+                    best_params = candidate
+                    best_train_stats = train_stats
+
+                if (trial + 1) % 20 == 0 or (trial + 1) == int(args.wf_trials):
+                    print(
+                        f"[WF] fold={fold_idx} trial={trial+1}/{args.wf_trials} "
+                        f"best_score={best_score:.3f} trades={metrics.get('trades', 0)}"
+                    )
+
+            if best_params is None or best_train_stats is None:
+                print(f"No valid candidate found for fold {fold_idx}")
+                continue
+
+            test_stats = run_backtest(
+                data=test_df,
+                strategy=STRATEGY_REGISTRY["wave5"],
+                cash=args.cash,
+                commission=args.commission,
+                spread_pips=args.spread,
+                margin=exec_margin,
+                exclusive_orders=wave5_exclusive,
+                strategy_params=best_params,
+            )
+
+            train_metrics = _extract_key_metrics(best_train_stats)
+            test_metrics = _extract_key_metrics(test_stats)
+
+            summary_rows.append({
+                "fold": fold_idx,
+                "train_start": fold["train_start"],
+                "train_end": fold["train_end"],
+                "test_start": fold["test_start"],
+                "test_end": fold["test_end"],
+                "train_objective": best_score,
+                "train_return": train_metrics["return"],
+                "train_maxdd": train_metrics["maxdd"],
+                "train_pf": train_metrics["pf"],
+                "train_trades": train_metrics["trades"],
+                "train_exposure": train_metrics["exposure"],
+                "test_return": test_metrics["return"],
+                "test_maxdd": test_metrics["maxdd"],
+                "test_pf": test_metrics["pf"],
+                "test_trades": test_metrics["trades"],
+                "test_exposure": test_metrics["exposure"],
+                "best_params": json.dumps(best_params),
+            })
+            best_params_by_fold.append(best_params)
+
+            export_trades_csv(test_stats, trades_dir / f"wf_fold_{fold_idx}_test_trades.csv")
+            export_equity_curve_csv(test_stats, equity_dir / f"wf_fold_{fold_idx}_test_equity.csv")
+
+        if summary_rows:
+            pd.DataFrame(summary_rows).to_csv(outdir / "wf_summary.csv", index=False)
+            (outdir / "wf_best_params_by_fold.json").write_text(json.dumps(best_params_by_fold, indent=2))
+            print(f"\nWalk-forward reports saved to: {outdir}")
+        else:
+            print("No folds produced results; no reports written.")
         return
 
     gate_debug = compute_gating_debug(
