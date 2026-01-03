@@ -898,9 +898,6 @@ class Wave5AODivergenceStrategy(Strategy):
             return trace
         entry_price_for_size = float(entry)
 
-        if self.debug:
-            self._dbg(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
-
         placed_any = False
         order_attempts = 0
 
@@ -936,50 +933,42 @@ class Wave5AODivergenceStrategy(Strategy):
             if self.entry_mode == 'close':
                 self.summary["order_attempts"] += 1
                 order_attempts += 1
-                self._dbg(f"[W5 ORDER TRY] side=SELL entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1}")
                 try:
                     o1 = self.sell(sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
                         placed_any = True
                         self.summary["orders_placed"] += 1
-                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
                     self.summary["exceptions_count"] += 1
                     self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
                 self.summary["order_attempts"] += 1
                 order_attempts += 1
-                self._dbg(f"[W5 ORDER TRY] side=SELL entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2}")
                 try:
                     o2 = self.sell(sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
                         placed_any = True
                         self.summary["orders_placed"] += 1
-                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
                     self.summary["exceptions_count"] += 1
                     self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
             else:
                 self.summary["order_attempts"] += 1
                 order_attempts += 1
-                self._dbg(f"[W5 ORDER TRY] side=SELL entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1}")
                 try:
                     o1 = self.sell(stop=trigger_low, sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
                         placed_any = True
                         self.summary["orders_placed"] += 1
-                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
                     self.summary["exceptions_count"] += 1
                     self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
                 self.summary["order_attempts"] += 1
                 order_attempts += 1
-                self._dbg(f"[W5 ORDER TRY] side=SELL entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2}")
                 try:
                     o2 = self.sell(stop=trigger_low, sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
                         placed_any = True
                         self.summary["orders_placed"] += 1
-                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
                     self.summary["exceptions_count"] += 1
                     self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
@@ -1027,7 +1016,6 @@ class Wave5AODivergenceStrategy(Strategy):
 
             self.summary["order_attempts"] += 1
             order_attempts += 1
-            self._dbg(f"[W5 ORDER TRY] side=SELL entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size}")
             try:
                 if self.entry_mode == 'close':
                     order = self.sell(sl=sl, tp=tp, size=final_size)
@@ -1036,7 +1024,6 @@ class Wave5AODivergenceStrategy(Strategy):
                 if order is not None:
                     placed_any = True
                     self.summary["orders_placed"] += 1
-                    self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
             except (ValueError, AssertionError, RuntimeError) as e:
                 self.summary["exceptions_count"] += 1
                 self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
@@ -1280,9 +1267,6 @@ class Wave5AODivergenceStrategy(Strategy):
             return trace
         entry_price_for_size = float(entry)
 
-        if self.debug:
-            self._dbg(f"[WAVE5 ORDER] base_size={base_size:.3f} entry_mode={self.entry_mode} tp_split={bool(self.tp_split)}")
-
         placed_any = False
         order_attempts = 0
 
@@ -1318,50 +1302,42 @@ class Wave5AODivergenceStrategy(Strategy):
             if self.entry_mode == 'close':
                 self.summary["order_attempts"] += 1
                 order_attempts += 1
-                self._dbg(f"[W5 ORDER TRY] side=BUY entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1}")
                 try:
                     o1 = self.buy(sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
                         placed_any = True
                         self.summary["orders_placed"] += 1
-                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
                     self.summary["exceptions_count"] += 1
                     self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
                 self.summary["order_attempts"] += 1
                 order_attempts += 1
-                self._dbg(f"[W5 ORDER TRY] side=BUY entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2}")
                 try:
                     o2 = self.buy(sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
                         placed_any = True
                         self.summary["orders_placed"] += 1
-                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
                     self.summary["exceptions_count"] += 1
                     self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
             else:
                 self.summary["order_attempts"] += 1
                 order_attempts += 1
-                self._dbg(f"[W5 ORDER TRY] side=BUY entry={entry:.5f} sl={sl:.5f} tp={tp1:.5f} size={order_size1}")
                 try:
                     o1 = self.buy(stop=trigger_high, sl=sl, tp=tp1, size=order_size1)
                     if o1 is not None:
                         placed_any = True
                         self.summary["orders_placed"] += 1
-                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
                     self.summary["exceptions_count"] += 1
                     self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
                 self.summary["order_attempts"] += 1
                 order_attempts += 1
-                self._dbg(f"[W5 ORDER TRY] side=BUY entry={entry:.5f} sl={sl:.5f} tp={tp2:.5f} size={order_size2}")
                 try:
                     o2 = self.buy(stop=trigger_high, sl=sl, tp=tp2, size=order_size2)
                     if o2 is not None:
                         placed_any = True
                         self.summary["orders_placed"] += 1
-                        self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
                 except (ValueError, AssertionError, RuntimeError) as e:
                     self.summary["exceptions_count"] += 1
                     self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
@@ -1409,7 +1385,6 @@ class Wave5AODivergenceStrategy(Strategy):
 
             self.summary["order_attempts"] += 1
             order_attempts += 1
-            self._dbg(f"[W5 ORDER TRY] side=BUY entry={entry:.5f} sl={sl:.5f} tp={tp:.5f} size={final_size}")
             try:
                 if self.entry_mode == 'close':
                     order = self.buy(sl=sl, tp=tp, size=final_size)
@@ -1418,7 +1393,6 @@ class Wave5AODivergenceStrategy(Strategy):
                 if order is not None:
                     placed_any = True
                     self.summary["orders_placed"] += 1
-                    self._dbg(f"[W5 ORDER OK] orders_len={len(self.orders)}")
             except (ValueError, AssertionError, RuntimeError) as e:
                 self.summary["exceptions_count"] += 1
                 self._dbg(f"[W5 ORDER FAIL] exc={repr(e)}")
