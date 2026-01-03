@@ -1,0 +1,1511 @@
+Fetching data from: https://raw.githubusercontent.com/ejtraderLabs/historical-data/main/XAUUSD/XAUUSDh1.csv
+Auto-scaled prices for XAUUSD by /100 (median_close 131571 -> 1315.71)
+Successfully loaded 57600 rows of data
+DATA rows=705 start=2021-01-15 01:00:00 end=2021-02-26 23:00:00 infer_freq=None median_close=1834.98 attrs={'symbol': 'XAUUSD', 'timeframe': '1h'}
+[RUN CONFIG] exec_margin=1.00 sizing_margin=1.0000 leverage=1.00
+[SCRIPT] C:\Users\kyawswar\Desktop\bt3\bt3\src\compare_strategies.py
+[BROKER DEBUG] Installed new_order hooks
+[BROKER DEBUG] Installed order removal tracking and config logging
+[BROKER DEBUG] All hooks installed successfully
+[RUN CONFIG] wave5_params={"swing_window": 2, "fib_tol_atr": 0.25, "fib_tol_mode": "atr_pct", "fib_tol_lookback": 500, "fib_tol_lo": 0.35, "fib_tol_hi": 1.25, "ao_div_min": 0.0, "require_zero_cross": false, "entry_mode": "break", "tp_r": 2.0, "tp_mode": "hybrid", "order_size": 0.2, "debug": true, "sizing_margin": 1.0, "exec_margin": 1.0, "min_w3_atr": 1.0, "max_trigger_lag": 120, "break_buffer_atr": 0.05, "max_body_atr": 1.5, "asset": "XAUUSD", "sl_at_wave5_extreme": true, "require_ext_touch": false, "wave5_ao_decay": false, "ao_decay_mode": "strict", "min_w5_ext": 1.16, "tp_split": false, "tp_split_ratio": 0.5, "atr_long": 100, "atr_expand_k": 1.5, "zone_mode": "either", "use_scoring": true, "score_threshold": 0.575, "w_zone": 1.0, "w_div": 1.0, "w_candle": 0.1, "w_lag": 0.5, "w_regime": 0.3, "w_zero": 0.2, "w_decay": 0.2, "zone_k": 3.0, "div_scale": 0.5, "regime_r": 0.6, "enable_size_by_score": false, "min_size_mult": 0.5, "debug_trace": true}
+[BROKER CONFIG] {'commission': <bound method _Broker._commission_func of <Broker: 10000+0.0 (0 trades)>>}
+[BROKER] ts=2021-01-18 12:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-18 13:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-18 14:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-18 15:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-18 16:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-18 17:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-18 18:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-18 19:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 01:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 02:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 03:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 04:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 05:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 06:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 07:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 08:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 09:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 10:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 11:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 12:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 13:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 14:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 15:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 16:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 17:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 18:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] ts=2021-01-19 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-19 19:00:00 c=1842.65000 ao=1.56285 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-19 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-19 20:00:00 c=1840.86000 ao=2.10885 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-19 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-19 21:00:00 c=1839.29000 ao=1.86194 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-19 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-19 22:00:00 c=1840.28000 ao=2.33565 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-19 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-19 23:00:00 c=1839.63000 ao=2.01991 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 01:00:00 c=1840.95000 ao=1.72421 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 02:00:00 c=1843.58000 ao=1.56747 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 03:00:00 c=1846.37000 ao=2.42032 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 04:00:00 c=1849.88000 ao=3.68979 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 05:00:00 c=1848.74000 ao=5.21441 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 06:00:00 c=1849.50000 ao=6.45768 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 07:00:00 c=1851.31000 ao=7.68235 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 08:00:00 c=1852.73000 ao=8.57465 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 09:00:00 c=1855.97000 ao=9.22409 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 10:00:00 c=1855.41000 ao=9.91621 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 11:00:00 c=1854.68000 ao=10.63000 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 12:00:00 c=1853.72000 ao=10.86462 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 13:00:00 c=1848.57000 ao=10.27091 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 14:00:00 c=1843.01000 ao=8.45850 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 15:00:00 c=1848.93000 ao=5.61612 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 16:00:00 c=1855.48000 ao=5.23224 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 17:00:00 c=1866.70000 ao=6.32732 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 18:00:00 c=1866.74000 ao=8.44424 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 19:00:00 c=1863.11000 ao=11.40626 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 20:00:00 c=1868.40000 ao=15.66288 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 21:00:00 c=1868.13000 ao=17.10385 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 22:00:00 c=1869.78000 ao=17.69565 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-20 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-20 23:00:00 c=1871.42000 ao=17.75682 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 01:00:00 c=1869.93000 ao=18.17338 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 02:00:00 c=1868.01000 ao=17.88341 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 03:00:00 c=1868.97000 ao=17.16121 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 04:00:00 c=1871.65000 ao=16.43338 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 05:00:00 c=1872.36000 ao=15.61168 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 06:00:00 c=1871.09000 ao=14.81382 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 07:00:00 c=1874.16000 ao=14.63935 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 08:00:00 c=1874.08000 ao=14.50532 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 09:00:00 c=1867.50000 ao=13.63409 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 10:00:00 c=1871.83000 ao=12.50950 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 11:00:00 c=1871.74000 ao=11.54032 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 12:00:00 c=1870.22000 ao=10.08391 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 13:00:00 c=1871.21000 ao=8.77491 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 14:00:00 c=1867.21000 ao=7.83903 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 15:00:00 c=1861.02000 ao=6.38129 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 16:00:00 c=1864.22000 ao=4.39112 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 17:00:00 c=1864.06000 ao=2.79779 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 18:00:00 c=1863.79000 ao=1.05132 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 19:00:00 c=1864.84000 ao=-0.39856 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 20:00:00 c=1867.55000 ao=-0.53518 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 21:00:00 c=1869.36000 ao=0.10579 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 22:00:00 c=1868.96000 ao=0.85165 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-21 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-21 23:00:00 c=1869.80000 ao=1.53626 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 01:00:00 c=1869.61000 ao=2.25765 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 02:00:00 c=1866.86000 ao=2.00106 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 03:00:00 c=1864.44000 ao=0.60182 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 04:00:00 c=1860.85000 ao=-0.92341 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 05:00:00 c=1861.68000 ao=-2.53124 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 06:00:00 c=1864.09000 ao=-3.86241 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 07:00:00 c=1862.50000 ao=-4.92097 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 08:00:00 c=1861.43000 ao=-5.70538 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 09:00:00 c=1861.09000 ao=-5.96006 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 10:00:00 c=1862.03000 ao=-5.88647 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 11:00:00 c=1858.84000 ao=-6.07329 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 12:00:00 c=1851.96000 ao=-7.20944 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 13:00:00 c=1849.52000 ao=-8.82103 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 14:00:00 c=1843.52000 ao=-11.00494 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 15:00:00 c=1843.32000 ao=-14.05115 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 16:00:00 c=1850.50000 ao=-16.48488 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 17:00:00 c=1855.99000 ao=-16.13821 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 18:00:00 c=1854.95000 ao=-14.35388 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 19:00:00 c=1855.65000 ao=-12.13029 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 20:00:00 c=1856.13000 ao=-8.72200 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 21:00:00 c=1855.69000 ao=-5.84588 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 22:00:00 c=1854.30000 ao=-5.08874 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-22 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-22 23:00:00 c=1854.67000 ao=-4.93621 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 01:00:00 c=1856.93000 ao=-3.93588 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 02:00:00 c=1858.28000 ao=-3.29171 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 03:00:00 c=1854.96000 ao=-3.11826 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 04:00:00 c=1854.55000 ao=-2.92382 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 05:00:00 c=1853.87000 ao=-2.50141 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 06:00:00 c=1854.39000 ao=-2.96526 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 07:00:00 c=1853.31000 ao=-3.43347 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 08:00:00 c=1850.64000 ao=-3.93879 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 09:00:00 c=1853.70000 ao=-4.06774 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 10:00:00 c=1852.13000 ao=-4.00532 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 11:00:00 c=1855.95000 ao=-3.70438 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 12:00:00 c=1862.73000 ao=-2.36438 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 13:00:00 c=1863.12000 ao=0.15991 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 14:00:00 c=1863.09000 ao=2.36065 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 15:00:00 c=1864.94000 ao=4.76241 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 16:00:00 c=1855.97000 ao=6.25462 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 17:00:00 c=1851.98000 ao=5.50774 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 18:00:00 c=1855.31000 ao=3.39474 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 19:00:00 c=1858.24000 ao=2.33000 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 20:00:00 c=1857.00000 ao=0.90568 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 21:00:00 c=1854.99000 ao=0.07609 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 22:00:00 c=1855.84000 ao=0.43015 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-25 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-25 23:00:00 c=1855.94000 ao=1.20644 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 01:00:00 c=1855.46000 ao=0.77147 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 02:00:00 c=1854.75000 ao=0.01624 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 03:00:00 c=1858.32000 ao=-0.36753 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 04:00:00 c=1860.59000 ao=0.10003 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 05:00:00 c=1860.32000 ao=0.90200 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 06:00:00 c=1856.39000 ao=1.46500 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 07:00:00 c=1857.28000 ao=1.78268 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 08:00:00 c=1855.03000 ao=1.70856 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 09:00:00 c=1851.04000 ao=0.53526 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 10:00:00 c=1854.57000 ao=-0.68229 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 11:00:00 c=1852.60000 ao=-1.80185 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 12:00:00 c=1849.30000 ao=-2.55341 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 13:00:00 c=1852.80000 ao=-3.14974 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 14:00:00 c=1855.47000 ao=-2.78256 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 15:00:00 c=1857.11000 ao=-2.43050 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 16:00:00 c=1856.34000 ao=-2.26109 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 17:00:00 c=1853.01000 ao=-1.59750 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 18:00:00 c=1852.38000 ao=-1.29276 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 19:00:00 c=1852.68000 ao=-1.63494 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 20:00:00 c=1851.81000 ao=-2.42132 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 21:00:00 c=1851.67000 ao=-3.02109 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 22:00:00 c=1851.31000 ao=-3.53735 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-26 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-26 23:00:00 c=1851.43000 ao=-3.71791 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 01:00:00 c=1851.31000 ao=-3.92391 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 02:00:00 c=1849.01000 ao=-4.09000 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 03:00:00 c=1846.07000 ao=-4.49250 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 04:00:00 c=1847.87000 ao=-5.19332 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 05:00:00 c=1845.47000 ao=-5.88432 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 06:00:00 c=1847.52000 ao=-6.42115 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 07:00:00 c=1851.09000 ao=-6.37953 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 08:00:00 c=1848.52000 ao=-5.48588 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 09:00:00 c=1850.94000 ao=-4.67229 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 10:00:00 c=1847.43000 ao=-3.97774 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 11:00:00 c=1845.83000 ao=-3.75385 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 12:00:00 c=1846.69000 ao=-3.87618 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 13:00:00 c=1841.37000 ao=-4.92941 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 14:00:00 c=1841.05000 ao=-6.34638 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 15:00:00 c=1843.11000 ao=-7.45309 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 16:00:00 c=1837.25000 ao=-8.42318 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 17:00:00 c=1848.97000 ao=-8.80003 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 18:00:00 c=1845.28000 ao=-7.48088 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 19:00:00 c=1845.57000 ao=-6.18209 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 20:00:00 c=1845.50000 ao=-5.01665 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 21:00:00 c=1841.60000 ao=-3.39094 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 22:00:00 c=1840.73000 ao=-3.05844 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-27 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-27 23:00:00 c=1843.83000 ao=-3.91371 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 01:00:00 c=1839.97000 ao=-4.35044 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 02:00:00 c=1840.01000 ao=-5.31568 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 03:00:00 c=1836.25000 ao=-6.28168 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 04:00:00 c=1837.63000 ao=-6.77835 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 05:00:00 c=1837.90000 ao=-7.26841 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 06:00:00 c=1837.15000 ao=-7.48032 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 07:00:00 c=1836.93000 ao=-7.19332 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 08:00:00 c=1837.29000 ao=-6.87044 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 09:00:00 c=1836.42000 ao=-6.71176 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 10:00:00 c=1838.27000 ao=-6.14256 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 11:00:00 c=1840.87000 ao=-5.43250 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 12:00:00 c=1841.74000 ao=-4.45300 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 13:00:00 c=1840.69000 ao=-3.20429 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 14:00:00 c=1840.33000 ao=-2.08332 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 15:00:00 c=1857.02000 ao=-0.17788 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 16:00:00 c=1854.64000 ao=3.18791 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 17:00:00 c=1857.53000 ao=6.20853 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 18:00:00 c=1845.85000 ao=8.28285 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 19:00:00 c=1839.35000 ao=8.92835 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 20:00:00 c=1840.72000 ao=7.43659 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 21:00:00 c=1843.88000 ao=4.47203 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 22:00:00 c=1842.17000 ao=1.47091 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-28 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-28 23:00:00 c=1842.61000 ao=-0.52447 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 01:00:00 c=1843.90000 ao=-0.47400 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 02:00:00 c=1840.57000 ao=0.19703 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 03:00:00 c=1843.07000 ao=0.05047 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 04:00:00 c=1842.19000 ao=-0.07171 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 05:00:00 c=1842.01000 ao=0.00503 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 06:00:00 c=1842.92000 ao=-0.02115 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 07:00:00 c=1845.89000 ao=0.34159 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 08:00:00 c=1850.10000 ao=1.46321 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 09:00:00 c=1845.73000 ao=2.22950 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 10:00:00 c=1846.00000 ao=2.60650 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 11:00:00 c=1851.61000 ao=3.94021 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 12:00:00 c=1857.49000 ao=5.65009 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 13:00:00 c=1862.18000 ao=7.37882 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 14:00:00 c=1865.24000 ao=10.08768 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 15:00:00 c=1871.86000 ao=13.95565 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 16:00:00 c=1865.05000 ao=15.99668 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 17:00:00 c=1858.50000 ao=16.54621 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 18:00:00 c=1857.76000 ao=15.60347 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 19:00:00 c=1852.17000 ao=13.19412 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 20:00:00 c=1851.56000 ao=9.13512 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 21:00:00 c=1849.97000 ao=6.20691 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 22:00:00 c=1841.82000 ao=3.13894 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-01-29 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-01-29 23:00:00 c=1847.59000 ao=0.39300 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 01:00:00 c=1856.09000 ao=0.05362 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 02:00:00 c=1854.33000 ao=0.28476 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 03:00:00 c=1852.28000 ao=0.36441 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 04:00:00 c=1861.51000 ao=2.51288 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 05:00:00 c=1860.98000 ao=5.88618 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 06:00:00 c=1860.35000 ao=6.78800 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 07:00:00 c=1859.75000 ao=7.45588 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 08:00:00 c=1865.50000 ao=8.86815 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 09:00:00 c=1861.51000 ao=9.50012 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 10:00:00 c=1862.62000 ao=9.58076 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 11:00:00 c=1861.68000 ao=9.26438 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 12:00:00 c=1859.97000 ao=8.76921 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 13:00:00 c=1864.21000 ao=7.94979 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 14:00:00 c=1861.24000 ao=7.62435 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 15:00:00 c=1864.08000 ao=6.69221 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 16:00:00 c=1863.55000 ao=6.47456 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 17:00:00 c=1860.20000 ao=6.49426 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 18:00:00 c=1862.58000 ao=5.88985 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 19:00:00 c=1864.91000 ao=5.03312 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 20:00:00 c=1860.53000 ao=4.18826 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 21:00:00 c=1859.56000 ao=2.68479 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 22:00:00 c=1858.86000 ao=2.01085 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-01 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-01 23:00:00 c=1860.55000 ao=1.66562 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 01:00:00 c=1857.72000 ao=0.82824 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 02:00:00 c=1856.99000 ao=-0.17359 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 03:00:00 c=1862.78000 ao=0.05179 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 04:00:00 c=1858.85000 ao=0.25312 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 05:00:00 c=1857.14000 ao=-0.35150 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 06:00:00 c=1854.04000 ao=-0.99418 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 07:00:00 c=1856.36000 ao=-1.14488 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 08:00:00 c=1855.29000 ao=-2.16321 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 09:00:00 c=1848.33000 ao=-4.34676 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 10:00:00 c=1849.93000 ao=-6.19412 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 11:00:00 c=1850.21000 ao=-7.52988 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 12:00:00 c=1849.42000 ao=-8.43135 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 13:00:00 c=1842.22000 ao=-10.14947 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 14:00:00 c=1843.19000 ao=-11.22432 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 15:00:00 c=1837.97000 ao=-12.77553 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 16:00:00 c=1834.20000 ao=-14.79356 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 17:00:00 c=1833.14000 ao=-17.26359 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 18:00:00 c=1837.43000 ao=-18.50703 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 19:00:00 c=1835.17000 ao=-18.98756 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 20:00:00 c=1835.04000 ao=-18.76456 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 21:00:00 c=1836.81000 ao=-17.58106 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 22:00:00 c=1835.87000 ao=-16.30326 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-02 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-02 23:00:00 c=1837.65000 ao=-15.54815 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 01:00:00 c=1836.38000 ao=-14.71438 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 02:00:00 c=1839.29000 ao=-13.03465 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 03:00:00 c=1841.70000 ao=-11.64326 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 04:00:00 c=1842.17000 ao=-9.60065 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 05:00:00 c=1841.53000 ao=-8.05212 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 06:00:00 c=1840.66000 ao=-6.76653 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 07:00:00 c=1839.14000 ao=-5.65826 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 08:00:00 c=1838.41000 ao=-5.38424 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 09:00:00 c=1837.14000 ao=-5.78229 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 10:00:00 c=1835.72000 ao=-6.09891 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 11:00:00 c=1835.65000 ao=-6.51876 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 12:00:00 c=1834.82000 ao=-7.00497 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 13:00:00 c=1834.93000 ao=-6.95609 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 14:00:00 c=1837.05000 ao=-6.42765 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 15:00:00 c=1838.26000 ao=-5.16706 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 16:00:00 c=1836.14000 ao=-4.37544 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 17:00:00 c=1833.68000 ao=-4.05132 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 18:00:00 c=1835.57000 ao=-3.34347 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 19:00:00 c=1835.91000 ao=-3.07188 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 20:00:00 c=1833.92000 ao=-3.54159 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 21:00:00 c=1833.22000 ao=-3.58497 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 22:00:00 c=1833.00000 ao=-3.11632 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-03 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-03 23:00:00 c=1834.21000 ao=-3.02647 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 01:00:00 c=1834.26000 ao=-2.90868 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 02:00:00 c=1832.85000 ao=-2.80226 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 03:00:00 c=1826.94000 ao=-3.56229 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 04:00:00 c=1822.88000 ao=-4.92929 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 05:00:00 c=1823.08000 ao=-6.87429 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 06:00:00 c=1822.29000 ao=-8.66262 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 07:00:00 c=1817.65000 ao=-11.01391 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 08:00:00 c=1823.72000 ao=-12.36968 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 09:00:00 c=1825.22000 ao=-12.00991 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 10:00:00 c=1821.91000 ao=-11.40718 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 11:00:00 c=1814.49000 ao=-12.20156 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 12:00:00 c=1811.86000 ao=-12.78065 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 13:00:00 c=1812.73000 ao=-13.64221 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 14:00:00 c=1816.86000 ao=-14.77465 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 15:00:00 c=1808.44000 ao=-15.99700 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 16:00:00 c=1785.83000 ao=-18.52100 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 17:00:00 c=1786.62000 ao=-21.47491 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 18:00:00 c=1792.59000 ao=-24.47509 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 19:00:00 c=1789.45000 ao=-28.21915 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 20:00:00 c=1792.39000 ao=-31.26582 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 21:00:00 c=1795.10000 ao=-30.69024 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 22:00:00 c=1793.52000 ao=-28.62579 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-04 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-04 23:00:00 c=1793.12000 ao=-26.66126 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1430 fib_pct=0.881 z=0.000
+[BROKER] ts=2021-02-05 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 01:00:00 c=1795.94000 ao=-24.40968 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1132 fib_pct=0.848 z=0.000
+[BROKER] ts=2021-02-05 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 02:00:00 c=1795.05000 ao=-22.18218 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0073 fib_pct=0.730 z=0.000
+[BROKER] ts=2021-02-05 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 03:00:00 c=1796.66000 ao=-20.68653 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0270 fib_pct=0.752 z=0.000
+[BROKER] ts=2021-02-05 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 04:00:00 c=1794.74000 ao=-19.29512 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0413 fib_pct=0.768 z=0.000
+[BROKER] ts=2021-02-05 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 05:00:00 c=1795.09000 ao=-17.76359 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0041 fib_pct=0.727 z=0.000
+[BROKER] ts=2021-02-05 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 06:00:00 c=1795.49000 ao=-16.59135 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8781 fib_pct=0.587 z=0.000
+[BROKER] ts=2021-02-05 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 07:00:00 c=1797.85000 ao=-15.26226 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6240 fib_pct=0.304 z=0.000
+[BROKER] ts=2021-02-05 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 08:00:00 c=1797.16000 ao=-13.63250 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4652 fib_pct=0.128 z=0.000
+[BROKER] ts=2021-02-05 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 09:00:00 c=1798.78000 ao=-12.01565 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4088 fib_pct=0.065 z=0.000
+[BROKER] ts=2021-02-05 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 10:00:00 c=1808.44000 ao=-9.31441 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5311 fib_pct=0.201 z=0.000
+[BROKER] ts=2021-02-05 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 11:00:00 c=1807.77000 ao=-6.18959 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5438 fib_pct=0.215 z=0.000
+[BROKER] ts=2021-02-05 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 12:00:00 c=1807.46000 ao=-3.35082 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5141 fib_pct=0.182 z=0.000
+[BROKER] ts=2021-02-05 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 13:00:00 c=1802.84000 ao=-0.91700 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5770 fib_pct=0.252 z=0.000
+[BROKER] ts=2021-02-05 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 14:00:00 c=1802.25000 ao=0.70753 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5921 fib_pct=0.269 z=0.000
+[BROKER] ts=2021-02-05 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 15:00:00 c=1799.89000 ao=0.49653 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7751 fib_pct=0.472 z=0.000
+[BROKER] ts=2021-02-05 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 16:00:00 c=1802.78000 ao=-0.06956 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8445 fib_pct=0.549 z=0.000
+[BROKER] ts=2021-02-05 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 17:00:00 c=1805.90000 ao=0.07124 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8561 fib_pct=0.562 z=0.000
+[BROKER] ts=2021-02-05 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 18:00:00 c=1812.97000 ao=1.27729 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8884 fib_pct=0.598 z=0.000
+[BROKER] ts=2021-02-05 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 19:00:00 c=1811.81000 ao=3.59174 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9076 fib_pct=0.620 z=0.000
+[BROKER] ts=2021-02-05 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 20:00:00 c=1810.34000 ao=6.30100 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9216 fib_pct=0.635 z=0.000
+[BROKER] ts=2021-02-05 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 21:00:00 c=1810.02000 ao=8.78429 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9044 fib_pct=0.616 z=0.000
+[BROKER] ts=2021-02-05 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 22:00:00 c=1811.12000 ao=10.03418 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9183 fib_pct=0.631 z=0.000
+[BROKER] ts=2021-02-05 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-05 23:00:00 c=1813.40000 ao=10.42853 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9192 fib_pct=0.632 z=0.000
+[BROKER] ts=2021-02-08 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 01:00:00 c=1818.02000 ao=11.10788 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8281 fib_pct=0.531 z=0.000
+[BROKER] ts=2021-02-08 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 02:00:00 c=1813.07000 ao=11.91165 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8472 fib_pct=0.552 z=0.000
+[BROKER] ts=2021-02-08 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 03:00:00 c=1815.44000 ao=12.48926 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8458 fib_pct=0.551 z=0.000
+[BROKER] ts=2021-02-08 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 04:00:00 c=1810.84000 ao=12.23644 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8697 fib_pct=0.577 z=0.000
+[BROKER] ts=2021-02-08 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 05:00:00 c=1810.76000 ao=11.45324 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8430 fib_pct=0.548 z=0.000
+[BROKER] ts=2021-02-08 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 06:00:00 c=1810.89000 ao=9.53624 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6903 fib_pct=0.378 z=0.000
+[BROKER] ts=2021-02-08 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 07:00:00 c=1812.99000 ao=8.36118 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6014 fib_pct=0.279 z=0.000
+[BROKER] ts=2021-02-08 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 08:00:00 c=1815.70000 ao=7.73097 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5481 fib_pct=0.220 z=0.000
+[BROKER] ts=2021-02-08 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 09:00:00 c=1814.98000 ao=7.94165 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4525 fib_pct=0.114 z=0.000
+[BROKER] ts=2021-02-08 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 10:00:00 c=1809.21000 ao=7.60321 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5245 fib_pct=0.194 z=0.000
+[BROKER] ts=2021-02-08 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 11:00:00 c=1813.77000 ao=7.20221 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5688 fib_pct=0.243 z=0.000
+[BROKER] ts=2021-02-08 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 12:00:00 c=1815.44000 ao=6.74697 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5930 fib_pct=0.270 z=0.000
+[BROKER] ts=2021-02-08 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 13:00:00 c=1820.78000 ao=7.03871 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6887 fib_pct=0.376 z=0.000
+[BROKER] ts=2021-02-08 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 14:00:00 c=1825.33000 ao=7.45768 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7593 fib_pct=0.455 z=0.000
+[BROKER] ts=2021-02-08 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 15:00:00 c=1829.83000 ao=9.46435 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8098 fib_pct=0.511 z=0.000
+[BROKER] ts=2021-02-08 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 16:00:00 c=1832.09000 ao=12.52956 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7963 fib_pct=0.496 z=0.000
+[BROKER] ts=2021-02-08 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 17:00:00 c=1836.62000 ao=15.67853 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8440 fib_pct=0.549 z=0.000
+[BROKER] ts=2021-02-08 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 18:00:00 c=1837.65000 ao=17.90738 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8110 fib_pct=0.512 z=0.000
+[BROKER] ts=2021-02-08 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 19:00:00 c=1832.79000 ao=19.28503 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8778 fib_pct=0.586 z=0.000
+[BROKER] ts=2021-02-08 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 20:00:00 c=1831.23000 ao=19.44309 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8910 fib_pct=0.601 z=0.000
+[BROKER] ts=2021-02-08 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 21:00:00 c=1832.18000 ao=18.54800 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8581 fib_pct=0.565 z=0.000
+[BROKER] ts=2021-02-08 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 22:00:00 c=1829.98000 ao=17.12597 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8881 fib_pct=0.598 z=0.000
+[BROKER] ts=2021-02-08 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-08 23:00:00 c=1830.13000 ao=15.33668 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8770 fib_pct=0.586 z=0.000
+[BROKER] ts=2021-02-09 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 01:00:00 c=1830.56000 ao=13.63800 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7964 fib_pct=0.496 z=0.000
+[BROKER] ts=2021-02-09 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 02:00:00 c=1834.08000 ao=12.75168 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7832 fib_pct=0.481 z=0.000
+[BROKER] ts=2021-02-09 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 03:00:00 c=1836.87000 ao=12.59285 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7964 fib_pct=0.496 z=0.000
+[BROKER] ts=2021-02-09 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 04:00:00 c=1841.35000 ao=12.85244 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7619 fib_pct=0.458 z=0.000
+[BROKER] ts=2021-02-09 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 05:00:00 c=1839.62000 ao=13.86791 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6872 fib_pct=0.375 z=0.000
+[BROKER] ts=2021-02-09 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 06:00:00 c=1841.22000 ao=15.15976 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5821 fib_pct=0.258 z=0.000
+[BROKER] ts=2021-02-09 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 07:00:00 c=1840.02000 ao=15.93100 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5461 fib_pct=0.218 z=0.000
+[BROKER] ts=2021-02-09 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 08:00:00 c=1839.91000 ao=15.72171 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4513 fib_pct=0.113 z=0.000
+[BROKER] ts=2021-02-09 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 09:00:00 c=1843.06000 ao=15.19315 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4745 fib_pct=0.138 z=0.000
+[BROKER] ts=2021-02-09 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 10:00:00 c=1844.10000 ao=14.47074 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4766 fib_pct=0.141 z=0.000
+[BROKER] ts=2021-02-09 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 11:00:00 c=1846.57000 ao=14.38038 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5394 fib_pct=0.210 z=0.000
+[BROKER] ts=2021-02-09 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 12:00:00 c=1841.81000 ao=14.47691 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6065 fib_pct=0.285 z=0.000
+[BROKER] ts=2021-02-09 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 13:00:00 c=1843.71000 ao=14.45815 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5802 fib_pct=0.256 z=0.000
+[BROKER] ts=2021-02-09 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 14:00:00 c=1842.70000 ao=13.97976 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5936 fib_pct=0.271 z=0.000
+[BROKER] ts=2021-02-09 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 15:00:00 c=1846.91000 ao=13.29900 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7040 fib_pct=0.393 z=0.000
+[BROKER] ts=2021-02-09 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 16:00:00 c=1837.01000 ao=11.29635 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8485 fib_pct=0.554 z=0.000
+[BROKER] ts=2021-02-09 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 17:00:00 c=1839.43000 ao=9.76326 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9116 fib_pct=0.624 z=0.000
+[BROKER] ts=2021-02-09 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 18:00:00 c=1836.00000 ao=7.95650 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9056 fib_pct=0.617 z=0.000
+[BROKER] ts=2021-02-09 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 19:00:00 c=1838.01000 ao=6.17547 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9088 fib_pct=0.621 z=0.000
+[BROKER] ts=2021-02-09 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 20:00:00 c=1834.98000 ao=4.25838 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9051 fib_pct=0.617 z=0.000
+[BROKER] ts=2021-02-09 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 21:00:00 c=1837.52000 ao=2.81424 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8923 fib_pct=0.603 z=0.000
+[BROKER] ts=2021-02-09 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 22:00:00 c=1835.92000 ao=1.06926 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9023 fib_pct=0.614 z=0.000
+[BROKER] ts=2021-02-09 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-09 23:00:00 c=1837.64000 ao=0.18097 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8601 fib_pct=0.567 z=0.000
+[BROKER] ts=2021-02-10 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 01:00:00 c=1836.25000 ao=-0.26635 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8158 fib_pct=0.518 z=0.000
+[BROKER] ts=2021-02-10 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 02:00:00 c=1836.57000 ao=-0.62847 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7763 fib_pct=0.474 z=0.000
+[BROKER] ts=2021-02-10 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 03:00:00 c=1839.67000 ao=-0.76438 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7775 fib_pct=0.475 z=0.000
+[BROKER] ts=2021-02-10 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 04:00:00 c=1841.50000 ao=-0.13021 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7719 fib_pct=0.469 z=0.000
+[BROKER] ts=2021-02-10 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 05:00:00 c=1843.31000 ao=0.95326 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7933 fib_pct=0.493 z=0.000
+[BROKER] ts=2021-02-10 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 06:00:00 c=1843.84000 ao=1.82150 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7118 fib_pct=0.402 z=0.000
+[BROKER] ts=2021-02-10 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 07:00:00 c=1842.73000 ao=2.95426 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4837 fib_pct=0.149 z=0.000
+[BROKER] ts=2021-02-10 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 08:00:00 c=1843.53000 ao=3.71562 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3967 fib_pct=0.052 z=0.000
+[BROKER] ts=2021-02-10 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 09:00:00 c=1845.81000 ao=4.19471 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3899 fib_pct=0.044 z=0.000
+[BROKER] ts=2021-02-10 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 10:00:00 c=1845.03000 ao=4.03871 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4031 fib_pct=0.059 z=0.000
+[BROKER] ts=2021-02-10 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 11:00:00 c=1839.38000 ao=3.57309 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4404 fib_pct=0.100 z=0.000
+[BROKER] ts=2021-02-10 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 12:00:00 c=1841.53000 ao=2.77474 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4578 fib_pct=0.120 z=0.000
+[BROKER] ts=2021-02-10 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 13:00:00 c=1840.83000 ao=2.23691 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4905 fib_pct=0.156 z=0.000
+[BROKER] ts=2021-02-10 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 14:00:00 c=1838.51000 ao=1.06032 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4989 fib_pct=0.165 z=0.000
+[BROKER] ts=2021-02-10 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 15:00:00 c=1851.17000 ao=1.32206 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7585 fib_pct=0.454 z=0.000
+[BROKER] ts=2021-02-10 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 16:00:00 c=1841.71000 ao=2.10047 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9057 fib_pct=0.617 z=0.000
+[BROKER] ts=2021-02-10 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 17:00:00 c=1841.10000 ao=1.96985 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9565 fib_pct=0.674 z=0.000
+[BROKER] ts=2021-02-10 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 18:00:00 c=1841.17000 ao=1.47176 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9941 fib_pct=0.716 z=0.000
+[BROKER] ts=2021-02-10 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 19:00:00 c=1842.22000 ao=1.57471 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0034 fib_pct=0.726 z=0.000
+[BROKER] ts=2021-02-10 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 20:00:00 c=1843.00000 ao=0.72118 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0018 fib_pct=0.724 z=0.000
+[BROKER] ts=2021-02-10 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 21:00:00 c=1843.12000 ao=0.04194 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0067 fib_pct=0.730 z=0.000
+[BROKER] ts=2021-02-10 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 22:00:00 c=1842.44000 ao=0.42082 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0030 fib_pct=0.726 z=0.000
+[BROKER] ts=2021-02-10 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-10 23:00:00 c=1842.35000 ao=1.31615 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9650 fib_pct=0.683 z=0.000
+[BROKER] ts=2021-02-11 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 01:00:00 c=1842.01000 ao=1.84521 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9400 fib_pct=0.656 z=0.000
+[BROKER] ts=2021-02-11 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 02:00:00 c=1839.77000 ao=1.59009 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8810 fib_pct=0.590 z=0.000
+[BROKER] ts=2021-02-11 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 03:00:00 c=1838.83000 ao=0.71641 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8755 fib_pct=0.584 z=0.000
+[BROKER] ts=2021-02-11 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 04:00:00 c=1837.90000 ao=-0.21841 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8722 fib_pct=0.580 z=0.000
+[BROKER] ts=2021-02-11 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 05:00:00 c=1837.48000 ao=-1.29959 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8836 fib_pct=0.593 z=0.000
+[BROKER] ts=2021-02-11 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 06:00:00 c=1835.87000 ao=-2.47465 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6606 fib_pct=0.345 z=0.000
+[BROKER] ts=2021-02-11 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 07:00:00 c=1836.93000 ao=-3.36671 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4491 fib_pct=0.110 z=0.000
+[BROKER] ts=2021-02-11 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 08:00:00 c=1842.54000 ao=-3.31106 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4215 fib_pct=0.079 z=0.000
+[BROKER] ts=2021-02-11 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 09:00:00 c=1843.14000 ao=-2.37509 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3710 fib_pct=0.023 z=0.000
+[BROKER] ts=2021-02-11 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 10:00:00 c=1842.28000 ao=-1.14659 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3667 fib_pct=0.019 z=0.000
+[BROKER] ts=2021-02-11 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 11:00:00 c=1842.61000 ao=-0.09635 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3771 fib_pct=0.030 z=0.000
+[BROKER] ts=2021-02-11 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 12:00:00 c=1840.53000 ao=0.86829 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3604 fib_pct=0.012 z=0.000
+[BROKER] ts=2021-02-11 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 13:00:00 c=1841.77000 ao=0.94588 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3749 fib_pct=0.028 z=0.000
+[BROKER] ts=2021-02-11 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 14:00:00 c=1843.35000 ao=0.73712 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4018 fib_pct=0.058 z=0.000
+[BROKER] ts=2021-02-11 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 15:00:00 c=1843.43000 ao=0.95641 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4348 fib_pct=0.094 z=0.000
+[BROKER] ts=2021-02-11 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 16:00:00 c=1842.41000 ao=0.67965 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4821 fib_pct=0.147 z=0.000
+[BROKER] ts=2021-02-11 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 17:00:00 c=1838.62000 ao=0.46462 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5127 fib_pct=0.181 z=0.000
+[BROKER] ts=2021-02-11 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 18:00:00 c=1830.07000 ao=-0.68676 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6438 fib_pct=0.326 z=0.000
+[BROKER] ts=2021-02-11 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 19:00:00 c=1826.49000 ao=-3.25100 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7088 fib_pct=0.399 z=0.000
+[BROKER] ts=2021-02-11 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 20:00:00 c=1825.41000 ao=-6.61053 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7202 fib_pct=0.411 z=0.000
+[BROKER] ts=2021-02-11 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 21:00:00 c=1824.43000 ao=-9.63165 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7541 fib_pct=0.449 z=0.000
+[BROKER] ts=2021-02-11 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 22:00:00 c=1826.26000 ao=-12.15812 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6839 fib_pct=0.371 z=0.000
+[BROKER] ts=2021-02-11 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-11 23:00:00 c=1825.47000 ao=-13.30218 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6608 fib_pct=0.345 z=0.000
+[BROKER] ts=2021-02-12 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 01:00:00 c=1826.72000 ao=-13.07129 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6135 fib_pct=0.293 z=0.000
+[BROKER] ts=2021-02-12 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 02:00:00 c=1824.16000 ao=-12.62224 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6291 fib_pct=0.310 z=0.000
+[BROKER] ts=2021-02-12 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 03:00:00 c=1823.52000 ao=-11.90724 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6527 fib_pct=0.336 z=0.000
+[BROKER] ts=2021-02-12 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 04:00:00 c=1819.69000 ao=-11.86435 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6701 fib_pct=0.356 z=0.000
+[BROKER] ts=2021-02-12 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 05:00:00 c=1821.94000 ao=-12.26421 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6734 fib_pct=0.359 z=0.000
+[BROKER] ts=2021-02-12 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 06:00:00 c=1822.59000 ao=-12.52247 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6146 fib_pct=0.294 z=0.000
+[BROKER] ts=2021-02-12 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 07:00:00 c=1823.97000 ao=-12.57065 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5600 fib_pct=0.233 z=0.000
+[BROKER] ts=2021-02-12 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 08:00:00 c=1818.77000 ao=-12.38750 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5635 fib_pct=0.237 z=0.000
+[BROKER] ts=2021-02-12 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 09:00:00 c=1817.37000 ao=-12.20009 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 10:00:00 c=1817.06000 ao=-12.60065 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 11:00:00 c=1817.94000 ao=-12.88044 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 12:00:00 c=1820.55000 ao=-13.02497 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 13:00:00 c=1818.72000 ao=-12.84206 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 14:00:00 c=1818.09000 ao=-12.43976 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 15:00:00 c=1815.69000 ao=-11.84724 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 16:00:00 c=1814.71000 ao=-11.47076 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 17:00:00 c=1828.25000 ao=-10.30259 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 18:00:00 c=1824.50000 ao=-8.49524 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 19:00:00 c=1819.61000 ao=-7.01056 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 20:00:00 c=1822.35000 ao=-5.05579 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 21:00:00 c=1819.32000 ao=-3.53315 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 22:00:00 c=1821.50000 ao=-3.42926 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-12 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-12 23:00:00 c=1824.17000 ao=-3.69659 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 01:00:00 c=1820.94000 ao=-3.00441 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 02:00:00 c=1822.89000 ao=-2.37044 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 03:00:00 c=1826.95000 ao=-1.05026 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 04:00:00 c=1825.12000 ao=0.64353 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 05:00:00 c=1826.22000 ao=1.61785 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 06:00:00 c=1822.71000 ao=2.13703 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 07:00:00 c=1824.95000 ao=2.61891 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 08:00:00 c=1818.77000 ao=2.17253 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 09:00:00 c=1817.20000 ao=0.82935 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 10:00:00 c=1818.32000 ao=-0.32103 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 11:00:00 c=1818.18000 ao=-1.21744 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 12:00:00 c=1818.52000 ao=-2.08250 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 13:00:00 c=1820.51000 ao=-2.24129 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 14:00:00 c=1821.45000 ao=-1.45212 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 15:00:00 c=1817.85000 ao=-1.16735 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 16:00:00 c=1818.50000 ao=-1.10379 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 17:00:00 c=1818.10000 ao=-1.06797 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 18:00:00 c=1820.13000 ao=-1.05968 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-15 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-15 19:00:00 c=1818.72000 ao=-1.60841 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 01:00:00 c=1818.71000 ao=-1.82682 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 02:00:00 c=1821.66000 ao=-1.62559 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 03:00:00 c=1824.81000 ao=-0.69674 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 04:00:00 c=1823.83000 ao=0.22506 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 05:00:00 c=1826.24000 ao=1.32347 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 06:00:00 c=1824.57000 ao=2.41506 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 07:00:00 c=1821.14000 ao=2.75732 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 08:00:00 c=1823.53000 ao=2.41435 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 09:00:00 c=1820.63000 ao=1.79100 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 10:00:00 c=1823.68000 ao=1.29550 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 11:00:00 c=1824.05000 ao=0.97809 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 12:00:00 c=1822.88000 ao=1.12774 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 13:00:00 c=1816.11000 ao=0.63403 ao_signal=1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 14:00:00 c=1807.44000 ao=-0.91632 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 15:00:00 c=1796.76000 ao=-3.85062 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 16:00:00 c=1791.57000 ao=-8.94185 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 17:00:00 c=1813.66000 ao=-12.70121 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 18:00:00 c=1796.64000 ao=-14.99082 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="no_wave_match"
+[BROKER] ts=2021-02-16 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 19:00:00 c=1796.62000 ao=-17.57771 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2302 fib_pct=0.978 z=0.000
+[BROKER] ts=2021-02-16 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 20:00:00 c=1796.69000 ao=-17.99229 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2356 fib_pct=0.984 z=0.000
+[BROKER] ts=2021-02-16 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 21:00:00 c=1795.28000 ao=-16.89962 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2284 fib_pct=0.976 z=0.000
+[BROKER] ts=2021-02-16 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 22:00:00 c=1795.24000 ao=-17.55938 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2213 fib_pct=0.968 z=0.000
+[BROKER] ts=2021-02-16 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-16 23:00:00 c=1794.56000 ao=-18.84426 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2159 fib_pct=0.962 z=0.000
+[BROKER] ts=2021-02-17 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 01:00:00 c=1788.38000 ao=-19.13400 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2177 fib_pct=0.964 z=0.000
+[BROKER] ts=2021-02-17 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 02:00:00 c=1789.05000 ao=-20.33300 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2159 fib_pct=0.962 z=0.001
+[BROKER] ts=2021-02-17 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 03:00:00 c=1791.09000 ao=-20.56282 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2249 fib_pct=0.972 z=0.000
+[BROKER] ts=2021-02-17 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 04:00:00 c=1794.17000 ao=-20.30729 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2051 fib_pct=0.950 z=0.000
+[BROKER] ts=2021-02-17 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 05:00:00 c=1793.42000 ao=-19.79009 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1746 fib_pct=0.916 z=0.000
+[BROKER] ts=2021-02-17 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 06:00:00 c=1792.93000 ao=-18.32103 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0650 fib_pct=0.794 z=0.000
+[BROKER] ts=2021-02-17 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 07:00:00 c=1791.90000 ao=-16.82371 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0201 fib_pct=0.745 z=0.000
+[BROKER] ts=2021-02-17 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 08:00:00 c=1792.70000 ao=-15.77835 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7614 fib_pct=0.457 z=0.000
+[BROKER] ts=2021-02-17 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 09:00:00 c=1789.98000 ao=-15.32535 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5153 fib_pct=0.184 z=0.000
+[BROKER] ts=2021-02-17 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 10:00:00 c=1787.69000 ao=-15.62068 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5781 fib_pct=0.253 z=0.000
+[BROKER] ts=2021-02-17 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 11:00:00 c=1786.00000 ao=-15.94079 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6105 fib_pct=0.289 z=0.000
+[BROKER] ts=2021-02-17 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 12:00:00 c=1789.34000 ao=-15.82488 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6249 fib_pct=0.305 z=0.000
+[BROKER] ts=2021-02-17 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 13:00:00 c=1790.82000 ao=-15.38491 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6716 fib_pct=0.357 z=0.000
+[BROKER] ts=2021-02-17 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 14:00:00 c=1792.19000 ao=-14.43282 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7147 fib_pct=0.405 z=0.000
+[BROKER] ts=2021-02-17 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 15:00:00 c=1778.90000 ao=-13.95091 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8746 fib_pct=0.583 z=0.000
+[BROKER] ts=2021-02-17 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 16:00:00 c=1781.53000 ao=-13.86082 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9805 fib_pct=0.701 z=0.000
+[BROKER] ts=2021-02-17 17:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 17:00:00 c=1773.81000 ao=-14.56471 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0596 fib_pct=0.788 score=0.319 z=0.001 d=0.000 lag_s=1.000 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-17 18:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 18:00:00 c=1777.94000 ao=-15.97126 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.1099 fib_pct=0.844 score=0.320 z=0.006 d=0.000 lag_s=1.000 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-17 19:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 19:00:00 c=1775.86000 ao=-17.32576 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.1189 fib_pct=0.854 score=0.319 z=0.006 d=0.000 lag_s=0.992 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-17 20:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 20:00:00 c=1775.38000 ao=-17.85224 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.1512 fib_pct=0.890 score=0.325 z=0.030 d=0.000 lag_s=0.983 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-17 21:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 21:00:00 c=1771.98000 ao=-17.80150 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.1584 fib_pct=0.898 score=0.327 z=0.043 d=0.000 lag_s=0.975 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-17 22:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 22:00:00 c=1774.62000 ao=-16.95500 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.1458 fib_pct=0.884 score=0.329 z=0.051 d=0.000 lag_s=0.967 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-17 23:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-17 23:00:00 c=1776.70000 ao=-15.30585 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.1117 fib_pct=0.846 score=0.319 z=0.022 d=0.000 lag_s=0.958 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 01:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 01:00:00 c=1778.15000 ao=-14.16291 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0865 fib_pct=0.818 score=0.314 z=0.010 d=0.000 lag_s=0.950 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 02:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 02:00:00 c=1780.95000 ao=-12.19824 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0757 fib_pct=0.806 score=0.310 z=0.003 d=0.000 lag_s=0.942 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 03:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 03:00:00 c=1780.80000 ao=-10.11241 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0793 fib_pct=0.810 score=0.308 z=0.001 d=0.000 lag_s=0.933 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 04:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 04:00:00 c=1783.15000 ao=-8.27821 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0829 fib_pct=0.814 score=0.337 z=0.001 d=0.000 lag_s=0.925 reg_s=0.500 cndl_s=1.000
+[BROKER] ts=2021-02-18 05:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 05:00:00 c=1783.28000 ao=-6.07606 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0722 fib_pct=0.802 score=0.306 z=0.000 d=0.000 lag_s=0.917 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 06:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 06:00:00 c=1782.67000 ao=-4.24097 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.8422 fib_pct=0.547 score=0.304 z=0.000 d=0.000 lag_s=0.908 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 07:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 07:00:00 c=1783.83000 ao=-3.02835 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.7524 fib_pct=0.447 score=0.333 z=0.000 d=0.000 lag_s=0.900 reg_s=0.500 cndl_s=1.000
+[BROKER] ts=2021-02-18 08:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 08:00:00 c=1782.59000 ao=-2.05574 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.5746 fib_pct=0.250 score=0.302 z=0.000 d=0.000 lag_s=0.892 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 09:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 09:00:00 c=1782.16000 ao=-1.45462 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.4470 fib_pct=0.108 score=0.301 z=0.000 d=0.000 lag_s=0.883 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 10:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 10:00:00 c=1787.73000 ao=-1.18594 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.5512 fib_pct=0.224 score=0.330 z=0.000 d=0.000 lag_s=0.875 reg_s=0.500 cndl_s=1.000
+[BROKER] ts=2021-02-18 11:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 11:00:00 c=1787.45000 ao=-0.24579 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.5189 fib_pct=0.188 score=0.298 z=0.000 d=0.000 lag_s=0.867 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 12:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 12:00:00 c=1784.99000 ao=0.13488 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.5404 fib_pct=0.212 score=0.297 z=0.000 d=0.000 lag_s=0.858 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 13:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 13:00:00 c=1784.12000 ao=0.64521 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.5314 fib_pct=0.202 score=0.295 z=0.000 d=0.000 lag_s=0.850 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 14:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 14:00:00 c=1784.12000 ao=0.94556 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.6087 fib_pct=0.287 score=0.294 z=0.000 d=0.000 lag_s=0.842 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 15:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 15:00:00 c=1786.11000 ao=1.51391 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.7201 fib_pct=0.411 score=0.293 z=0.000 d=0.000 lag_s=0.833 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 16:00:00 equity=10000.00 margin_available=10000.00
+[W5 TRACE] ts=2021-02-18 16:00:00 c=1775.81000 ao=0.48588 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.8404 fib_pct=0.545 score=0.292 z=0.000 d=0.000 lag_s=0.825 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 17:00:00 equity=10000.00 margin_available=10000.00
+[BROKER ORDER] action=NEW side=BUY size=5 stop=None limit=1779.41 sl=None tp=None
+[BROKER STATE] ts=2021-02-18 17:00:00 equity=10000.00 margin_available=10000.00 for_order
+[BROKER ORDER] action=ACCEPTED side=BUY size=5 order_id=2203257456592
+[W5 TRACE] ts=2021-02-18 17:00:00 c=1778.49000 ao=-1.04991 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=1 entry=1 sl=1 size=1 reason="" fib_tol=0.9213 fib_pct=0.635 score=0.640 z=0.003 d=1.000 lag_s=1.000 reg_s=0.500 cndl_s=0.600
+[BROKER] ts=2021-02-18 18:00:00 equity=10000.00 margin_available=10000.00
+[BROKER] orders_pending=1
+[BROKER ORDER] action=PENDING side=BUY size=5.0 stop=1779.41 limit=None created_at=None
+[BROKER ORDER] action=NEW side=SELL size=5 stop=None limit=1807.9602857142856 sl=None tp=None
+[BROKER STATE] ts=2021-02-18 18:00:00 equity=9986.20 margin_available=1102.95 for_order
+[BROKER ORDER] action=ACCEPTED side=SELL size=5 order_id=2203261422160
+[BROKER ORDER] action=NEW side=SELL size=5 stop=1765.1348571428573 limit=None sl=None tp=None
+[BROKER STATE] ts=2021-02-18 18:00:00 equity=9986.20 margin_available=1102.95 for_order
+[BROKER ORDER] action=ACCEPTED side=SELL size=5 order_id=2203261428752
+[BROKER ORDER] action=REMOVE reason=EXPLICIT_REMOVE side=SELL size=0 caller=C:\Users\kyawswar\Desktop\bt3\bt3\.venv\Lib\site-packages\backtesting\backtesting.py:_process_orders:1038
+[W5 TRACE] ts=2021-02-18 18:00:00 c=1776.65000 ao=-2.24997 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="trigger_fail"
+[BROKER] ts=2021-02-18 19:00:00 equity=9982.90 margin_available=1102.95
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1765.1348571428573 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1807.9602857142856 created_at=None
+[W5 TRACE] ts=2021-02-18 19:00:00 c=1775.99000 ao=-3.01235 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="trigger_fail"
+[BROKER] ts=2021-02-18 20:00:00 equity=9974.60 margin_available=1102.95
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1765.1348571428573 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1807.9602857142856 created_at=None
+[W5 TRACE] ts=2021-02-18 20:00:00 c=1774.33000 ao=-4.74735 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="trigger_fail"
+[BROKER] ts=2021-02-18 21:00:00 equity=9979.95 margin_available=1102.95
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1765.1348571428573 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1807.9602857142856 created_at=None
+[W5 TRACE] ts=2021-02-18 21:00:00 c=1775.40000 ao=-5.29603 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="trigger_fail"
+[BROKER] ts=2021-02-18 22:00:00 equity=9976.20 margin_available=1102.95
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1765.1348571428573 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1807.9602857142856 created_at=None
+[W5 TRACE] ts=2021-02-18 22:00:00 c=1774.65000 ao=-4.78256 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=1 entry=0 sl=0 size=0 reason="already_in_position" fib_tol=0.9590 fib_pct=0.677 score=0.623 z=0.027 d=1.000 lag_s=0.958 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-18 23:00:00 equity=9980.15 margin_available=1102.95
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1765.1348571428573 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1807.9602857142856 created_at=None
+[W5 TRACE] ts=2021-02-18 23:00:00 c=1775.44000 ao=-4.73841 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=1 entry=0 sl=0 size=0 reason="already_in_position" fib_tol=0.9356 fib_pct=0.651 score=0.648 z=0.012 d=1.000 lag_s=0.950 reg_s=0.500 cndl_s=1.000
+[BROKER] ts=2021-02-19 01:00:00 equity=9961.00 margin_available=1102.95
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1765.1348571428573 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1807.9602857142856 created_at=None
+[W5 TRACE] ts=2021-02-19 01:00:00 c=1771.61000 ao=-4.81088 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=1 entry=0 sl=0 size=0 reason="already_in_position" fib_tol=0.8763 fib_pct=0.585 score=0.615 z=0.010 d=1.000 lag_s=0.942 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 02:00:00 equity=9950.50 margin_available=1102.95
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1765.1348571428573 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1807.9602857142856 created_at=None
+[W5 TRACE] ts=2021-02-19 02:00:00 c=1769.51000 ao=-5.16982 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=1 entry=0 sl=0 size=0 reason="already_in_position" fib_tol=0.9338 fib_pct=0.649 score=0.600 z=0.087 d=0.844 lag_s=1.000 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 03:00:00 equity=9938.75 margin_available=1102.95
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1765.1348571428573 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1807.9602857142856 created_at=None
+[BROKER ORDER] action=REMOVE reason=EXPLICIT_REMOVE side=SELL size=0 caller=C:\Users\kyawswar\Desktop\bt3\bt3\.venv\Lib\site-packages\backtesting\backtesting.py:_close_trade:1068
+[BROKER ORDER] action=REMOVE reason=EXPLICIT_REMOVE side=SELL size=0 caller=C:\Users\kyawswar\Desktop\bt3\bt3\.venv\Lib\site-packages\backtesting\backtesting.py:_close_trade:1070
+[BROKER] orders_removed=2
+[BROKER ORDER] action=NEW side=BUY size=5 stop=None limit=1770.73 sl=None tp=None
+[BROKER STATE] ts=2021-02-19 03:00:00 equity=9928.62 margin_available=9928.62 for_order
+[BROKER ORDER] action=ACCEPTED side=BUY size=5 order_id=2203259700624
+[W5 TRACE] ts=2021-02-19 03:00:00 c=1767.16000 ao=-6.51694 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=1 entry=1 sl=1 size=1 reason="" fib_tol=1.0075 fib_pct=0.731 score=0.576 z=0.307 d=0.542 lag_s=1.000 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 04:00:00 equity=9928.62 margin_available=9928.62
+[BROKER] orders_pending=1
+[BROKER ORDER] action=PENDING side=BUY size=5.0 stop=1770.73 limit=None created_at=None
+[W5 TRACE] ts=2021-02-19 04:00:00 c=1770.06000 ao=-7.61182 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="trigger_fail"
+[BROKER] ts=2021-02-19 05:00:00 equity=9928.62 margin_available=9928.62
+[BROKER] orders_pending=1
+[BROKER ORDER] action=PENDING side=BUY size=5.0 stop=1770.73 limit=None created_at=None
+[W5 TRACE] ts=2021-02-19 05:00:00 c=1767.93000 ao=-8.70647 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="trigger_fail"
+[BROKER] ts=2021-02-19 06:00:00 equity=9928.62 margin_available=9928.62
+[BROKER] orders_pending=1
+[BROKER ORDER] action=PENDING side=BUY size=5.0 stop=1770.73 limit=None created_at=None
+[W5 TRACE] ts=2021-02-19 06:00:00 c=1767.91000 ao=-9.84488 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="trigger_fail"
+[BROKER] ts=2021-02-19 07:00:00 equity=9928.62 margin_available=9928.62
+[BROKER] orders_pending=1
+[BROKER ORDER] action=PENDING side=BUY size=5.0 stop=1770.73 limit=None created_at=None
+[BROKER ORDER] action=NEW side=SELL size=5 stop=None limit=1797.5190714285714 sl=None tp=None
+[BROKER STATE] ts=2021-02-19 07:00:00 equity=9937.97 margin_available=1074.97 for_order
+[BROKER ORDER] action=ACCEPTED side=SELL size=5 order_id=2203259766864
+[BROKER ORDER] action=NEW side=SELL size=5 stop=1757.3354642857144 limit=None sl=None tp=None
+[BROKER STATE] ts=2021-02-19 07:00:00 equity=9937.97 margin_available=1074.97 for_order
+[BROKER ORDER] action=ACCEPTED side=SELL size=5 order_id=2203261110544
+[BROKER ORDER] action=REMOVE reason=EXPLICIT_REMOVE side=SELL size=0 caller=C:\Users\kyawswar\Desktop\bt3\bt3\.venv\Lib\site-packages\backtesting\backtesting.py:_process_orders:1038
+[W5 TRACE] ts=2021-02-19 07:00:00 c=1772.60000 ao=-9.44309 ao_signal=-1 swing_ready=1 type=none zone=0 trigger=0 entry=0 sl=0 size=0 reason="trigger_fail"
+[BROKER] ts=2021-02-19 08:00:00 equity=9935.47 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 08:00:00 c=1772.10000 ao=-7.78465 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.7596 fib_pct=0.455 score=0.477 z=0.004 d=0.542 lag_s=0.958 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 09:00:00 equity=9945.02 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 09:00:00 c=1774.01000 ao=-6.86250 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.7380 fib_pct=0.431 score=0.513 z=0.026 d=0.542 lag_s=0.950 reg_s=0.500 cndl_s=1.000
+[BROKER] ts=2021-02-19 10:00:00 equity=9947.02 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 10:00:00 c=1774.41000 ao=-5.98429 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.7416 fib_pct=0.435 score=0.478 z=0.014 d=0.542 lag_s=0.942 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 11:00:00 equity=9931.07 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 11:00:00 c=1771.22000 ao=-4.66006 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.7614 fib_pct=0.457 score=0.478 z=0.017 d=0.542 lag_s=0.933 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 12:00:00 equity=9935.57 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 12:00:00 c=1772.12000 ao=-4.29309 ao_signal=-1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.7883 fib_pct=0.487 score=0.482 z=0.037 d=0.542 lag_s=0.925 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 13:00:00 equity=9919.52 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 13:00:00 c=1768.91000 ao=-4.76494 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.8296 fib_pct=0.533 score=0.496 z=0.086 d=0.542 lag_s=0.917 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 14:00:00 equity=9944.42 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 14:00:00 c=1773.89000 ao=-4.51582 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.8817 fib_pct=0.591 score=0.510 z=0.037 d=0.542 lag_s=0.908 reg_s=0.500 cndl_s=1.000
+[BROKER] ts=2021-02-19 15:00:00 equity=9991.42 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 15:00:00 c=1783.29000 ao=-3.67829 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0183 fib_pct=0.743 score=0.468 z=0.000 d=0.542 lag_s=0.900 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 16:00:00 equity=10009.62 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 16:00:00 c=1786.93000 ao=-1.28506 ao_signal=-1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0883 fib_pct=0.820 score=0.466 z=0.000 d=0.542 lag_s=0.892 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 17:00:00 equity=10004.32 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 17:00:00 c=1785.87000 ao=1.05350 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0668 fib_pct=0.796 score=0.465 z=0.000 d=0.542 lag_s=0.883 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 18:00:00 equity=9992.37 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 18:00:00 c=1783.48000 ao=4.00274 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0506 fib_pct=0.778 score=0.464 z=0.000 d=0.542 lag_s=0.875 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 19:00:00 equity=9990.52 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 19:00:00 c=1783.11000 ao=6.06494 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0955 fib_pct=0.828 score=0.463 z=0.001 d=0.542 lag_s=0.867 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 20:00:00 equity=9976.97 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 20:00:00 c=1780.40000 ao=6.80938 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.1081 fib_pct=0.842 score=0.462 z=0.002 d=0.542 lag_s=0.858 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 21:00:00 equity=9976.22 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 21:00:00 c=1780.25000 ao=5.99141 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0829 fib_pct=0.814 score=0.461 z=0.003 d=0.542 lag_s=0.850 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-19 22:00:00 equity=9984.57 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 22:00:00 c=1781.92000 ao=5.68791 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0398 fib_pct=0.766 score=0.489 z=0.001 d=0.542 lag_s=0.842 reg_s=0.500 cndl_s=1.000
+[BROKER] ts=2021-02-19 23:00:00 equity=9990.22 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-19 23:00:00 c=1783.05000 ao=5.13168 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0147 fib_pct=0.739 score=0.457 z=0.001 d=0.542 lag_s=0.833 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 01:00:00 equity=9992.02 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-22 01:00:00 c=1783.41000 ao=5.73276 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0398 fib_pct=0.766 score=0.456 z=0.000 d=0.542 lag_s=0.825 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 02:00:00 equity=10001.92 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-22 02:00:00 c=1785.39000 ao=6.49785 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0344 fib_pct=0.760 score=0.455 z=0.000 d=0.542 lag_s=0.817 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 03:00:00 equity=10008.42 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-22 03:00:00 c=1786.69000 ao=7.89435 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0362 fib_pct=0.762 score=0.454 z=0.000 d=0.542 lag_s=0.808 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 04:00:00 equity=9992.77 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-22 04:00:00 c=1783.56000 ao=8.63182 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0290 fib_pct=0.754 score=0.452 z=0.000 d=0.542 lag_s=0.800 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 05:00:00 equity=9993.92 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-22 05:00:00 c=1783.79000 ao=8.58026 ao_signal=1 swing_ready=1 type=buy zone=1 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=1.0272 fib_pct=0.752 score=0.451 z=0.000 d=0.542 lag_s=0.792 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 06:00:00 equity=9999.27 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-22 06:00:00 c=1784.86000 ao=8.30009 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.8117 fib_pct=0.513 score=0.450 z=0.000 d=0.542 lag_s=0.783 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 07:00:00 equity=10022.02 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-22 07:00:00 c=1789.41000 ao=8.58847 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.7039 fib_pct=0.393 score=0.448 z=0.000 d=0.542 lag_s=0.775 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 08:00:00 equity=10029.32 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-22 08:00:00 c=1790.87000 ao=8.99909 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.6751 fib_pct=0.361 score=0.447 z=0.000 d=0.542 lag_s=0.767 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 09:00:00 equity=10047.52 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-22 09:00:00 c=1794.51000 ao=9.75121 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.6931 fib_pct=0.381 score=0.446 z=0.000 d=0.542 lag_s=0.758 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 10:00:00 equity=10046.47 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[W5 TRACE] ts=2021-02-22 10:00:00 c=1794.30000 ao=11.09632 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.6644 fib_pct=0.349 score=0.445 z=0.000 d=0.542 lag_s=0.750 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 11:00:00 equity=10062.17 margin_available=1074.97
+[BROKER] orders_pending=2
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=1757.3354642857144 limit=None created_at=None
+[BROKER ORDER] action=PENDING side=SELL size=5.0 stop=None limit=1797.5190714285714 created_at=None
+[BROKER ORDER] action=REMOVE reason=EXPLICIT_REMOVE side=SELL size=0 caller=C:\Users\kyawswar\Desktop\bt3\bt3\.venv\Lib\site-packages\backtesting\backtesting.py:_close_trade:1068
+[BROKER ORDER] action=REMOVE reason=EXPLICIT_REMOVE side=SELL size=0 caller=C:\Users\kyawswar\Desktop\bt3\bt3\.venv\Lib\site-packages\backtesting\backtesting.py:_close_trade:1070
+[BROKER] orders_removed=2
+[W5 TRACE] ts=2021-02-22 11:00:00 c=1797.44000 ao=12.87197 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.6572 fib_pct=0.341 score=0.474 z=0.000 d=0.542 lag_s=0.742 reg_s=0.500 cndl_s=1.000
+[BROKER] ts=2021-02-22 12:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 12:00:00 c=1796.18000 ao=14.09565 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.6662 fib_pct=0.351 score=0.442 z=0.000 d=0.542 lag_s=0.733 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 13:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 13:00:00 c=1795.23000 ao=14.19115 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.6823 fib_pct=0.369 score=0.441 z=0.000 d=0.542 lag_s=0.725 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 14:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 14:00:00 c=1794.69000 ao=14.03406 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.7111 fib_pct=0.401 score=0.440 z=0.000 d=0.542 lag_s=0.717 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 15:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 15:00:00 c=1797.47000 ao=14.20685 ao_signal=1 swing_ready=1 type=buy zone=0 trigger=0 entry=0 sl=0 size=0 reason="score_fail" fib_tol=0.7308 fib_pct=0.423 score=0.438 z=0.000 d=0.542 lag_s=0.708 reg_s=0.500 cndl_s=0.000
+[BROKER] ts=2021-02-22 16:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 16:00:00 c=1804.72000 ao=14.21562 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8871 fib_pct=0.597 z=0.000
+[BROKER] ts=2021-02-22 17:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 17:00:00 c=1809.00000 ao=14.94732 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9249 fib_pct=0.639 z=0.001
+[BROKER] ts=2021-02-22 18:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 18:00:00 c=1811.54000 ao=16.52359 ao_signal=1 swing_ready=1 type=sell zone=1 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9374 fib_pct=0.653 z=0.007
+[BROKER] ts=2021-02-22 19:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 19:00:00 c=1809.18000 ao=18.35785 ao_signal=1 swing_ready=1 type=sell zone=1 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9320 fib_pct=0.647 z=0.007
+[BROKER] ts=2021-02-22 20:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 20:00:00 c=1808.53000 ao=19.48106 ao_signal=1 swing_ready=1 type=sell zone=1 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9500 fib_pct=0.667 z=0.010
+[BROKER] ts=2021-02-22 21:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 21:00:00 c=1808.10000 ao=19.84406 ao_signal=1 swing_ready=1 type=sell zone=1 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8979 fib_pct=0.609 z=0.004
+[BROKER] ts=2021-02-22 22:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 22:00:00 c=1808.25000 ao=19.07253 ao_signal=1 swing_ready=1 type=sell zone=1 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8512 fib_pct=0.557 z=0.003
+[BROKER] ts=2021-02-22 23:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-22 23:00:00 c=1809.04000 ao=17.67115 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7919 fib_pct=0.491 z=0.004
+[BROKER] ts=2021-02-23 01:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 01:00:00 c=1810.43000 ao=16.52397 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7668 fib_pct=0.463 z=0.000
+[BROKER] ts=2021-02-23 02:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 02:00:00 c=1809.65000 ao=15.40874 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7219 fib_pct=0.413 z=0.000
+[BROKER] ts=2021-02-23 03:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 03:00:00 c=1813.23000 ao=14.86135 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7883 fib_pct=0.487 z=0.000
+[BROKER] ts=2021-02-23 04:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 04:00:00 c=1815.37000 ao=15.08135 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8135 fib_pct=0.515 z=0.000
+[BROKER] ts=2021-02-23 05:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 05:00:00 c=1813.20000 ao=15.26032 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8153 fib_pct=0.517 z=0.000
+[BROKER] ts=2021-02-23 06:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 06:00:00 c=1812.72000 ao=14.92429 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7147 fib_pct=0.405 z=0.000
+[BROKER] ts=2021-02-23 07:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 07:00:00 c=1812.67000 ao=14.50109 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5207 fib_pct=0.190 z=0.000
+[BROKER] ts=2021-02-23 08:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 08:00:00 c=1812.03000 ao=14.05379 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4560 fib_pct=0.118 z=0.000
+[BROKER] ts=2021-02-23 09:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 09:00:00 c=1808.58000 ao=12.62000 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4524 fib_pct=0.114 z=0.000
+[BROKER] ts=2021-02-23 10:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 10:00:00 c=1810.12000 ao=10.85965 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4452 fib_pct=0.106 z=0.000
+[BROKER] ts=2021-02-23 11:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 11:00:00 c=1804.24000 ao=9.05497 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5225 fib_pct=0.192 z=0.000
+[BROKER] ts=2021-02-23 12:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 12:00:00 c=1805.77000 ao=7.41300 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5728 fib_pct=0.248 z=0.000
+[BROKER] ts=2021-02-23 13:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 13:00:00 c=1809.15000 ao=5.67509 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5853 fib_pct=0.261 z=0.000
+[BROKER] ts=2021-02-23 14:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 14:00:00 c=1810.03000 ao=4.98794 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6338 fib_pct=0.315 z=0.000
+[BROKER] ts=2021-02-23 15:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 15:00:00 c=1809.64000 ao=4.34891 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.6734 fib_pct=0.359 z=0.000
+[BROKER] ts=2021-02-23 16:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 16:00:00 c=1801.55000 ao=2.94241 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8350 fib_pct=0.539 z=0.000
+[BROKER] ts=2021-02-23 17:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 17:00:00 c=1806.97000 ao=2.01950 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9051 fib_pct=0.617 z=0.000
+[BROKER] ts=2021-02-23 18:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 18:00:00 c=1807.22000 ao=1.01826 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9141 fib_pct=0.627 z=0.000
+[BROKER] ts=2021-02-23 19:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 19:00:00 c=1806.93000 ao=-0.01876 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8889 fib_pct=0.599 z=0.000
+[BROKER] ts=2021-02-23 20:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 20:00:00 c=1803.88000 ao=-1.31597 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9716 fib_pct=0.691 z=0.000
+[BROKER] ts=2021-02-23 21:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 21:00:00 c=1803.69000 ao=-1.37718 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9464 fib_pct=0.663 z=0.000
+[BROKER] ts=2021-02-23 22:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 22:00:00 c=1804.80000 ao=-1.64997 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9159 fib_pct=0.629 z=0.000
+[BROKER] ts=2021-02-23 23:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-23 23:00:00 c=1805.07000 ao=-1.84588 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8422 fib_pct=0.547 z=0.000
+[BROKER] ts=2021-02-24 01:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 01:00:00 c=1805.78000 ao=-2.44124 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8260 fib_pct=0.529 z=0.000
+[BROKER] ts=2021-02-24 02:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 02:00:00 c=1807.42000 ao=-2.40279 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7686 fib_pct=0.465 z=0.000
+[BROKER] ts=2021-02-24 03:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 03:00:00 c=1812.02000 ao=-1.52097 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7793 fib_pct=0.477 z=0.000
+[BROKER] ts=2021-02-24 04:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 04:00:00 c=1810.24000 ao=-0.43891 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7757 fib_pct=0.473 z=0.000
+[BROKER] ts=2021-02-24 05:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 05:00:00 c=1808.89000 ao=0.38409 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7560 fib_pct=0.451 z=0.000
+[BROKER] ts=2021-02-24 06:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 06:00:00 c=1809.24000 ao=0.83638 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7219 fib_pct=0.413 z=0.000
+[BROKER] ts=2021-02-24 07:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 07:00:00 c=1809.55000 ao=1.31712 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.5009 fib_pct=0.168 z=0.000
+[BROKER] ts=2021-02-24 08:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 08:00:00 c=1808.28000 ao=0.82941 ao_signal=1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3644 fib_pct=0.016 z=0.000
+[BROKER] ts=2021-02-24 09:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 09:00:00 c=1806.01000 ao=-0.19365 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3572 fib_pct=0.008 z=0.000
+[BROKER] ts=2021-02-24 10:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 10:00:00 c=1806.01000 ao=-0.60859 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3680 fib_pct=0.020 z=0.000
+[BROKER] ts=2021-02-24 11:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 11:00:00 c=1804.38000 ao=-1.03568 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3644 fib_pct=0.016 z=0.000
+[BROKER] ts=2021-02-24 12:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 12:00:00 c=1807.10000 ao=-1.38706 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.3985 fib_pct=0.054 z=0.000
+[BROKER] ts=2021-02-24 13:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 13:00:00 c=1808.56000 ao=-1.27797 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4165 fib_pct=0.074 z=0.000
+[BROKER] ts=2021-02-24 14:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 14:00:00 c=1806.59000 ao=-0.96450 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.4757 fib_pct=0.140 z=0.000
+[BROKER] ts=2021-02-24 15:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 15:00:00 c=1790.68000 ao=-2.39753 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7829 fib_pct=0.481 z=0.000
+[BROKER] ts=2021-02-24 16:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 16:00:00 c=1785.67000 ao=-5.03171 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9105 fib_pct=0.623 z=0.000
+[BROKER] ts=2021-02-24 17:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 17:00:00 c=1794.99000 ao=-7.69347 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0254 fib_pct=0.750 z=0.000
+[BROKER] ts=2021-02-24 18:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 18:00:00 c=1802.04000 ao=-9.58950 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1027 fib_pct=0.836 z=0.000
+[BROKER] ts=2021-02-24 19:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 19:00:00 c=1798.37000 ao=-10.54362 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1225 fib_pct=0.858 z=0.000
+[BROKER] ts=2021-02-24 20:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 20:00:00 c=1797.60000 ao=-10.30641 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1422 fib_pct=0.880 z=0.000
+[BROKER] ts=2021-02-24 21:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 21:00:00 c=1797.30000 ao=-8.17512 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1440 fib_pct=0.882 z=0.000
+[BROKER] ts=2021-02-24 22:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 22:00:00 c=1802.50000 ao=-5.89856 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1638 fib_pct=0.904 z=0.000
+[BROKER] ts=2021-02-24 23:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-24 23:00:00 c=1805.33000 ao=-4.35521 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1512 fib_pct=0.890 z=0.000
+[BROKER] ts=2021-02-25 01:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 01:00:00 c=1803.07000 ao=-3.81200 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1332 fib_pct=0.870 z=0.000
+[BROKER] ts=2021-02-25 02:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 02:00:00 c=1798.31000 ao=-2.78624 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1440 fib_pct=0.882 z=0.000
+[BROKER] ts=2021-02-25 03:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 03:00:00 c=1797.00000 ao=-2.13526 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1494 fib_pct=0.888 z=0.000
+[BROKER] ts=2021-02-25 04:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 04:00:00 c=1796.48000 ao=-2.55647 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1692 fib_pct=0.910 z=0.000
+[BROKER] ts=2021-02-25 05:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 05:00:00 c=1796.73000 ao=-3.88103 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1620 fib_pct=0.902 z=0.000
+[BROKER] ts=2021-02-25 06:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 06:00:00 c=1797.96000 ao=-4.84888 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9859 fib_pct=0.707 z=0.000
+[BROKER] ts=2021-02-25 07:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 07:00:00 c=1800.63000 ao=-5.09791 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8692 fib_pct=0.577 z=0.000
+[BROKER] ts=2021-02-25 08:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 08:00:00 c=1796.75000 ao=-5.39862 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.8063 fib_pct=0.507 z=0.000
+[BROKER] ts=2021-02-25 09:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 09:00:00 c=1794.54000 ao=-5.83579 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7183 fib_pct=0.409 z=0.000
+[BROKER] ts=2021-02-25 10:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 10:00:00 c=1790.42000 ao=-6.35641 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7272 fib_pct=0.419 z=0.000
+[BROKER] ts=2021-02-25 11:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 11:00:00 c=1794.39000 ao=-7.24332 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7668 fib_pct=0.463 z=0.000
+[BROKER] ts=2021-02-25 12:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 12:00:00 c=1794.77000 ao=-7.90682 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.7740 fib_pct=0.471 z=0.000
+[BROKER] ts=2021-02-25 13:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 13:00:00 c=1786.70000 ao=-9.16076 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9033 fib_pct=0.615 z=0.000
+[BROKER] ts=2021-02-25 14:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 14:00:00 c=1787.65000 ao=-9.67744 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=0.9590 fib_pct=0.677 z=0.000
+[BROKER] ts=2021-02-25 15:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 15:00:00 c=1781.43000 ao=-10.17274 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0632 fib_pct=0.792 z=0.000
+[BROKER] ts=2021-02-25 16:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 16:00:00 c=1781.47000 ao=-10.88018 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1027 fib_pct=0.836 z=0.000
+[BROKER] ts=2021-02-25 17:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 17:00:00 c=1775.67000 ao=-13.45529 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1584 fib_pct=0.898 z=0.000
+[BROKER] ts=2021-02-25 18:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 18:00:00 c=1780.58000 ao=-14.48447 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1817 fib_pct=0.924 z=0.000
+[BROKER] ts=2021-02-25 19:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 19:00:00 c=1773.29000 ao=-15.79188 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2069 fib_pct=0.952 z=0.000
+[BROKER] ts=2021-02-25 20:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 20:00:00 c=1778.41000 ao=-17.28982 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2374 fib_pct=0.986 z=0.000
+[BROKER] ts=2021-02-25 21:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 21:00:00 c=1773.33000 ao=-17.91365 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2428 fib_pct=0.992 z=0.000
+[BROKER] ts=2021-02-25 22:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 22:00:00 c=1769.60000 ao=-17.75091 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2284 fib_pct=0.976 z=0.000
+[BROKER] ts=2021-02-25 23:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-25 23:00:00 c=1770.25000 ao=-18.05862 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2266 fib_pct=0.974 z=0.000
+[BROKER] ts=2021-02-26 01:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 01:00:00 c=1769.86000 ao=-18.06338 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2105 fib_pct=0.956 z=0.000
+[BROKER] ts=2021-02-26 02:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 02:00:00 c=1772.70000 ao=-17.52665 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2105 fib_pct=0.956 z=0.000
+[BROKER] ts=2021-02-26 03:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 03:00:00 c=1771.22000 ao=-17.82009 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2195 fib_pct=0.966 z=0.000
+[BROKER] ts=2021-02-26 04:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 04:00:00 c=1772.89000 ao=-17.04109 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1925 fib_pct=0.936 z=0.000
+[BROKER] ts=2021-02-26 05:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 05:00:00 c=1772.83000 ao=-16.28776 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1781 fib_pct=0.920 z=0.000
+[BROKER] ts=2021-02-26 06:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 06:00:00 c=1767.84000 ao=-15.76809 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1476 fib_pct=0.886 z=0.000
+[BROKER] ts=2021-02-26 07:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 07:00:00 c=1760.62000 ao=-15.75688 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1512 fib_pct=0.890 z=0.000
+[BROKER] ts=2021-02-26 08:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 08:00:00 c=1762.91000 ao=-16.37197 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0847 fib_pct=0.816 z=0.000
+[BROKER] ts=2021-02-26 09:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 09:00:00 c=1759.42000 ao=-17.95882 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0811 fib_pct=0.812 z=0.000
+[BROKER] ts=2021-02-26 10:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 10:00:00 c=1768.33000 ao=-18.84126 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0901 fib_pct=0.822 z=0.000
+[BROKER] ts=2021-02-26 11:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 11:00:00 c=1763.18000 ao=-18.41262 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0362 fib_pct=0.762 z=0.000
+[BROKER] ts=2021-02-26 12:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 12:00:00 c=1764.52000 ao=-17.09947 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0111 fib_pct=0.735 z=0.000
+[BROKER] ts=2021-02-26 13:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 13:00:00 c=1759.92000 ao=-16.02003 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0416 fib_pct=0.768 z=0.000
+[BROKER] ts=2021-02-26 14:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 14:00:00 c=1758.71000 ao=-14.63474 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0344 fib_pct=0.760 z=0.000
+[BROKER] ts=2021-02-26 15:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 15:00:00 c=1761.59000 ao=-13.87806 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.0901 fib_pct=0.822 z=0.000
+[BROKER] ts=2021-02-26 16:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 16:00:00 c=1744.99000 ao=-15.07068 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.1871 fib_pct=0.930 z=0.000
+[BROKER] ts=2021-02-26 17:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 17:00:00 c=1729.99000 ao=-19.08824 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2446 fib_pct=0.994 z=0.000
+[BROKER] ts=2021-02-26 18:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 18:00:00 c=1718.05000 ao=-24.29721 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2500 fib_pct=1.000 z=0.000
+[BROKER] ts=2021-02-26 19:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 19:00:00 c=1726.43000 ao=-29.72124 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2500 fib_pct=1.000 z=0.000
+[BROKER] ts=2021-02-26 20:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 20:00:00 c=1729.78000 ao=-34.56888 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2482 fib_pct=0.998 z=0.000
+[BROKER] ts=2021-02-26 21:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 21:00:00 c=1727.21000 ao=-37.66250 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2446 fib_pct=0.994 z=0.000
+[BROKER] ts=2021-02-26 22:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 22:00:00 c=1726.76000 ao=-37.03812 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2446 fib_pct=0.994 z=0.000
+[BROKER] ts=2021-02-26 23:00:00 equity=10062.57 margin_available=10062.57
+[W5 TRACE] ts=2021-02-26 23:00:00 c=1733.84000 ao=-33.90818 ao_signal=-1 swing_ready=1 type=sell zone=0 trigger=0 entry=0 sl=0 size=0 reason="entry_fail" fib_tol=1.2446 fib_pct=0.994 z=0.000
+[W5 SUMMARY] {'bars_seen': 645, 'wave_candidates': 305, 'zone_pass': 51, 'trigger_pass': 6, 'entry_pass': 2, 'order_attempts': 2, 'orders_placed': 2, 'exceptions_count': 0}
+[BROKER] ts=2021-02-26 23:00:00 equity=10062.57 margin_available=10062.57
+FINAL COUNTERS: {'swings_count': 204, 'type_match': 305, 'elliott_pass': 656, 'zone_fail': 254, 'w3_size_fail': 0, 'w3_short_fail': 0, 'divergence_pass': 37, 'div_fail': 23, 'zero_cross_fail': 0, 'lag_fail': 0, 'candle_fail': 51, 'break_body_fail': 0, 'entries': 2, 'ao_decay_fail': 0, 'ao_decay_pass': 0, 'w5_ext_fail': 245, 'atr_regime_fail': 0, 'same_bar_ambiguous_fail': 0, 'zone_trigger_pass': 5, 'zone_extreme_pass': 50, 'score_fail': 54, 'score_pass': 6}
+======================================================================
+Wave5 Strategy Stats
+======================================================================
+Start                     2021-01-15 01:00:00
+End                       2021-02-26 23:00:00
+Duration                     42 days 22:00:00
+Exposure Time [%]                     5.24823
+Equity Final [$]                  10062.56964
+Equity Peak [$]                   10062.56964
+Return [%]                             0.6257
+Buy & Hold Return [%]                -5.34464
+Return (Ann.) [%]                     5.20121
+Volatility (Ann.) [%]                 2.32239
+CAGR [%]                              3.73044
+Sharpe Ratio                          2.23959
+Sortino Ratio                         9.04074
+Calmar Ratio                          6.46308
+Alpha [%]                             0.75767
+Beta                                  0.02469
+Max. Drawdown [%]                    -0.80476
+Avg. Drawdown [%]                    -0.38296
+Max. Drawdown Duration        2 days 15:00:00
+Avg. Drawdown Duration        1 days 06:00:00
+# Trades                                    2
+Win Rate [%]                             50.0
+Best Trade [%]                        1.51288
+Worst Trade [%]                      -0.80224
+Avg. Trade [%]                        0.34865
+Max. Trade Duration           3 days 04:00:00
+Avg. Trade Duration           1 days 19:00:00
+Profit Factor                         1.88582
+Expectancy [%]                        0.35532
+SQN                                   0.30474
+Kelly Criterion                       0.23356
+_strategy                 Wave5AODivergenc...
+_equity_curve                             ...
+_trades                      Size  EntryBa...
+dtype: object
+
+All reports saved to: reports\XAUUSD_1h_wave5_20260103_155307

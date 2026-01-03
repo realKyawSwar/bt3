@@ -639,6 +639,54 @@ class Wave5AODivergenceStrategy(Strategy):
             parts.append(f"{t.get('id')} size={t.get('size')} long={int(bool(t.get('is_long')))}")
         return "[" + "; ".join(parts) + "]"
 
+    @staticmethod
+    def _is_engine_internal_removal(reason: str, caller: str | None) -> bool:
+        """Return True when removal is driven by backtesting engine internals."""
+        if reason != "EXPLICIT_REMOVE":
+            return False
+        caller_str = caller or ""
+        return ("_process_orders" in caller_str) or ("_close_trade" in caller_str)
+
+    @staticmethod
+    def _removal_matches_order(order: dict, removal: dict) -> bool:
+        """Best-effort match of a removal event to an order descriptor."""
+        if not removal:
+            return False
+
+        # Prefer object identity when available
+        if removal.get("order_id") is not None and removal.get("order_id") == order.get("id"):
+            return True
+
+        numeric_fields = ("stop", "limit", "size")
+        matched_any = False
+
+        if order.get("side") and removal.get("side") and order.get("side") != removal.get("side"):
+            return False
+        matched_any = matched_any or bool(order.get("side") and removal.get("side"))
+
+        for field in numeric_fields:
+            o_val = order.get(field)
+            r_val = removal.get(field)
+            if o_val is None or r_val is None:
+                continue
+            matched_any = True
+            try:
+                if not np.isclose(float(o_val), float(r_val)):
+                    return False
+            except Exception:
+                if o_val != r_val:
+                    return False
+
+        return matched_any
+
+    @classmethod
+    def _find_matching_removal(cls, order: dict, removal_events: list[dict]) -> dict | None:
+        """Find the best matching removal event for a missing order."""
+        for evt in removal_events:
+            if cls._removal_matches_order(order, evt):
+                return evt
+        return None
+
     def _build_broker_snapshot(self) -> dict:
         """Capture pending orders, open trades, and recent removals for this bar."""
         orders = []
@@ -648,7 +696,14 @@ class Wave5AODivergenceStrategy(Strategy):
         if hasattr(self, "trades"):
             trades = [self._summarize_trade(t) for t in self.trades]
 
+        ts = None
+        try:
+            ts = self.data.index[-1] if hasattr(self.data, "index") else None
+        except Exception:
+            ts = None
+
         snapshot = {
+            "ts": ts,
             "orders": orders,
             "order_ids": {o["id"] for o in orders if "id" in o},
             "trades": trades,
@@ -659,18 +714,47 @@ class Wave5AODivergenceStrategy(Strategy):
 
         recent_removals = getattr(getattr(self, "_broker", None), "_recent_order_removals", None)
         if recent_removals:
-            snapshot["recent_removals"] = list(recent_removals)
-            try:
-                recent_removals.clear()
-            except Exception:
-                # If clearing fails, keep the copied list to avoid stale duplication
-                snapshot["recent_removals"] = list(snapshot["recent_removals"])
+            events = list(recent_removals)
+            if ts is not None:
+                events = [evt for evt in events if evt.get("ts") is None or evt.get("ts") == ts]
+            snapshot["recent_removals"] = events
 
         return snapshot
 
     @staticmethod
-    def _classify_missing_orders(missing_orders: list[dict], prev_snapshot: dict, curr_snapshot: dict) -> dict:
+    def _classify_missing_orders(
+        missing_orders: list[dict],
+        prev_snapshot: dict,
+        curr_snapshot: dict,
+        log_fn=None,
+    ) -> dict:
         """Classify why orders disappeared between bars."""
+        removal_events = curr_snapshot.get("recent_removals") or []
+        remaining_missing: list[dict] = []
+        suppressed_events: list[tuple[dict, dict]] = []
+
+        for order in missing_orders:
+            match = Wave5AODivergenceStrategy._find_matching_removal(order, removal_events)
+            if match and Wave5AODivergenceStrategy._is_engine_internal_removal(
+                str(match.get("reason")), match.get("caller")
+            ):
+                suppressed_events.append((order, match))
+            else:
+                remaining_missing.append(order)
+
+        if suppressed_events and log_fn:
+            for order, evt in suppressed_events:
+                log_fn(
+                    "[BROKER] suppressed_order_disappeared=1 "
+                    f"reason={evt.get('reason')} caller={evt.get('caller')} "
+                    f"stop={evt.get('stop')} limit={evt.get('limit')} "
+                    f"side={order.get('side')} size={order.get('size')}"
+                )
+
+        missing_orders = remaining_missing
+        if not missing_orders:
+            return {"reason": "engine_internal", "alert": False}
+
         missing_ids = {o.get("id") for o in missing_orders}
         prev_trade_ids = prev_snapshot.get("trade_ids", set())
         curr_trade_ids = curr_snapshot.get("trade_ids", set())
@@ -688,8 +772,8 @@ class Wave5AODivergenceStrategy(Strategy):
 
         removal_events = curr_snapshot.get("recent_removals") or []
         matched_removal = any(
-            (evt.get("order_id") in missing_ids) or evt.get("order_id") is None
-            for evt in removal_events
+            Wave5AODivergenceStrategy._find_matching_removal(order, removal_events) is not None
+            for order in missing_orders
         )
 
         parent_closed = any(
@@ -719,7 +803,12 @@ class Wave5AODivergenceStrategy(Strategy):
                 if o.get("id") not in curr_snapshot.get("order_ids", set())
             ]
             if missing:
-                result = self._classify_missing_orders(missing, prev_snapshot, curr_snapshot)
+                result = self._classify_missing_orders(
+                    missing,
+                    prev_snapshot,
+                    curr_snapshot,
+                    log_fn=self._dbg if self.debug else None,
+                )
                 if result.get("alert", False):
                     reason = result.get("reason", "unknown")
                     prev_pending = self._format_order_list(prev_snapshot.get("orders", []))

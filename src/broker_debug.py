@@ -13,6 +13,7 @@ Key enhancements:
 
 import functools
 import traceback
+from collections import deque
 from typing import Any, Callable, List
 
 
@@ -31,10 +32,11 @@ class TrackedOrderList:
 
         def _record_event(event: dict) -> None:
             try:
-                events = getattr(self._broker, "_recent_order_removals", [])
+                events = getattr(self._broker, "_recent_order_removals", None)
+                if not isinstance(events, deque):
+                    events = deque(maxlen=500)
                 events.append(event)
-                # Keep a small tail to avoid unbounded growth
-                setattr(self._broker, "_recent_order_removals", events[-50:])
+                setattr(self._broker, "_recent_order_removals", events)
             except Exception:
                 pass
         
@@ -46,11 +48,20 @@ class TrackedOrderList:
                 caller = f"{frame.filename.split('/')[-1]}:{frame.name}:{frame.lineno}"
                 break
         
+        ts = None
+        try:
+            data = getattr(self._broker, "_data", None)
+            if data is not None:
+                ts = data.index[-1] if hasattr(data, "index") else None
+        except Exception:
+            ts = None
+
         item_info = ""
         event = {
             "reason": reason,
             "order_id": id(item) if item else None,
             "caller": caller,
+            "ts": ts,
         }
         if item and hasattr(item, '__dict__'):
             attrs = vars(item)

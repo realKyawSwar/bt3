@@ -110,5 +110,58 @@ def test_missing_without_reason_triggers_alert() -> None:
     assert result["alert"] is True
 
 
+def test_engine_internal_explicit_remove_is_suppressed() -> None:
+    """EXPLICIT_REMOVE driven by engine internals should not alert."""
+    prev_orders = [_order_desc(30, side="SELL", stop=25.0, size=1.5)]
+    prev_snapshot = _snapshot(prev_orders, position=0.0)
+    removal_event = {
+        "order_id": None,
+        "side": "SELL",
+        "stop": 25.0,
+        "limit": None,
+        "size": 1.5,
+        "reason": "EXPLICIT_REMOVE",
+        "caller": "/path/backtesting.py:_process_orders:1038",
+    }
+    curr_snapshot = _snapshot([], removals=[removal_event], position=0.0)
+
+    result = Wave5AODivergenceStrategy._classify_missing_orders(
+        missing_orders=prev_orders,
+        prev_snapshot=prev_snapshot,
+        curr_snapshot=curr_snapshot,
+    )
+
+    assert result["reason"] == "engine_internal"
+    assert result["alert"] is False
+
+
+def test_other_missing_orders_still_alert_when_some_suppressed() -> None:
+    """Internal removals are ignored, but remaining unexplained disappearances still alert."""
+    prev_orders = [
+        _order_desc(40, side="BUY", stop=10.0, size=1.0),
+        _order_desc(41, side="SELL", stop=11.0, size=2.0),
+    ]
+    prev_snapshot = _snapshot(prev_orders, position=0.0)
+    removal_event = {
+        "order_id": 40,
+        "side": "BUY",
+        "stop": 10.0,
+        "limit": None,
+        "size": 1.0,
+        "reason": "EXPLICIT_REMOVE",
+        "caller": "/path/backtesting.py:_close_trade:1068",
+    }
+    curr_snapshot = _snapshot([], removals=[removal_event], position=0.0)
+
+    result = Wave5AODivergenceStrategy._classify_missing_orders(
+        missing_orders=prev_orders,
+        prev_snapshot=prev_snapshot,
+        curr_snapshot=curr_snapshot,
+    )
+
+    assert result["reason"] == "unknown"
+    assert result["alert"] is True
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
