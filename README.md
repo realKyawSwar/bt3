@@ -6,6 +6,7 @@ Lightweight forex backtesting utilities on top of `backtesting.py`, plus a CLI r
 - Fetches forex OHLCV from the `ejtraderLabs/historical-data` repo or local CSV/Parquet.
 - Alligator + Fractal strategies (strict/classic/pullback) and Wave5 AO divergence with extensive tuning flags.
 - New FX 12-month cross-sectional momentum benchmark with optional carry, volatility targeting, and monthly rebalance.
+- Momentum + mean reversion strategy with momentum regime filter, ATR-based risk/TP, and RSI timing.
 - Reporting helpers to export trades, equity curves, metrics, and summary tables to `reports/`.
 
 ## Installation
@@ -29,6 +30,16 @@ pip install -r requirements.txt
       --fxmom-pairs EURUSD,GBPUSD,USDJPY,USDCHF,AUDUSD,NZDUSD,USDCAD \
       --fxmom-k 2 --fxmom-target-vol 0.10 --fxmom-use-carry 0
   ```
+- Momentum + mean reversion timing:
+  ```
+  python src/compare_strategies.py --mode mom_mr --asset EURUSD --tf 1h --mom-window 126 --rsi-threshold 20 --sl-atr 2.0 --spread 10
+  ```
+- Momentum + mean reversion grid search:
+  ```
+  python src/mom_mr_compare.py --asset XAUUSD --tf 1h \
+      --mom-window-grid 63,126 --rsi-threshold-grid 15,20,25 --sl-atr-grid 2.0,2.5 \
+      --outdir reports/mom_mr/
+  ```
 
 ## Data
 - Remote fetch pattern: `https://raw.githubusercontent.com/ejtraderLabs/historical-data/main/{SYMBOL}/{SYMBOL}{suffix}.csv`
@@ -41,10 +52,12 @@ pip install -r requirements.txt
 - Optional carry: `--fxmom-use-carry 1 --fxmom-rates-csv data/rates_monthly.csv` (columns: `date,USD,EUR,JPY,GBP,CHF,AUD,NZD,CAD` in decimal).
 - Vol targeting: `--fxmom-target-vol 0.10 --fxmom-vol-lookback 12 --fxmom-max-lev 3.0`.
 - Reports saved under `reports/fxmom_*timestamp*/`: currency scores/weights, pair weights, returns, equity, metrics JSON, leverage, and equity PNG.
+- Momentum + mean reversion saves stats/trades/equity under `reports/{asset}_{tf}_mommr_{timestamp}/` via `compare_strategies.py`, and grid runs under `reports/{asset}_{tf}_mommr_grid_{timestamp}/`.
 
 ## Outputs
 - Stats/trades/equity CSVs for strategy runs (under `reports/` with timestamped subfolders).
 - Equity PNG for FX momentum; use `reporting.plot_equity_curve` for other strategies.
+- Grid scripts also emit ranked CSVs and best-trade artifacts for the new momentum + mean reversion strategy.
 
 ## Development
 - Tests are in `tests/` and `src/test_*.py`; run with `pytest`.

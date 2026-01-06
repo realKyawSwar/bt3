@@ -28,6 +28,7 @@ from fx_momentum_12m import (
     map_currency_weights_to_pairs,
     prepare_monthly_closes,
 )
+from mom_mr import MomentumMeanReversionStrategy
 from metrics import compute_metrics
 from reporting import export_equity_curve_csv, export_trades_csv
 from wave5_ao import Wave5AODivergenceStrategy
@@ -35,6 +36,7 @@ from wave5_ao import Wave5AODivergenceStrategy
 
 STRATEGY_REGISTRY = {
     "wave5": Wave5AODivergenceStrategy,
+    "mom_mr": MomentumMeanReversionStrategy,
 }
 
 
@@ -566,8 +568,16 @@ def run_fx_momentum_mode(args) -> None:
 
 
 def main() -> None:
-    mode_choices = ["alligator", "wave5", "wave5_wf", "fxmom"]
-    parser = argparse.ArgumentParser(description="Compare strict vs classic Alligator+Fractal strategies.")
+    mode_choices = ["alligator", "wave5", "wave5_wf", "fxmom", "mom_mr"]
+    parser = argparse.ArgumentParser(
+        description="Compare strict vs classic Alligator+Fractal strategies.",
+        epilog=(
+            "Examples:\n"
+            "  python src/compare_strategies.py --mode mom_mr --asset EURUSD --tf 1h --mom-window 126 --rsi-threshold 20 --sl-atr 2.0 --spread 10\n"
+            "  python src/mom_mr_compare.py --asset XAUUSD --tf 1h --mom-window-grid 63,126 --rsi-threshold-grid 15,20,25 --sl-atr-grid 2.0,2.5 --outdir reports/mom_mr/\n"
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
     parser.add_argument(
         "--mode",
         choices=mode_choices,
@@ -602,6 +612,25 @@ def main() -> None:
     parser.add_argument("--fxmom-target-vol", type=float, default=0.10, help="Annualized volatility target (set <=0 to disable).")
     parser.add_argument("--fxmom-vol-lookback", type=int, default=12, help="Lookback months for realized vol in vol targeting.")
     parser.add_argument("--fxmom-max-lev", type=float, default=3.0, help="Maximum leverage for vol targeting.")
+
+    # Momentum + mean reversion strategy params
+    parser.add_argument("--mom-window", type=int, default=MomentumMeanReversionStrategy.mom_window, help="Momentum lookback window length.")
+    parser.add_argument("--mom-threshold", type=float, default=MomentumMeanReversionStrategy.mom_threshold, help="Momentum threshold for bullish/bearish regimes.")
+    parser.add_argument("--rsi-window", type=int, default=MomentumMeanReversionStrategy.rsi_window, help="RSI lookback for timing (mean reversion).")
+    parser.add_argument("--rsi-threshold", type=float, default=MomentumMeanReversionStrategy.rsi_threshold, help="RSI threshold to trigger entries (longs when below, shorts when above 100-threshold).")
+    parser.add_argument("--rsi-exit", type=float, default=MomentumMeanReversionStrategy.rsi_exit, help="RSI level to exit mean reversion trades.")
+    parser.add_argument("--atr-window", type=int, default=MomentumMeanReversionStrategy.atr_window, help="ATR lookback for stop distance.")
+    parser.add_argument("--sl-atr", type=float, default=MomentumMeanReversionStrategy.sl_atr, help="Stop-loss multiple of ATR.")
+    parser.add_argument(
+        "--tp-mode",
+        choices=["rsi", "atr"],
+        default=MomentumMeanReversionStrategy.tp_mode,
+        help="Take-profit mode: rsi revert or ATR multiple.",
+    )
+    parser.add_argument("--tp-atr", type=float, default=MomentumMeanReversionStrategy.tp_atr, help="ATR multiple for hard TP when tp-mode=atr.")
+    parser.add_argument("--risk-pct", type=float, default=MomentumMeanReversionStrategy.risk_pct, help="Risk per trade as fraction of equity (e.g., 0.01=1%).")
+    parser.add_argument("--min-size", type=float, default=MomentumMeanReversionStrategy.min_size, help="Minimum position size clamp (units).")
+    parser.add_argument("--max-size", type=float, default=MomentumMeanReversionStrategy.max_size, help="Maximum position size clamp (units).")
 
     parser.add_argument("--wave5-swing-window", type=int, default=Wave5AODivergenceStrategy.swing_window)
     parser.add_argument("--wave5-fib-tol", type=float, default=Wave5AODivergenceStrategy.fib_tol_atr)
@@ -715,6 +744,56 @@ def main() -> None:
         raise ValueError("No data available after filtering/resampling.")
 
     print(_data_fingerprint(df))
+
+    if args.mode == "mom_mr":
+        mom_params = {
+            "mom_window": args.mom_window,
+            "mom_threshold": args.mom_threshold,
+            "rsi_window": args.rsi_window,
+            "rsi_threshold": args.rsi_threshold,
+            "rsi_exit": args.rsi_exit,
+            "atr_window": args.atr_window,
+            "sl_atr": args.sl_atr,
+            "tp_mode": args.tp_mode,
+            "tp_atr": args.tp_atr,
+            "risk_pct": args.risk_pct,
+            "min_size": args.min_size,
+            "max_size": args.max_size,
+        }
+
+        mom_stats = run_backtest(
+            data=df,
+            strategy=MomentumMeanReversionStrategy,
+            cash=args.cash,
+            commission=args.commission,
+            spread_pips=args.spread,
+            margin=args.margin,
+            exclusive_orders=args.exclusive_orders,
+            strategy_params=mom_params,
+        )
+
+        _print_stats("Momentum + Mean Reversion Stats", mom_stats)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        asset_name = args.asset if args.asset else "data"
+        tf_name = args.tf if args.tf else "custom"
+        run_dir = f"{asset_name}_{tf_name}_mommr_{timestamp}"
+
+        outdir = Path(args.outdir) / run_dir
+        outdir.mkdir(parents=True, exist_ok=True)
+        stats_dir = outdir / "stats"
+        trades_dir = outdir / "trades"
+        equity_dir = outdir / "equity"
+        stats_dir.mkdir(exist_ok=True)
+        trades_dir.mkdir(exist_ok=True)
+        equity_dir.mkdir(exist_ok=True)
+
+        (stats_dir / "mom_mr_stats.json").write_text(json.dumps(_stats_to_json(mom_stats), indent=2))
+        export_trades_csv(mom_stats, trades_dir / "mom_mr_trades.csv")
+        export_equity_curve_csv(mom_stats, equity_dir / "mom_mr_equity.csv")
+
+        print(f"\nAll reports saved to: {outdir}")
+        return
 
     if args.mode == "wave5":
         sizing_margin = float(args.margin)
