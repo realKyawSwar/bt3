@@ -1,5 +1,14 @@
 # Quick Start Guide: Order Removal Diagnosis Solution
 
+## Quick CLI Cheatsheet
+- Alligator vs classic compare (remote fetch):  
+  `python src/compare_strategies.py --asset GBPJPY --tf 1h --spread 1.5 --exclusive_orders`
+- Wave5 AO divergence (explicit sizing, debug on):  
+  `python src/compare_strategies.py --mode wave5 --asset XAUUSD --tf 1h --spread 30 --wave5-size 0.2 --wave5-entry-mode break --wave5-trigger-lag 24 --wave5-debug`
+- FX 12m cross-sectional momentum benchmark (monthly rebalance):  
+  `python src/compare_strategies.py --mode fxmom --fxmom-pairs EURUSD,GBPUSD,USDJPY,USDCHF,AUDUSD,NZDUSD,USDCAD --fxmom-k 2 --fxmom-target-vol 0.10 --fxmom-use-carry 0`
+
+
 ## Problem Statement
 
 When using `--margin 0.02` with Wave5 strategy:

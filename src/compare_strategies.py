@@ -17,10 +17,20 @@ from alligator_fractal import (
     compute_atr_ohlc,
     compute_htf_bias,
 )
+from broker_debug import install_all_broker_hooks
 from bt3 import fetch_data, run_backtest
+from fx_momentum_12m import (
+    build_currency_panel,
+    build_weights,
+    compute_momentum_scores,
+    compute_portfolio_returns,
+    load_fx_prices_from_csv,
+    map_currency_weights_to_pairs,
+    prepare_monthly_closes,
+)
+from metrics import compute_metrics
 from reporting import export_equity_curve_csv, export_trades_csv
 from wave5_ao import Wave5AODivergenceStrategy
-from broker_debug import install_all_broker_hooks
 
 
 STRATEGY_REGISTRY = {
@@ -202,6 +212,59 @@ def _stats_to_json(stats) -> dict:
         else:
             result[key] = str(value)
     return result
+
+
+def _parse_pairs_arg(pairs_arg: str) -> list[str]:
+    if not pairs_arg:
+        return []
+    return [p.strip().upper() for p in pairs_arg.split(",") if p.strip()]
+
+
+def _load_rates_csv(path: str) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    date_cols = ["Date", "date", "timestamp", "Timestamp", "time", "Time", "datetime", "Datetime"]
+    idx = None
+    for col in date_cols:
+        if col in df.columns:
+            dt = pd.to_datetime(df[col], errors="coerce")
+            if dt.notna().any():
+                idx = dt
+                break
+    if idx is None:
+        idx = pd.to_datetime(df.iloc[:, 0], errors="coerce")
+    df.index = idx
+    df = df[~df.index.isna()]
+    drop_cols = [c for c in df.columns if c.lower() in {c.lower() for c in date_cols}]
+    if drop_cols:
+        df = df.drop(columns=drop_cols)
+    df = df.apply(pd.to_numeric, errors="coerce")
+    df.columns = [c.upper() for c in df.columns]
+    df = df.sort_index()
+    return df.resample("M").last()
+
+
+def _load_fx_pair_data(pairs: list[str], data_dir: Optional[str], tf: Optional[str]) -> dict[str, pd.DataFrame]:
+    pairs_upper = [p.upper() for p in pairs]
+    if data_dir:
+        base = Path(data_dir)
+        paths = []
+        for pair in pairs_upper:
+            candidate = base / f"{pair}.csv"
+            fallback = base / f"{pair.lower()}.csv"
+            paths.append(candidate if candidate.exists() else fallback)
+        loaded = load_fx_prices_from_csv(paths)
+        prices = {}
+        for pair in pairs_upper:
+            if pair in loaded:
+                prices[pair] = loaded[pair]
+            elif pair.lower() in loaded:
+                prices[pair] = loaded[pair.lower()]
+            else:
+                raise ValueError(f"Missing data for pair {pair} in {data_dir}")
+        return prices
+
+    tf_use = tf or "1d"
+    return {pair: fetch_data(pair, tf_use) for pair in pairs_upper}
 
 
 def _metric_value(stats, keys: Iterable[str]):
@@ -431,8 +494,79 @@ def compute_gating_debug(
     }
 
 
+def run_fx_momentum_mode(args) -> None:
+    pairs = _parse_pairs_arg(args.fxmom_pairs)
+    if not pairs:
+        raise ValueError("Provide at least one FX pair via --fxmom-pairs.")
+
+    pair_data = _load_fx_pair_data(pairs, args.fxmom_data_dir, args.tf)
+    monthly_closes = prepare_monthly_closes(pair_data)
+    if monthly_closes.empty:
+        raise ValueError("No price data available for FX momentum.")
+
+    monthly_returns = monthly_closes.pct_change()
+    panel = build_currency_panel({pair: monthly_closes[pair].dropna() for pair in monthly_closes.columns})
+
+    carry_df = None
+    if getattr(args, "fxmom_use_carry", 0):
+        if not args.fxmom_rates_csv:
+            raise ValueError("Carry adjustment requested but --fxmom-rates-csv not provided.")
+        carry_df = _load_rates_csv(args.fxmom_rates_csv)
+
+    scores = compute_momentum_scores(panel, carry_df=carry_df)
+    scores = scores.dropna(how="all")
+    currency_weights = build_weights(scores, k_top=args.fxmom_k, k_bottom=args.fxmom_k)
+    pair_weights = map_currency_weights_to_pairs(currency_weights, monthly_closes.columns.tolist())
+
+    target_vol = args.fxmom_target_vol if args.fxmom_target_vol and args.fxmom_target_vol > 0 else None
+    portfolio_returns, levered_pair_weights, leverage_series = compute_portfolio_returns(
+        pair_weights,
+        monthly_returns,
+        target_vol=target_vol,
+        vol_lookback=args.fxmom_vol_lookback,
+        max_leverage=args.fxmom_max_lev,
+    )
+    if portfolio_returns.empty:
+        raise ValueError("No portfolio returns computed; check data coverage and warmup period.")
+
+    equity = (1.0 + portfolio_returns).cumprod()
+    metrics = compute_metrics(portfolio_returns, levered_pair_weights, periods_per_year=12)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = Path(args.outdir) / f"fxmom_{timestamp}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    scores.to_csv(run_dir / "fxmom_currency_scores.csv")
+    currency_weights.to_csv(run_dir / "fxmom_currency_weights.csv")
+    levered_pair_weights.to_csv(run_dir / "fxmom_pair_weights.csv")
+    portfolio_returns.to_frame("return").to_csv(run_dir / "fxmom_returns.csv")
+    equity.to_frame("equity").to_csv(run_dir / "fxmom_equity.csv")
+    (run_dir / "fxmom_metrics.json").write_text(json.dumps(metrics, indent=2))
+    leverage_series.to_frame("leverage").to_csv(run_dir / "fxmom_leverage.csv")
+
+    try:
+        import matplotlib.pyplot as plt
+
+        plt.figure()
+        equity.plot()
+        plt.title("FX Momentum Equity")
+        plt.xlabel("Date")
+        plt.ylabel("Equity")
+        plt.tight_layout()
+        plt.savefig(run_dir / "fxmom_equity.png", dpi=150)
+        plt.close()
+    except Exception as exc:  # pragma: no cover - plotting is optional
+        print(f"Equity plot skipped: {exc}")
+
+    print("\nFX Momentum Benchmark")
+    print(f"Pairs: {', '.join(pairs)}")
+    print(f"Sharpe: {metrics.get('sharpe'):.3f}  MaxDD: {metrics.get('max_drawdown'):.3f}  Turnover: {metrics.get('turnover'):.3f}")
+    print(f"Total Return: {metrics.get('total_return'):.3f}  Vol: {metrics.get('vol'):.3f}")
+    print(f"Reports saved to: {run_dir}")
+
+
 def main() -> None:
-    mode_choices = ["alligator", "wave5", "wave5_wf"]
+    mode_choices = ["alligator", "wave5", "wave5_wf", "fxmom"]
     parser = argparse.ArgumentParser(description="Compare strict vs classic Alligator+Fractal strategies.")
     parser.add_argument(
         "--mode",
@@ -459,6 +593,15 @@ def main() -> None:
     parser.add_argument("--outdir", default="reports/", help="Output directory for reports.")
     parser.add_argument("--pullback-k", type=float, default=None, help="Override pullback_k_atr for pullback strategy.")
     parser.add_argument("--touch-teeth", action="store_true", default=False, help="Require pullback to touch teeth.")
+
+    parser.add_argument("--fxmom-pairs", default="EURUSD,GBPUSD,USDJPY,USDCHF,AUDUSD,NZDUSD,USDCAD", help="Comma-separated USD-cross FX pairs for momentum.")
+    parser.add_argument("--fxmom-k", type=int, default=2, help="Number of currencies to long/short (top/bottom k).")
+    parser.add_argument("--fxmom-use-carry", type=int, choices=[0, 1], default=0, help="Include carry differential in momentum score (0/1).")
+    parser.add_argument("--fxmom-rates-csv", default=None, help="CSV containing monthly rates (columns: date, USD, EUR, ...).")
+    parser.add_argument("--fxmom-data-dir", default=None, help="Directory of CSVs for FX pairs (defaults to remote fetch).")
+    parser.add_argument("--fxmom-target-vol", type=float, default=0.10, help="Annualized volatility target (set <=0 to disable).")
+    parser.add_argument("--fxmom-vol-lookback", type=int, default=12, help="Lookback months for realized vol in vol targeting.")
+    parser.add_argument("--fxmom-max-lev", type=float, default=3.0, help="Maximum leverage for vol targeting.")
 
     parser.add_argument("--wave5-swing-window", type=int, default=Wave5AODivergenceStrategy.swing_window)
     parser.add_argument("--wave5-fib-tol", type=float, default=Wave5AODivergenceStrategy.fib_tol_atr)
@@ -556,6 +699,10 @@ def main() -> None:
     parser.add_argument("--opt-disable-scoring", dest="opt_allow_scoring", action="store_false", help="Disable scoring candidates during random search.")
 
     args = parser.parse_args()
+
+    if args.mode == "fxmom":
+        run_fx_momentum_mode(args)
+        return
 
     df = _load_data(args.data, args.asset, args.tf)
     df = _ensure_ohlc(df)
