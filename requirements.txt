@@ -1,3 +1,5 @@
 backtesting
 pandas
 numpy
+matplotlib
+pytest
