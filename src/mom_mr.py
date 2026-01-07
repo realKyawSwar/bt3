@@ -92,6 +92,10 @@ class MomentumMeanReversionStrategy(Strategy):
         size = max(self.min_size, min(self.max_size, size))
         if size <= 0 or not math.isfinite(size):
             return 0.0
+        if size >= 1:
+            size = float(math.floor(size))
+            if size < 1:
+                return 0.0
         return size
 
     def _regime(self, mom_val: float) -> str:
